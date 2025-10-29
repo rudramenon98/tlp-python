@@ -15,7 +15,7 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
-    "ai_doc_parser @ file:packages/ai_doc_parser",
+    # Core dependencies only
 ]
 
 [project.optional-dependencies]

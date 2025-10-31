@@ -82,7 +82,9 @@ class ClickableStatusLabel(QLabel):
             # Show temporary visual feedback
             self.original_text = self.text()
             self.setText(f"Copied: {os.path.basename(self.file_path)}")
-            self.setStyleSheet("QLabel { background-color: #d4edda; border: 1px solid #c3e6cb; padding: 2px; }")
+            self.setStyleSheet(
+                "QLabel { background-color: #d4edda; border: 1px solid #c3e6cb; padding: 2px; }"
+            )
 
             # Reset after 1.5 seconds
             self.reset_timer.start(1500)
@@ -90,7 +92,9 @@ class ClickableStatusLabel(QLabel):
         super().mousePressEvent(event)
 
 
-def get_class_color(row: pd.Series) -> Tuple[Tuple[int, int, int, int], Tuple[int, int, int, int]]:
+def get_class_color(
+    row: pd.Series,
+) -> Tuple[Tuple[int, int, int, int], Tuple[int, int, int, int]]:
     """Get color based on class information.
 
     Args:
@@ -103,18 +107,18 @@ def get_class_color(row: pd.Series) -> Tuple[Tuple[int, int, int, int], Tuple[in
     class_value = None
 
     # Check predicted_class first
-    if 'FinalClass' in row and pd.notna(row['FinalClass']):
-        class_value = row['FinalClass']
-    elif 'PredictedClass' in row and pd.notna(row['PredictedClass']):
-        class_value = row['PredictedClass']
-    elif 'ClassLabel' in row and pd.notna(row['ClassLabel']):
-        class_value = row['ClassLabel']
-    elif 'SourceClass' in row and pd.notna(row['SourceClass']):
-        class_value = str(row['SourceClass']).lower()
-    elif 'LabelledClass' in row and pd.notna(row['LabelledClass']):
-        class_value = row['LabelledClass']
-    elif 'header_footer_type' in row and pd.notna(row['header_footer_type']):
-        class_value = row['header_footer_type']
+    if "FinalClass" in row and pd.notna(row["FinalClass"]):
+        class_value = row["FinalClass"]
+    elif "PredictedClass" in row and pd.notna(row["PredictedClass"]):
+        class_value = row["PredictedClass"]
+    elif "ClassLabel" in row and pd.notna(row["ClassLabel"]):
+        class_value = row["ClassLabel"]
+    elif "SourceClass" in row and pd.notna(row["SourceClass"]):
+        class_value = str(row["SourceClass"]).lower()
+    elif "LabelledClass" in row and pd.notna(row["LabelledClass"]):
+        class_value = row["LabelledClass"]
+    elif "header_footer_type" in row and pd.notna(row["header_footer_type"]):
+        class_value = row["header_footer_type"]
 
     # Define color mapping based on class values
 
@@ -138,7 +142,12 @@ def get_class_color(row: pd.Series) -> Tuple[Tuple[int, int, int, int], Tuple[in
     class_color = colors_map.get(class_value, (255, 0, 0, 30))
 
     # make border color a little darker and have alpha 100
-    border_color = (int(class_color[0] * 0.8), int(class_color[1] * 0.8), int(class_color[2] * 0.8), 100)
+    border_color = (
+        int(class_color[0] * 0.8),
+        int(class_color[1] * 0.8),
+        int(class_color[2] * 0.8),
+        100,
+    )
     return class_color, border_color
 
 
@@ -151,10 +160,14 @@ def get_annotation_text(row: pd.Series) -> str:
     Returns:
         Formatted string containing annotation details
     """
-    labelled_class_name = TextClass(row.get('LabelledClass', None)).name if row.get('LabelledClass', None) is not None else "n/a"
-    row['LabelledClassName'] = labelled_class_name
+    labelled_class_name = (
+        TextClass(row.get("LabelledClass", None)).name
+        if row.get("LabelledClass", None) is not None
+        else "n/a"
+    )
+    row["LabelledClassName"] = labelled_class_name
 
-    feature_str = "\n".join(sorted([f'__' + col + '__' for col in FEATURE_COLUMNS]))
+    feature_str = "\n".join(sorted([f"__" + col + "__" for col in FEATURE_COLUMNS]))
     # Define the list of keys to display
     details_str = f"""
     PDF Features:
@@ -193,7 +206,7 @@ def get_annotation_text(row: pd.Series) -> str:
     for key in lines:
         if key.startswith("__") and key.endswith("__"):
             key = key[2:-2]
-            value = row.get(key, 'n/a')
+            value = row.get(key, "n/a")
             if "text" in key:
                 line_str = f"\n{key}:\n {value}\n"
             else:
@@ -247,7 +260,9 @@ class AnnotationRectItem(QGraphicsRectItem):
         Args:
             event: Hover leave event
         """
-        self.setPen(QPen(QColor(*self.original_border_color), 2))  # Back to original border color
+        self.setPen(
+            QPen(QColor(*self.original_border_color), 2)
+        )  # Back to original border color
         super().hoverLeaveEvent(event)
 
 
@@ -334,7 +349,9 @@ class PDFViewer(QGraphicsView):
             # Normal scrolling when Ctrl is not pressed
             super().wheelEvent(event)
 
-    def display_page(self, pixmap: QPixmap, annotations: Optional[pd.DataFrame] = None) -> None:
+    def display_page(
+        self, pixmap: QPixmap, annotations: Optional[pd.DataFrame] = None
+    ) -> None:
         """Display a PDF page with optional annotations.
 
         Args:
@@ -377,18 +394,18 @@ class PDFViewer(QGraphicsView):
         scale = 2
         for _, row in annotations.iterrows():
             # Extract bounding box coordinates
-            crop_x0 = row.get('crop_x0', 0) * scale
-            crop_x1 = row.get('crop_x1', 0) * scale
-            crop_y0 = row.get('crop_y0', 0) * scale
-            crop_y1 = row.get('crop_y1', 0) * scale
-            page_width = row.get('page_width', 0) * scale
+            crop_x0 = row.get("crop_x0", 0) * scale
+            crop_x1 = row.get("crop_x1", 0) * scale
+            crop_y0 = row.get("crop_y0", 0) * scale
+            crop_y1 = row.get("crop_y1", 0) * scale
+            page_width = row.get("page_width", 0) * scale
 
             top_margin = 180
-            row.get('major_font_size', 12)
-            x0 = row.get('line_x0', 0) * scale + crop_x0
-            x1 = row.get('line_x1', 0) * scale + crop_x0
-            y0 = row.get('line_y0', 0) * scale + crop_y0
-            y1 = row.get('line_y1', 0) * scale + crop_y0
+            row.get("major_font_size", 12)
+            x0 = row.get("line_x0", 0) * scale + crop_x0
+            x1 = row.get("line_x1", 0) * scale + crop_x0
+            y0 = row.get("line_y0", 0) * scale + crop_y0
+            y1 = row.get("line_y1", 0) * scale + crop_y0
             # Create rectangle
             rect = QRectF(x0, y0, x1 - x0, y1 - y0)
 
@@ -403,7 +420,9 @@ class PDFViewer(QGraphicsView):
             fill_color, border_color = get_class_color(row)
 
             # Create clickable annotation item with class-based colors
-            annotation_item = AnnotationRectItem(rect, annotation_text, border_color, fill_color)
+            annotation_item = AnnotationRectItem(
+                rect, annotation_text, border_color, fill_color
+            )
             self.scene.addItem(annotation_item)
             self.annotation_items.append(annotation_item)
 
@@ -428,9 +447,9 @@ class PDFViewer(QGraphicsView):
             lines = list(chain.from_iterable([eval(t) for t in lines]))
             return lines
 
-        table_coordinates = get_lines_list(annotations, 'table_coordinates')
-        horizontal_lines = get_lines_list(annotations, 'horizontal_lines')
-        vertical_lines = get_lines_list(annotations, 'vertical_lines')
+        table_coordinates = get_lines_list(annotations, "table_coordinates")
+        horizontal_lines = get_lines_list(annotations, "horizontal_lines")
+        vertical_lines = get_lines_list(annotations, "vertical_lines")
 
         for table_coordinate in table_coordinates:
             rect = QRectF(
@@ -554,10 +573,10 @@ class FeatureVisualizer(QMainWindow):
         self.lines_rectangles_items = []  # Store line and rectangle items for toggling
 
         # Default file paths
-        self.default_pdf_path = r"C:\Users\r123m\Documents\enginius\data\xml_cfr\CFR-2024-title14-vol2.pdf"
-        self.default_csv_path = (
-            r"C:\Users\r123m\Documents\enginius\data\xml_cfr\labelled\CFR-2024-title14-vol2_labelled.csv"
+        self.default_pdf_path = (
+            r"C:\Users\r123m\Documents\enginius\data\xml_cfr\CFR-2024-title14-vol2.pdf"
         )
+        self.default_csv_path = r"C:\Users\r123m\Documents\enginius\data\xml_cfr\labelled\CFR-2024-title14-vol2_labelled.csv"
 
         self.init_ui()
 
@@ -631,7 +650,9 @@ class FeatureVisualizer(QMainWindow):
         # Lines and rectangles toggle
         self.show_lines_rectangles_checkbox = QCheckBox("Show Lines & Rectangles")
         self.show_lines_rectangles_checkbox.setChecked(self.show_lines_rectangles)
-        self.show_lines_rectangles_checkbox.toggled.connect(self.toggle_lines_rectangles)
+        self.show_lines_rectangles_checkbox.toggled.connect(
+            self.toggle_lines_rectangles
+        )
         nav_layout.addWidget(self.show_lines_rectangles_checkbox)
 
         left_layout.addLayout(nav_layout)
@@ -692,7 +713,9 @@ class FeatureVisualizer(QMainWindow):
 
         self.annotations_combobox = QComboBox()
         self.annotations_combobox.setMinimumWidth(200)
-        self.annotations_combobox.currentTextChanged.connect(self.on_annotation_selected)
+        self.annotations_combobox.currentTextChanged.connect(
+            self.on_annotation_selected
+        )
         file_layout.addWidget(self.annotations_combobox)
 
         self.refresh_button = QPushButton("Refresh")
@@ -743,7 +766,9 @@ class FeatureVisualizer(QMainWindow):
                 self.pdf_document = fitz.open(saved_pdf_path)
                 self.total_pages = len(self.pdf_document)
                 self.current_page = self.settings.value("current_page", 0, type=int)
-                self.setWindowTitle(f"PDF Feature Visualizer - {os.path.basename(saved_pdf_path)}")
+                self.setWindowTitle(
+                    f"PDF Feature Visualizer - {os.path.basename(saved_pdf_path)}"
+                )
                 print(f"Loaded saved PDF: {saved_pdf_path}")
                 pdf_loaded = True
                 # Populate annotations combobox
@@ -757,7 +782,9 @@ class FeatureVisualizer(QMainWindow):
                 self.pdf_document = fitz.open(self.default_pdf_path)
                 self.total_pages = len(self.pdf_document)
                 self.current_page = 0
-                self.setWindowTitle(f"PDF Feature Visualizer - {os.path.basename(self.default_pdf_path)}")
+                self.setWindowTitle(
+                    f"PDF Feature Visualizer - {os.path.basename(self.default_pdf_path)}"
+                )
                 print(f"Loaded default PDF: {self.default_pdf_path}")
                 pdf_loaded = True
                 # Populate annotations combobox
@@ -808,7 +835,7 @@ class FeatureVisualizer(QMainWindow):
             if self.annotations_df is not None:
                 try:
                     # Try to get the CSV path from metadata first
-                    csv_path = self.annotations_df._metadata.get('file_path', '')
+                    csv_path = self.annotations_df._metadata.get("file_path", "")
                     if not csv_path:
                         # If no metadata, try to get it from settings
                         csv_path = self.settings.value("csv_path", "")
@@ -818,7 +845,9 @@ class FeatureVisualizer(QMainWindow):
                         for i in range(self.annotations_combobox.count()):
                             if self.annotations_combobox.itemData(i) == csv_path:
                                 self.annotations_combobox.setCurrentIndex(i)
-                                print(f"Restored combobox selection to: {self.annotations_combobox.currentText()}")
+                                print(
+                                    f"Restored combobox selection to: {self.annotations_combobox.currentText()}"
+                                )
                                 break
                 except Exception as e:
                     print(f"Could not restore combobox selection: {e}")
@@ -827,8 +856,10 @@ class FeatureVisualizer(QMainWindow):
         self.update_status_display()
 
         # Load saved toggle state
-        self.show_lines_rectangles = self.settings.value("show_lines_rectangles", True, type=bool)
-        if hasattr(self, 'show_lines_rectangles_checkbox'):
+        self.show_lines_rectangles = self.settings.value(
+            "show_lines_rectangles", True, type=bool
+        )
+        if hasattr(self, "show_lines_rectangles_checkbox"):
             self.show_lines_rectangles_checkbox.setChecked(self.show_lines_rectangles)
 
     def save_state(self) -> None:
@@ -850,7 +881,7 @@ class FeatureVisualizer(QMainWindow):
         elif self.annotations_df is not None:
             # Save CSV path (if it has a path attribute)
             try:
-                csv_path = self.annotations_df._metadata.get('file_path', '')
+                csv_path = self.annotations_df._metadata.get("file_path", "")
                 if csv_path:
                     self.settings.setValue("csv_path", csv_path)
             except:
@@ -880,7 +911,7 @@ class FeatureVisualizer(QMainWindow):
         # Update annotations status
         if self.annotations_df is not None and not self.annotations_df.empty:
             try:
-                csv_path = self.annotations_df._metadata.get('file_path', '')
+                csv_path = self.annotations_df._metadata.get("file_path", "")
                 if csv_path:
                     csv_name = os.path.basename(csv_path)
                     self.annotations_status_text.setText(f"Loaded: {csv_name}")
@@ -903,7 +934,9 @@ class FeatureVisualizer(QMainWindow):
                 self.pdf_document = fitz.open(self.default_pdf_path)
                 self.total_pages = len(self.pdf_document)
                 self.current_page = 0
-                self.setWindowTitle(f"PDF Feature Visualizer - {os.path.basename(self.default_pdf_path)}")
+                self.setWindowTitle(
+                    f"PDF Feature Visualizer - {os.path.basename(self.default_pdf_path)}"
+                )
                 print(f"Loaded default PDF: {self.default_pdf_path}")
             except Exception as e:
                 print(f"Failed to load default PDF: {e}")
@@ -928,7 +961,9 @@ class FeatureVisualizer(QMainWindow):
 
     def load_pdf(self) -> None:
         """Load a PDF file."""
-        file_path, _ = QFileDialog.getOpenFileName(self, "Open PDF File", "", "PDF Files (*.pdf)")
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Open PDF File", "", "PDF Files (*.pdf)"
+        )
 
         if file_path:
             try:
@@ -938,7 +973,9 @@ class FeatureVisualizer(QMainWindow):
                 self.display_current_page()
                 self.update_navigation_controls()
 
-                self.setWindowTitle(f"PDF Feature Visualizer - {os.path.basename(file_path)}")
+                self.setWindowTitle(
+                    f"PDF Feature Visualizer - {os.path.basename(file_path)}"
+                )
 
                 # Populate annotations combobox with matching CSV files
                 self.populate_annotations_combobox(file_path)
@@ -1031,7 +1068,7 @@ class FeatureVisualizer(QMainWindow):
             try:
                 self.annotations_df = pd.read_csv(csv_path)
                 # Store the file path in metadata for later saving
-                self.annotations_df._metadata = {'file_path': csv_path}
+                self.annotations_df._metadata = {"file_path": csv_path}
                 self.display_current_page()  # Refresh display with annotations
 
                 # Update status display
@@ -1056,7 +1093,9 @@ class FeatureVisualizer(QMainWindow):
             # Get current PDF path
             pdf_path = self.pdf_document.name
             if not pdf_path:
-                QMessageBox.warning(self, "No PDF Path", "Cannot refresh: PDF path not available.")
+                QMessageBox.warning(
+                    self, "No PDF Path", "Cannot refresh: PDF path not available."
+                )
                 return
 
             # Remember the currently selected annotation file before refreshing
@@ -1064,7 +1103,9 @@ class FeatureVisualizer(QMainWindow):
             if self.annotations_df is not None:
                 try:
                     # Try to get the current CSV path from metadata first
-                    current_csv_path = self.annotations_df._metadata.get('file_path', '')
+                    current_csv_path = self.annotations_df._metadata.get(
+                        "file_path", ""
+                    )
                 except:
                     pass
 
@@ -1091,7 +1132,7 @@ class FeatureVisualizer(QMainWindow):
                 # Reload the annotations
                 try:
                     self.annotations_df = pd.read_csv(current_csv_path)
-                    self.annotations_df._metadata = {'file_path': current_csv_path}
+                    self.annotations_df._metadata = {"file_path": current_csv_path}
                     print(f"Refreshed annotations from: {current_csv_path}")
                 except Exception as e:
                     print(f"Error refreshing annotations: {e}")
@@ -1101,8 +1142,10 @@ class FeatureVisualizer(QMainWindow):
                 if saved_csv_path and os.path.exists(saved_csv_path):
                     try:
                         self.annotations_df = pd.read_csv(saved_csv_path)
-                        self.annotations_df._metadata = {'file_path': saved_csv_path}
-                        print(f"Refreshed annotations from saved path: {saved_csv_path}")
+                        self.annotations_df._metadata = {"file_path": saved_csv_path}
+                        print(
+                            f"Refreshed annotations from saved path: {saved_csv_path}"
+                        )
 
                         # Update combobox selection to match
                         for i in range(self.annotations_combobox.count()):
@@ -1144,8 +1187,10 @@ class FeatureVisualizer(QMainWindow):
         page_annotations = None
         if self.annotations_df is not None and not self.annotations_df.empty:
             # Filter annotations for current page
-            if 'PageNumber' in self.annotations_df.columns:
-                page_annotations = self.annotations_df[self.annotations_df['PageNumber'] == self.current_page]
+            if "PageNumber" in self.annotations_df.columns:
+                page_annotations = self.annotations_df[
+                    self.annotations_df["PageNumber"] == self.current_page
+                ]
             else:
                 # If no page column, use all annotations
                 page_annotations = self.annotations_df
@@ -1256,8 +1301,10 @@ class FeatureVisualizer(QMainWindow):
         """
         if self.annotations_df is not None and not self.annotations_df.empty:
             # Filter annotations for current page
-            if 'PageNumber' in self.annotations_df.columns:
-                return self.annotations_df[self.annotations_df['PageNumber'] == self.current_page]
+            if "PageNumber" in self.annotations_df.columns:
+                return self.annotations_df[
+                    self.annotations_df["PageNumber"] == self.current_page
+                ]
             else:
                 # If no page column, use all annotations
                 return self.annotations_df
@@ -1401,7 +1448,7 @@ def main() -> None:
         app = QApplication(sys.argv)
 
         # Set application style
-        app.setStyle('Fusion')
+        app.setStyle("Fusion")
 
         # Create and show the main window
         window = FeatureVisualizer()

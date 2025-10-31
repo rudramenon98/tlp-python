@@ -19,7 +19,9 @@ from ai_doc_parser.tools.model_interpretability import ModelInterpretabilityAnal
 from ai_doc_parser.training.classifier_trainer import load_model, train_multiclass
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 log = logging.getLogger(__name__)
 
 
@@ -70,7 +72,9 @@ def quick_analysis_example():
 
     # Create dummy data
     np.random.seed(42)
-    X_dummy = pd.DataFrame(np.random.rand(n_samples, n_features), columns=feature_columns)
+    X_dummy = pd.DataFrame(
+        np.random.rand(n_samples, n_features), columns=feature_columns
+    )
 
     # Create dummy labels (replace with your actual labels)
     y_dummy = pd.Series(np.random.randint(0, 5, n_samples))  # 5 classes
@@ -78,11 +82,15 @@ def quick_analysis_example():
     # Train a model (replace with your actual training)
     log.info("Training a dummy model...")
     x_train, x_test, y_train, y_test, model, feature_columns = train_multiclass(
-        pd.concat([X_dummy, y_dummy.rename('LabelledClass')], axis=1), test_size=0.2, random_state=42
+        pd.concat([X_dummy, y_dummy.rename("LabelledClass")], axis=1),
+        test_size=0.2,
+        random_state=42,
     )
 
     # Initialize the analyzer
-    class_names = [TextClass(CLASS_MAP_INV[i]).name for i in sorted(CLASS_MAP_INV.keys())]
+    class_names = [
+        TextClass(CLASS_MAP_INV[i]).name for i in sorted(CLASS_MAP_INV.keys())
+    ]
     analyzer = ModelInterpretabilityAnalyzer(model, feature_columns, class_names)
 
     # Run feature importance analysis
@@ -93,7 +101,7 @@ def quick_analysis_example():
 
     # Show top features
     log.info("Top 10 most important features:")
-    for _, row in importance_results['top_features'].iterrows():
+    for _, row in importance_results["top_features"].iterrows():
         log.info(f"  {row['feature']:<25}: {row['importance']:.4f}")
 
     # Example 2: Analyze specific predictions
@@ -114,10 +122,14 @@ def quick_analysis_example():
         true_label = test_labels.iloc[i]
 
         pred_class_name = (
-            TextClass(CLASS_MAP_INV[prediction]).name if prediction in CLASS_MAP_INV else f"Class_{prediction}"
+            TextClass(CLASS_MAP_INV[prediction]).name
+            if prediction in CLASS_MAP_INV
+            else f"Class_{prediction}"
         )
         true_class_name = (
-            TextClass(CLASS_MAP_INV[true_label]).name if true_label in CLASS_MAP_INV else f"Class_{true_label}"
+            TextClass(CLASS_MAP_INV[true_label]).name
+            if true_label in CLASS_MAP_INV
+            else f"Class_{true_label}"
         )
 
         log.info(f"  True Class: {true_class_name}")
@@ -128,12 +140,18 @@ def quick_analysis_example():
         # Show top contributing features for this sample
         feature_importance = model.feature_importances_
         feature_contrib = pd.DataFrame(
-            {'feature': feature_columns, 'value': sample.values, 'importance': feature_importance}
-        ).sort_values('importance', ascending=False)
+            {
+                "feature": feature_columns,
+                "value": sample.values,
+                "importance": feature_importance,
+            }
+        ).sort_values("importance", ascending=False)
 
         log.info(f"  Top 5 contributing features:")
         for _, row in feature_contrib.head(5).iterrows():
-            log.info(f"    {row['feature']:<20}: value={row['value']:.3f}, importance={row['importance']:.4f}")
+            log.info(
+                f"    {row['feature']:<20}: value={row['value']:.3f}, importance={row['importance']:.4f}"
+            )
 
     # Example 3: Load and analyze an existing model
     log.info("\n" + "=" * 60)
@@ -152,7 +170,9 @@ def quick_analysis_example():
     loaded_model = load_model(model_path)
 
     # Initialize analyzer with loaded model
-    analyzer_loaded = ModelInterpretabilityAnalyzer(loaded_model, feature_columns, class_names)
+    analyzer_loaded = ModelInterpretabilityAnalyzer(
+        loaded_model, feature_columns, class_names
+    )
 
     # Run a quick analysis
     log.info("Running quick analysis on loaded model...")
@@ -199,26 +219,38 @@ def analyze_existing_model_example():
         # Prepare data (you might need to adjust this based on your data structure)
         from ai_doc_parser.training.classifier_trainer import prepare_df_for_model
 
-        df_processed, feature_columns = prepare_df_for_model(df, add_shifted_features=True, verbose=True)
+        df_processed, feature_columns = prepare_df_for_model(
+            df, add_shifted_features=True, verbose=True
+        )
 
         # Separate features and labels
         X = df_processed[feature_columns]
-        y_true = df_processed['LabelledClass'] if 'LabelledClass' in df_processed.columns else None
+        y_true = (
+            df_processed["LabelledClass"]
+            if "LabelledClass" in df_processed.columns
+            else None
+        )
 
         # Initialize analyzer
-        class_names = [TextClass(CLASS_MAP_INV[i]).name for i in sorted(CLASS_MAP_INV.keys())]
+        class_names = [
+            TextClass(CLASS_MAP_INV[i]).name for i in sorted(CLASS_MAP_INV.keys())
+        ]
         analyzer = ModelInterpretabilityAnalyzer(model, feature_columns, class_names)
 
         # Run comprehensive analysis
         log.info("Running comprehensive analysis...")
-        results = analyzer.comprehensive_analysis(X=X, y_true=y_true, output_dir="existing_model_analysis")
+        results = analyzer.comprehensive_analysis(
+            X=X, y_true=y_true, output_dir="existing_model_analysis"
+        )
 
         log.info("Analysis completed successfully!")
         log.info("Check the 'existing_model_analysis' directory for all results.")
 
     except Exception as e:
         log.error(f"Error during analysis: {e}")
-        log.info("Make sure your model and data paths are correct and the data format matches expectations.")
+        log.info(
+            "Make sure your model and data paths are correct and the data format matches expectations."
+        )
 
 
 if __name__ == "__main__":

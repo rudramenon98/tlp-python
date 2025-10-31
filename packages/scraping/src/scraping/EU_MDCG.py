@@ -17,7 +17,7 @@ from logconfig import configure_logging_from_argv
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
-'''
+"""
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -25,7 +25,7 @@ log.setLevel(logging.DEBUG)
 console_handler = logging.StreamHandler(sys.stdout)
 console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 console_handler.setFormatter(console_formatter)
-'''
+"""
 
 from app.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
 from app.scrape_url_service import (
@@ -258,8 +258,8 @@ def run(config: ScriptsConfig, scrapeURLId):
 if __name__ == "__main__":
     try:
         props = None
-        #configure the logging level
-        remaining_args = configure_logging_from_argv(default_level='INFO')
+        # configure the logging level
+        remaining_args = configure_logging_from_argv(default_level="INFO")
 
         docIdsList = []
         if len(remaining_args) >= 1:

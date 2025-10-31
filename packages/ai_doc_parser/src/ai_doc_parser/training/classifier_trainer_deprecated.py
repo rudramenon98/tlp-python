@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 # import fitz
 
 
-'''Recalculate Featues'''
+"""Recalculate Featues"""
 
 
 def Fraction_Capitalized(x):
@@ -25,7 +25,7 @@ def Fraction_Capitalized(x):
     return round(float(frac), 2)
 
 
-'''Multiclass Multilable Target Generation'''
+"""Multiclass Multilable Target Generation"""
 
 
 def multiclass_multilabel_target_generator(raw_target):
@@ -33,14 +33,14 @@ def multiclass_multilabel_target_generator(raw_target):
     multiclass_multilabel_target = []
     for _, row in raw_target.iterrows():
         target = [
-            float(ext) if str(ext) != "nan" and str(ext) != 'TABLE_TAG' else ext
+            float(ext) if str(ext) != "nan" and str(ext) != "TABLE_TAG" else ext
             for ext in raw_target.iloc[_].values.tolist()
         ]
         multiclass_multilabel_target.append(target)
     return multiclass_multilabel_target
 
 
-'''Multiclass Single Target Generation'''
+"""Multiclass Single Target Generation"""
 
 
 def multiclass_singlelabel_target_generator(raw_target):
@@ -54,7 +54,9 @@ def multiclass_singlelabel_target_generator(raw_target):
         target = [
             (
                 float(ext)
-                if str(ext) != "nan" and str(ext) != 'TABLE_TAG' and all(val != 1 for val in target_row[3:])
+                if str(ext) != "nan"
+                and str(ext) != "TABLE_TAG"
+                and all(val != 1 for val in target_row[3:])
                 else ext
             )
             for ext in target_row
@@ -92,7 +94,7 @@ def multiclass_singlelabel_target_generator(raw_target):
     return multiclass_singlelabel_target
 
 
-'''Choosing Arxiv CFR or Latex'''
+"""Choosing Arxiv CFR or Latex"""
 
 
 def make_version_split(df, df_version):
@@ -102,14 +104,16 @@ def make_version_split(df, df_version):
     return new_df
 
 
-'''Train Test Split'''
+"""Train Test Split"""
 
 
-def data_split_multiclass_singlelabel(df, run, train_df_version=[], val_df_version=[], removed_columns=[]):
+def data_split_multiclass_singlelabel(
+    df, run, train_df_version=[], val_df_version=[], removed_columns=[]
+):
 
-    Xtrain = Xtest = Ytrain = Ytest = text_test = text_train = version_train = version_test = page_number_train = (
-        page_number_test
-    ) = np.nan
+    Xtrain = Xtest = Ytrain = Ytest = text_test = text_train = version_train = (
+        version_test
+    ) = page_number_train = page_number_test = np.nan
 
     if len(train_df_version) > 0 or train_df_version == "ALL_DATA":
 
@@ -136,26 +140,36 @@ def data_split_multiclass_singlelabel(df, run, train_df_version=[], val_df_versi
         X = firstline_header
         y = firstline_header["target"].values.tolist()
         try:
-            xtrain_firstline_header, xtest_firstline_header, ytrain_firstline_header, ytest_firstline_header = (
-                train_test_split(X, y, test_size=0.2)
-            )
+            (
+                xtrain_firstline_header,
+                xtest_firstline_header,
+                ytrain_firstline_header,
+                ytest_firstline_header,
+            ) = train_test_split(X, y, test_size=0.2)
         except:
             print(
                 "ValueError,firstline_header[1, 0, 0, 0, 0]: With n_samples=0, test_size=0.2 and train_size=None, the resulting train set will be empty. Adjust any of the aforementioned parameters."
             )
-            xtrain_firstline_header = xtest_firstline_header = ytrain_firstline_header = ytest_firstline_header = []
+            xtrain_firstline_header = xtest_firstline_header = (
+                ytrain_firstline_header
+            ) = ytest_firstline_header = []
 
         X = continued_header
         y = continued_header["target"].values.tolist()
         try:
-            xtrain_continued_header, xtest_continued_header, ytrain_continued_header, ytest_continued_header = (
-                train_test_split(X, y, test_size=0.2)
-            )
+            (
+                xtrain_continued_header,
+                xtest_continued_header,
+                ytrain_continued_header,
+                ytest_continued_header,
+            ) = train_test_split(X, y, test_size=0.2)
         except:
             print(
                 "ValueError,continued_header[0, 1, 0, 0, 0]: With n_samples=0, test_size=0.2 and train_size=None, the resulting train set will be empty. Adjust any of the aforementioned parameters."
             )
-            xtrain_continued_header = xtest_continued_header = ytrain_continued_header = ytest_continued_header = []
+            xtrain_continued_header = xtest_continued_header = (
+                ytrain_continued_header
+            ) = ytest_continued_header = []
 
         X = firstline_paragraph
         y = firstline_paragraph["target"].values.tolist()
@@ -170,9 +184,9 @@ def data_split_multiclass_singlelabel(df, run, train_df_version=[], val_df_versi
             print(
                 "ValueError,firstline_paragraph[0, 0, 1, 0, 0]: With n_samples=0, test_size=0.2 and train_size=None, the resulting train set will be empty. Adjust any of the aforementioned parameters."
             )
-            xtrain_firstline_paragraph = xtest_firstline_paragraph = ytrain_firstline_paragraph = (
-                ytest_firstline_paragraph
-            ) = []
+            xtrain_firstline_paragraph = xtest_firstline_paragraph = (
+                ytrain_firstline_paragraph
+            ) = ytest_firstline_paragraph = []
 
         X = continued_paragraph
         y = continued_paragraph["target"].values.tolist()
@@ -187,14 +201,16 @@ def data_split_multiclass_singlelabel(df, run, train_df_version=[], val_df_versi
             print(
                 "ValueError,continued_paragraph[0, 0, 0, 1, 0]: With n_samples=0, test_size=0.2 and train_size=None, the resulting train set will be empty. Adjust any of the aforementioned parameters."
             )
-            xtrain_continued_paragraph = xtest_continued_paragraph = ytrain_continued_paragraph = (
-                ytest_continued_paragraph
-            ) = []
+            xtrain_continued_paragraph = xtest_continued_paragraph = (
+                ytrain_continued_paragraph
+            ) = ytest_continued_paragraph = []
 
         X = toc
         y = toc["target"].values.tolist()
         try:
-            xtrain_toc, xtest_toc, ytrain_toc, ytest_toc = train_test_split(X, y, test_size=0.2)
+            xtrain_toc, xtest_toc, ytrain_toc, ytest_toc = train_test_split(
+                X, y, test_size=0.2
+            )
         except:
             print(
                 "ValueError,toc[0, 0, 0, 0, 1]: With n_samples=0, test_size=0.2 and train_size=None, the resulting train set will be empty. Adjust any of the aforementioned parameters."
@@ -216,14 +232,24 @@ def data_split_multiclass_singlelabel(df, run, train_df_version=[], val_df_versi
             + ytest_toc
         )
 
-        xtrain_firstline_header = xtrain_firstline_header.append(xtrain_continued_header)
-        xtrain_firstline_header = xtrain_firstline_header.append(xtrain_firstline_paragraph)
-        xtrain_firstline_header = xtrain_firstline_header.append(xtrain_continued_paragraph)
+        xtrain_firstline_header = xtrain_firstline_header.append(
+            xtrain_continued_header
+        )
+        xtrain_firstline_header = xtrain_firstline_header.append(
+            xtrain_firstline_paragraph
+        )
+        xtrain_firstline_header = xtrain_firstline_header.append(
+            xtrain_continued_paragraph
+        )
         xtrain_firstline_header = xtrain_firstline_header.append(xtrain_toc)
 
         xtest_firstline_header = xtest_firstline_header.append(xtest_continued_header)
-        xtest_firstline_header = xtest_firstline_header.append(xtest_firstline_paragraph)
-        xtest_firstline_header = xtest_firstline_header.append(xtest_continued_paragraph)
+        xtest_firstline_header = xtest_firstline_header.append(
+            xtest_firstline_paragraph
+        )
+        xtest_firstline_header = xtest_firstline_header.append(
+            xtest_continued_paragraph
+        )
         xtest_firstline_header = xtest_firstline_header.append(xtest_toc)
 
         xtrain = xtrain_firstline_header
@@ -232,7 +258,9 @@ def data_split_multiclass_singlelabel(df, run, train_df_version=[], val_df_versi
         xtrain["target"] = ytrain
         xtest["target"] = ytest
 
-        xtrain = xtrain.sample(frac=1)  # need to make change if we do not want to reshuffle
+        xtrain = xtrain.sample(
+            frac=1
+        )  # need to make change if we do not want to reshuffle
         xtest = xtest.sample(frac=1)  # Here need to make changes if you want
 
         text_train = xtrain["line"].values.tolist()
@@ -286,7 +314,7 @@ def data_split_multiclass_singlelabel(df, run, train_df_version=[], val_df_versi
     )
 
 
-''' Running Predictions '''
+""" Running Predictions """
 
 
 def prediction(clf, X):
@@ -294,7 +322,7 @@ def prediction(clf, X):
     return predicted
 
 
-'''Prediction Probabilities'''
+"""Prediction Probabilities"""
 
 
 def prediction_probability(clf, X):
@@ -302,23 +330,23 @@ def prediction_probability(clf, X):
     return predicted
 
 
-'''F1 Score'''
+"""F1 Score"""
 
 
 def FOneScore(y_true, y_pred):
-    f1 = f1_score(y_true, y_pred, average='macro')
+    f1 = f1_score(y_true, y_pred, average="macro")
     return f1
 
 
-'''Accuracy'''
+"""Accuracy"""
 
 
 def auc_score(X, Y, clf):
-    auc = roc_auc_score(Y, list(clf.predict_proba(X)), multi_class='ovo')
+    auc = roc_auc_score(Y, list(clf.predict_proba(X)), multi_class="ovo")
     return auc
 
 
-'''Confusion Matrix'''
+"""Confusion Matrix"""
 
 
 def conf_matrix(Y, predicted):
@@ -326,25 +354,35 @@ def conf_matrix(Y, predicted):
     return conf_matrix
 
 
-'''Random Forest Classification'''
+"""Random Forest Classification"""
 
 
 def random_forest_model(Xtrain, Ytrain, trial=6):
-    randomforestclassifier = RandomForestClassifier(random_state=1, criterion='entropy')  # ,max_depth=50)
+    randomforestclassifier = RandomForestClassifier(
+        random_state=1, criterion="entropy"
+    )  # ,max_depth=50)
 
     clf = randomforestclassifier.fit(Xtrain, Ytrain)
 
     # save the model to disk
-    filename = 'RandomForestClassifier_modeltest_' + str(trial) + '.sav'
+    filename = "RandomForestClassifier_modeltest_" + str(trial) + ".sav"
     joblib.dump(clf, filename)
 
     return clf
 
 
-'''Main Function for splitting and generating label'''
+"""Main Function for splitting and generating label"""
 
 
-def call_main(df, removed_cols, train_df_version, val_df_version, pdf_type, mode="multiclass_singlelabel", run="train"):
+def call_main(
+    df,
+    removed_cols,
+    train_df_version,
+    val_df_version,
+    pdf_type,
+    mode="multiclass_singlelabel",
+    run="train",
+):
 
     df = df.reset_index(drop=True)
 
@@ -356,31 +394,39 @@ def call_main(df, removed_cols, train_df_version, val_df_version, pdf_type, mode
         if (
             mode == "multiclass_singlelabel"
         ):  # 5 labels: firstline_header, continuedline_header, firstline_paragraph, continuedline_paragraph, toc
-            raw_target = df[['is_header', 'is_firstline', 'is_toc']]
-            raw_input = df.drop(columns=['is_header', 'is_firstline', 'is_toc'], axis=1)
+            raw_target = df[["is_header", "is_firstline", "is_toc"]]
+            raw_input = df.drop(columns=["is_header", "is_firstline", "is_toc"], axis=1)
             target = multiclass_singlelabel_target_generator(raw_target)
 
-        if mode == "multiclass_multilabel":  # 3 labels: is_header, is_first_line, is_toc
-            raw_target = df[['is_header', 'is_firstline', 'is_toc']]
-            raw_input = df.drop(columns=['is_header', 'is_firstline', 'is_toc'], axis=1)
+        if (
+            mode == "multiclass_multilabel"
+        ):  # 3 labels: is_header, is_first_line, is_toc
+            raw_target = df[["is_header", "is_firstline", "is_toc"]]
+            raw_input = df.drop(columns=["is_header", "is_firstline", "is_toc"], axis=1)
             target = multiclass_multilabel_target_generator(raw_target)
 
         raw_input["target"] = target
-        raw_input["target_str"] = [str(ext) for ext in raw_input["target"].values.tolist()]
+        raw_input["target_str"] = [
+            str(ext) for ext in raw_input["target"].values.tolist()
+        ]
 
-        raw_input["page_number"] = [str(ext) for ext in raw_input["page_number"].values.tolist()]
+        raw_input["page_number"] = [
+            str(ext) for ext in raw_input["page_number"].values.tolist()
+        ]
 
         if pdf_type == "CFR":
             print("here")
-            groups_based_on_version = raw_input.groupby('version')
+            groups_based_on_version = raw_input.groupby("version")
             versions = raw_input["version"].unique()
 
             # if any nan or istable is detected in a apge, remove indexes after that nan/istable index
             new_df = pd.DataFrame()
             # raw_input_for_nan= pd.DataFrame()
             for version in versions:
-                group_version = groups_based_on_version.get_group(str(version)).reset_index()
-                groups = group_version.groupby('page_number')
+                group_version = groups_based_on_version.get_group(
+                    str(version)
+                ).reset_index()
+                groups = group_version.groupby("page_number")
                 pages = group_version["page_number"].unique()
                 for page in pages:
                     if str(page) == "nan":
@@ -388,8 +434,8 @@ def call_main(df, removed_cols, train_df_version, val_df_version, pdf_type, mode
                     group = groups.get_group(str(page)).reset_index(drop=True)
                     records = [
                         _
-                        for _, ext in enumerate(group['target_str'].values.tolist())
-                        if str(ext) == '[nan, nan, nan, nan, nan]'
+                        for _, ext in enumerate(group["target_str"].values.tolist())
+                        if str(ext) == "[nan, nan, nan, nan, nan]"
                     ]
                     pass_flag = False
 
@@ -398,7 +444,9 @@ def call_main(df, removed_cols, train_df_version, val_df_version, pdf_type, mode
                             pass_flag = True
 
                     toc_indices = [
-                        _ for _, ext in enumerate(group['target'].values.tolist()) if ext[4] == 1
+                        _
+                        for _, ext in enumerate(group["target"].values.tolist())
+                        if ext[4] == 1
                     ]  # if any value in page is is_toc
                     if any(toc_indices):  # if any value in page is is_toc
                         pass_flag = True
@@ -408,7 +456,7 @@ def call_main(df, removed_cols, train_df_version, val_df_version, pdf_type, mode
                         new_df = new_df.append(group)
                     else:
                         new_df = new_df.append(group)
-            raw_input = new_df[new_df['target_str'] != '[nan, nan, nan, nan, nan]']
+            raw_input = new_df[new_df["target_str"] != "[nan, nan, nan, nan, nan]"]
 
     (
         Xtrain,
@@ -426,7 +474,9 @@ def call_main(df, removed_cols, train_df_version, val_df_version, pdf_type, mode
         text_val_df,
         version_val_df,
         page_number_val_df,
-    ) = data_split_multiclass_singlelabel(raw_input, run, train_df_version, val_df_version, removed_cols)
+    ) = data_split_multiclass_singlelabel(
+        raw_input, run, train_df_version, val_df_version, removed_cols
+    )
 
     return (
         Xtrain,
@@ -448,11 +498,17 @@ def call_main(df, removed_cols, train_df_version, val_df_version, pdf_type, mode
     )
 
 
-'''Training and Testing Model'''
+"""Training and Testing Model"""
 
 
 def train_and_test(
-    df_list, removed_cols_list, train_df_version_list, val_df_versionn_list, pdf_typen_list, mode_list, run_list
+    df_list,
+    removed_cols_list,
+    train_df_version_list,
+    val_df_versionn_list,
+    pdf_typen_list,
+    mode_list,
+    run_list,
 ):
     print("here")
 
@@ -494,7 +550,13 @@ def train_and_test(
         page_number_val_df,
         raw_input_for_nan,
     ) = call_main(
-        df_list, removed_cols_list, train_df_version_list, val_df_versionn_list, pdf_typen_list, mode_list, run_list
+        df_list,
+        removed_cols_list,
+        train_df_version_list,
+        val_df_versionn_list,
+        pdf_typen_list,
+        mode_list,
+        run_list,
     )
 
     print("train starts...")
@@ -551,10 +613,12 @@ def train_and_test(
     return Xtrain, Xtest
 
 
-'''Valiadation Model'''
+"""Valiadation Model"""
 
 
-def validation(df, removed_cols, train_df_version, val_df_version, model, pdf_type, mode, run):
+def validation(
+    df, removed_cols, train_df_version, val_df_version, model, pdf_type, mode, run
+):
 
     (
         Xtrain,
@@ -573,7 +637,9 @@ def validation(df, removed_cols, train_df_version, val_df_version, model, pdf_ty
         version_val_df,
         page_number_val_df,
         raw_input_for_nan,
-    ) = call_main(df, removed_cols, train_df_version, val_df_version, pdf_type, mode, run)
+    ) = call_main(
+        df, removed_cols, train_df_version, val_df_version, pdf_type, mode, run
+    )
 
     clf = model
 
@@ -613,7 +679,9 @@ def validation(df, removed_cols, train_df_version, val_df_version, model, pdf_ty
             text_val_df_for_nan,
             version_val_df_for_nan,
             page_number_val_df_for_nan,
-        ) = data_split_multiclass_singlelabel(raw_input_for_nan, run, train_df_version, val_df_version, removed_cols)
+        ) = data_split_multiclass_singlelabel(
+            raw_input_for_nan, run, train_df_version, val_df_version, removed_cols
+        )
 
         is_table = Xval_df_for_nan["is_table"].values.tolist()
         Xval_df_for_nan = Xval_df_for_nan.drop(["is_table"], axis=1)
@@ -663,10 +731,12 @@ def validation(df, removed_cols, train_df_version, val_df_version, model, pdf_ty
     return Xval_df, Xval_df_for_nan
 
 
-'''Inference Model'''
+"""Inference Model"""
 
 
-def inference(df, removed_cols, train_df_version, val_df_version, model, pdf_type, mode, run):
+def inference(
+    df, removed_cols, train_df_version, val_df_version, model, pdf_type, mode, run
+):
 
     (
         Xtrain,
@@ -685,7 +755,9 @@ def inference(df, removed_cols, train_df_version, val_df_version, model, pdf_typ
         version_val_df,
         page_number_val_df,
         raw_input_for_nan,
-    ) = call_main(df, removed_cols, train_df_version, val_df_version, pdf_type, mode, run)
+    ) = call_main(
+        df, removed_cols, train_df_version, val_df_version, pdf_type, mode, run
+    )
 
     Xval_df["text"] = text_val_df
     Xval_df["version"] = version_val_df
@@ -702,7 +774,9 @@ def inference(df, removed_cols, train_df_version, val_df_version, model, pdf_typ
     version_val_df = Xval_df_NO_table["version"].values.tolist()
     page_number_val_df = Xval_df_NO_table["page_number"].values.tolist()
     is_table = Xval_df_NO_table["is_table"].values.tolist()
-    Xval_df_NO_table = Xval_df_NO_table.drop(["text", "version", "page_number", "is_table", "pred"], axis=1)
+    Xval_df_NO_table = Xval_df_NO_table.drop(
+        ["text", "version", "page_number", "is_table", "pred"], axis=1
+    )
 
     clf = model
 
@@ -723,26 +797,28 @@ def shifting_lines_with_pages(x):
     df = pd.DataFrame()
     prev_col_list = []
     for i in list(x.columns):
-        if i.startswith('prev'):
+        if i.startswith("prev"):
             prev_col_list.append(i)
     prev_col_list = prev_col_list
-    corrent_col_list = [i.replace('prev_line_', '') for i in prev_col_list]
-    next_line_col_list = [i.replace('prev_line_', 'Next_line_') for i in prev_col_list]
+    corrent_col_list = [i.replace("prev_line_", "") for i in prev_col_list]
+    next_line_col_list = [i.replace("prev_line_", "Next_line_") for i in prev_col_list]
     pages = list(x.Page_No.unique())
     lst = []
     for i in pages:
         # print("pageNo",i)
         temp = x[x.Page_No == i].reset_index()
-        header = temp.loc[0]['Class']
-        footer = temp.iloc[-1]['Class']
-        if str(header) != 'nan':
+        header = temp.loc[0]["Class"]
+        footer = temp.iloc[-1]["Class"]
+        if str(header) != "nan":
             if int(header) != 6:
                 # print("changed")
                 temp.loc[0, prev_col_list] = list(temp.loc[0, corrent_col_list])
-        elif str(footer) != 'nan':
+        elif str(footer) != "nan":
             if int(footer) != 7:
                 # print("changed")
-                temp.loc[temp.index[-1], next_line_col_list] = list(temp.loc[temp.index[-1], corrent_col_list])
+                temp.loc[temp.index[-1], next_line_col_list] = list(
+                    temp.loc[temp.index[-1], corrent_col_list]
+                )
         # df.append(temp,ignore_index=True)
         lst.append(temp)
     df = pd.concat(lst, ignore_index=True)
@@ -750,8 +826,8 @@ def shifting_lines_with_pages(x):
 
 
 def shifting(x, df):
-    prev = 'prev_line' + '_' + x
-    next_ = 'Next_line' + '_' + x
+    prev = "prev_line" + "_" + x
+    next_ = "Next_line" + "_" + x
 
     df[prev] = df[x].shift(1)
     df[next_] = df[x].shift(-1)

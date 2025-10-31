@@ -31,12 +31,13 @@ AI_PARSED_CLASSES = [
 ]
 
 
-    
-CONTINUE_PAIRS  = [(TextClass.HEADING, TextClass.HEADING_CONT),
-                   (TextClass.PARAGRAPH, TextClass.PARAGRAPH_CONT),
-                   (TextClass.ENUM_LIST, TextClass.ENUM_LIST_CONT),
-                   (TextClass.BULLET_LIST, TextClass.BULLET_LIST_CONT),
-                   (TextClass.GEN_LIST_CONT, TextClass.GEN_LIST_CONT),]
-    
+CONTINUE_PAIRS = [
+    (TextClass.HEADING, TextClass.HEADING_CONT),
+    (TextClass.PARAGRAPH, TextClass.PARAGRAPH_CONT),
+    (TextClass.ENUM_LIST, TextClass.ENUM_LIST_CONT),
+    (TextClass.BULLET_LIST, TextClass.BULLET_LIST_CONT),
+    (TextClass.GEN_LIST_CONT, TextClass.GEN_LIST_CONT),
+]
+
 CLASS_MAP = {value: idx for idx, value in enumerate(AI_PARSED_CLASSES)}
 CLASS_MAP_INV = {idx: value for idx, value in enumerate(AI_PARSED_CLASSES)}

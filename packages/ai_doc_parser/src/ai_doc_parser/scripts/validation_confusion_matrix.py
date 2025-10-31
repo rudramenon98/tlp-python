@@ -25,7 +25,9 @@ def load_validation_data() -> tuple[List[pd.DataFrame], List[pd.DataFrame]]:
         tuple: (labelled_dfs, inference_dfs) lists of dataframes
     """
     # Define paths
-    labelled_dir = Path("C:/Users/r123m/Documents/enginius/source/ai-pdf-parser/data/documents/validation/labelled_pdf")
+    labelled_dir = Path(
+        "C:/Users/r123m/Documents/enginius/source/ai-pdf-parser/data/documents/validation/labelled_pdf"
+    )
     inference_dir = Path(
         "C:/Users/r123m/Documents/enginius/source/ai-pdf-parser/data/documents/validation/ai_parsed_pdf_not_combined"
     )
@@ -46,7 +48,9 @@ def load_validation_data() -> tuple[List[pd.DataFrame], List[pd.DataFrame]]:
     labelled_files = list(labelled_dir.glob("*.csv"))
     inference_files = list(inference_dir.glob("*.csv"))
 
-    print(f"Found {len(labelled_files)} labelled files and {len(inference_files)} inference files")
+    print(
+        f"Found {len(labelled_files)} labelled files and {len(inference_files)} inference files"
+    )
 
     # Load labelled data
     for file_path in labelled_files:
@@ -54,13 +58,15 @@ def load_validation_data() -> tuple[List[pd.DataFrame], List[pd.DataFrame]]:
         #     continue
         try:
             df = pd.read_csv(file_path)
-            if 'LabelledClass' in df.columns and 'pdf_idx' in df.columns:
+            if "LabelledClass" in df.columns and "pdf_idx" in df.columns:
                 # Add the CSV file path as a column
-                df['csv_path'] = str(file_path)
+                df["csv_path"] = str(file_path)
                 labelled_dfs.append(df)
                 print(f"Loaded labelled data: {file_path.name} ({len(df)} rows)")
             else:
-                print(f"Warning: {file_path.name} missing required columns (LabelledClass, pdf_idx)")
+                print(
+                    f"Warning: {file_path.name} missing required columns (LabelledClass, pdf_idx)"
+                )
         except Exception as e:
             print(f"Error loading {file_path.name}: {e}")
 
@@ -68,22 +74,28 @@ def load_validation_data() -> tuple[List[pd.DataFrame], List[pd.DataFrame]]:
     for file_path in inference_files:
         try:
             df = pd.read_csv(file_path)
-            if 'FinalClass' in df.columns and 'pdf_idx' in df.columns:
+            if "FinalClass" in df.columns and "pdf_idx" in df.columns:
                 # Add the CSV file path as a column
-                df['csv_path'] = str(file_path)
+                df["csv_path"] = str(file_path)
                 inference_dfs.append(df)
                 print(f"Loaded inference data: {file_path.name} ({len(df)} rows)")
             else:
-                print(f"Warning: {file_path.name} missing required columns (FinalClass, pdf_idx)")
+                print(
+                    f"Warning: {file_path.name} missing required columns (FinalClass, pdf_idx)"
+                )
         except Exception as e:
             print(f"Error loading {file_path.name}: {e}")
 
     # If no files found in validation directories, try to find matching files
     if not labelled_dfs or not inference_dfs:
-        print("No data found in validation directories. Checking for alternative data sources...")
+        print(
+            "No data found in validation directories. Checking for alternative data sources..."
+        )
 
         # Try to find data in other directories
-        data_root = Path("C:/Users/r123m/Documents/enginius/source/ai-pdf-parser/data/documents")
+        data_root = Path(
+            "C:/Users/r123m/Documents/enginius/source/ai-pdf-parser/data/documents"
+        )
 
         # Look for CFR data as an example
         cfr_labelled_dir = data_root / "CFR" / "labelled_pdf"
@@ -93,28 +105,34 @@ def load_validation_data() -> tuple[List[pd.DataFrame], List[pd.DataFrame]]:
             print("Using CFR data as example...")
 
             # Load first few CFR files as example
-            cfr_labelled_files = list(cfr_labelled_dir.glob("*.csv"))[:2]  # Limit to 2 files
+            cfr_labelled_files = list(cfr_labelled_dir.glob("*.csv"))[
+                :2
+            ]  # Limit to 2 files
             cfr_inference_files = list(cfr_inference_dir.glob("*.csv"))[:2]
 
             for file_path in cfr_labelled_files:
                 try:
                     df = pd.read_csv(file_path)
-                    if 'LabelledClass' in df.columns and 'pdf_idx' in df.columns:
+                    if "LabelledClass" in df.columns and "pdf_idx" in df.columns:
                         # Add the CSV file path as a column
-                        df['csv_path'] = str(file_path)
+                        df["csv_path"] = str(file_path)
                         labelled_dfs.append(df)
-                        print(f"Loaded CFR labelled data: {file_path.name} ({len(df)} rows)")
+                        print(
+                            f"Loaded CFR labelled data: {file_path.name} ({len(df)} rows)"
+                        )
                 except Exception as e:
                     print(f"Error loading {file_path.name}: {e}")
 
             for file_path in cfr_inference_files:
                 try:
                     df = pd.read_csv(file_path)
-                    if 'FinalClass' in df.columns and 'pdf_idx' in df.columns:
+                    if "FinalClass" in df.columns and "pdf_idx" in df.columns:
                         # Add the CSV file path as a column
-                        df['csv_path'] = str(file_path)
+                        df["csv_path"] = str(file_path)
                         inference_dfs.append(df)
-                        print(f"Loaded CFR inference data: {file_path.name} ({len(df)} rows)")
+                        print(
+                            f"Loaded CFR inference data: {file_path.name} ({len(df)} rows)"
+                        )
                 except Exception as e:
                     print(f"Error loading {file_path.name}: {e}")
 
@@ -124,7 +142,11 @@ def load_validation_data() -> tuple[List[pd.DataFrame], List[pd.DataFrame]]:
 def remove_list_cont(input_class: TextClass) -> TextClass:
     if input_class in [TextClass.ENUM_LIST, TextClass.BULLET_LIST]:
         return TextClass.PARAGRAPH
-    if input_class in [TextClass.ENUM_LIST_CONT, TextClass.BULLET_LIST_CONT, TextClass.GEN_LIST_CONT]:
+    if input_class in [
+        TextClass.ENUM_LIST_CONT,
+        TextClass.BULLET_LIST_CONT,
+        TextClass.GEN_LIST_CONT,
+    ]:
         return TextClass.PARAGRAPH_CONT
     return input_class
 
@@ -154,7 +176,9 @@ def print_validation_confusion_matrix(
         print("Warning: No dataframes provided for validation")
         return pd.DataFrame()
 
-    print(f"Computing validation confusion matrix across {len(labelled_dfs)} document pairs")
+    print(
+        f"Computing validation confusion matrix across {len(labelled_dfs)} document pairs"
+    )
 
     # Collect all true and predicted labels
     all_true_labels = []
@@ -164,21 +188,25 @@ def print_validation_confusion_matrix(
     mismatch_data = []
 
     for i, (labelled_df, inference_df) in enumerate(zip(labelled_dfs, inference_dfs)):
-        print(f"Processing document pair {i}: {len(labelled_df)} labelled rows, {len(inference_df)} inference rows")
+        print(
+            f"Processing document pair {i}: {len(labelled_df)} labelled rows, {len(inference_df)} inference rows"
+        )
 
         # Create a mapping from pdf_idx to FinalClass for quick lookup
-        inference_lookup = dict(zip(inference_df['pdf_idx'], inference_df['FinalClass']))
+        inference_lookup = dict(
+            zip(inference_df["pdf_idx"], inference_df["FinalClass"])
+        )
 
         # Get the CSV path for this document pair from the stored csv_path column
         csv_path = f"document_{i}"  # Default fallback
-        if 'csv_path' in labelled_df.columns and len(labelled_df) > 0:
-            csv_path = labelled_df['csv_path'].iloc[0]
+        if "csv_path" in labelled_df.columns and len(labelled_df) > 0:
+            csv_path = labelled_df["csv_path"].iloc[0]
 
         # For each row in labelled_df, find the corresponding inference result
         for _, row in labelled_df.iterrows():
-            pdf_idx = row['pdf_idx']
-            labelled_class = row['LabelledClass']
-            text = row.get('text', '')  # Get text if available
+            pdf_idx = row["pdf_idx"]
+            labelled_class = row["LabelledClass"]
+            text = row.get("text", "")  # Get text if available
 
             labelled_class = remove_list_cont(labelled_class)
 
@@ -203,15 +231,17 @@ def print_validation_confusion_matrix(
                 if labelled_class != predicted_class:
                     mismatch_data.append(
                         {
-                            'csv_path': csv_path,
-                            'pdf_idx': pdf_idx,
-                            'text': text,
-                            'labelled_class': labelled_class,
-                            'inference_class': predicted_class,
+                            "csv_path": csv_path,
+                            "pdf_idx": pdf_idx,
+                            "text": text,
+                            "labelled_class": labelled_class,
+                            "inference_class": predicted_class,
                         }
                     )
             else:
-                print(f"No inference result found for pdf_idx {pdf_idx} in document {i}")
+                print(
+                    f"No inference result found for pdf_idx {pdf_idx} in document {i}"
+                )
 
     if len(all_true_labels) == 0:
         print("Warning: No matching labels found between labelled and inference data")
@@ -243,7 +273,9 @@ def main():
         return
 
     if len(labelled_dfs) != len(inference_dfs):
-        print(f"Warning: Mismatch in number of files - {len(labelled_dfs)} labelled vs {len(inference_dfs)} inference")
+        print(
+            f"Warning: Mismatch in number of files - {len(labelled_dfs)} labelled vs {len(inference_dfs)} inference"
+        )
         # Use the minimum number of files
         min_files = min(len(labelled_dfs), len(inference_dfs))
         labelled_dfs = labelled_dfs[:min_files]
@@ -255,11 +287,11 @@ def main():
     # Show sample data
     if labelled_dfs:
         print("\nSample labelled data:")
-        print(labelled_dfs[0][['pdf_idx', 'text', 'LabelledClass']].head())
+        print(labelled_dfs[0][["pdf_idx", "text", "LabelledClass"]].head())
 
     if inference_dfs:
         print("\nSample inference data:")
-        print(inference_dfs[0][['pdf_idx', 'text', 'FinalClass']].head())
+        print(inference_dfs[0][["pdf_idx", "text", "FinalClass"]].head())
 
     print("\n" + "=" * 80)
     print("VALIDATION CONFUSION MATRIX")
@@ -268,18 +300,22 @@ def main():
     # Generate confusion matrix and get mismatch data
     mismatch_df = print_validation_confusion_matrix(labelled_dfs, inference_dfs)
 
-    for i, (file_name, file_path_df) in enumerate(mismatch_df.groupby('csv_path')):
+    for i, (file_name, file_path_df) in enumerate(mismatch_df.groupby("csv_path")):
         num_total = len(labelled_dfs[i])
-        print(f"{len(file_path_df)}/{num_total} ({len(file_path_df)/num_total*100:.2f}%) Mismatches in {file_name}")
+        print(
+            f"{len(file_path_df)}/{num_total} ({len(file_path_df)/num_total*100:.2f}%) Mismatches in {file_name}"
+        )
 
     # mismatch_df = mismatch_df[mismatch_df['labelled_class'] == TextClass.PARAGRAPH]
     # mismatch_df = mismatch_df[mismatch_df['inference_class'] == TextClass.PARAGRAPH_CONT]
     mismatch_df = mismatch_df[
-        mismatch_df['csv_path']
+        mismatch_df["csv_path"]
         == r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents\validation\labelled_pdf\CFR-2023-title14-vol5.csv"
     ]
 
-    mismatch_dir = Path(r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents\validation\mismatch")
+    mismatch_dir = Path(
+        r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents\validation\mismatch"
+    )
     mismatch_df.to_csv(mismatch_dir / "CFR-2023-title14-vol5.csv", index=False)
     #
 
@@ -295,7 +331,9 @@ def main():
         for idx, row in sample_mismatches.iterrows():
             print(f"CSV: {row['csv_path']}")
             print(f"PDF Index: {row['pdf_idx']}")
-            print(f"Text: {row['text'][:100]}{'...' if len(str(row['text'])) > 100 else ''}")
+            print(
+                f"Text: {row['text'][:100]}{'...' if len(str(row['text'])) > 100 else ''}"
+            )
             print(f"Labelled Class: {TextClass(row['labelled_class']).name}")
             print(f"Inference Class: {TextClass(row['inference_class']).name}")
             print("-" * 40)

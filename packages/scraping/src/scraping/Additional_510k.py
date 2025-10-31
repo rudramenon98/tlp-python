@@ -29,14 +29,14 @@ from PyPDF2 import PdfFileReader, PdfReader
 from tqdm import tqdm
 
 log = logging.getLogger(__name__)
-'''
+"""
 log.setLevel(logging.DEBUG)
 
 # Console (stdout) handler
 console_handler = logging.StreamHandler(sys.stdout)
 console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 console_handler.setFormatter(console_formatter)
-'''
+"""
 
 # for logging
 logList = []
@@ -522,8 +522,8 @@ if __name__ == "__main__":
     try:
         props = None
 
-        #configure the logging level
-        remaining_args = configure_logging_from_argv(default_level='INFO')
+        # configure the logging level
+        remaining_args = configure_logging_from_argv(default_level="INFO")
 
         docIdsList = []
         n = len(remaining_args[0])

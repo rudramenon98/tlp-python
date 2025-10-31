@@ -11,7 +11,6 @@ Date: 2024
 
 import logging
 
-
 log = logging.getLogger(__name__)
 import re
 import traceback
@@ -29,10 +28,10 @@ log = logging.getLogger(__name__)
 def make_row(text: str, text_class: TextClass) -> Dict[str, Any]:
 
     return {
-        'text': latex_to_text(text).strip(),
-        'PageNumber': -1,
-        'SourceClass': text_class.value,
-        'SourceClassName': text_class.name,
+        "text": latex_to_text(text).strip(),
+        "PageNumber": -1,
+        "SourceClass": text_class.value,
+        "SourceClassName": text_class.name,
     }
 
 
@@ -53,44 +52,44 @@ def latex_to_text(s: str) -> str:
     s = s.replace("\r\n", "\n").replace("\r", "\n")
 
     # 1) Remove LaTeX comments (unescaped % to end of line)
-    s = re.sub(r'(?<!\\)%.*', '', s)
+    s = re.sub(r"(?<!\\)%.*", "", s)
 
     # 2) Remove \begin{...} and \end{...} wrappers but keep contents
-    s = re.sub(r'\\begin\{[^}]*\}', '', s)
-    s = re.sub(r'\\end\{[^}]*\}', '', s)
+    s = re.sub(r"\\begin\{[^}]*\}", "", s)
+    s = re.sub(r"\\end\{[^}]*\}", "", s)
 
     # 3) Protect escaped \$ so we don’t treat it as math delimiter
-    s = s.replace(r'\$', '<<ESCAPED_DOLLAR>>')
+    s = s.replace(r"\$", "<<ESCAPED_DOLLAR>>")
 
     # 4) Strip math delimiters, keep inner text
     # $$...$$ (greedy across lines)
-    s = re.sub(r'\$\$(.*?)\$\$', r'\1', s, flags=re.DOTALL)
+    s = re.sub(r"\$\$(.*?)\$\$", r"\1", s, flags=re.DOTALL)
     # $...$ (avoid crossing $$ regions already handled)
-    s = re.sub(r'\$(.*?)\$', r'\1', s, flags=re.DOTALL)
+    s = re.sub(r"\$(.*?)\$", r"\1", s, flags=re.DOTALL)
     # \[...\], \(...\)
-    s = re.sub(r'\\\[(.*?)\\\]', r'\1', s, flags=re.DOTALL)
-    s = re.sub(r'\\\((.*?)\\\)', r'\1', s, flags=re.DOTALL)
+    s = re.sub(r"\\\[(.*?)\\\]", r"\1", s, flags=re.DOTALL)
+    s = re.sub(r"\\\((.*?)\\\)", r"\1", s, flags=re.DOTALL)
 
     # 5) Drop \verb constructs, keep inner text (simple forms)
-    s = re.sub(r'\\verb\*?(.)(.*?)\1', r'\2', s, flags=re.DOTALL)
+    s = re.sub(r"\\verb\*?(.)(.*?)\1", r"\2", s, flags=re.DOTALL)
 
     # 5.5) Remove citation commands entirely (\cite, \citet, \citep, etc.) with all args
     #      Replace with a single space to avoid concatenating words
-    s = re.sub(r'\\cite[a-zA-Z*]*\s*(?:\[[^\]]*\]\s*)*(?:\{[^{}]*\}\s*)+', ' ', s)
+    s = re.sub(r"\\cite[a-zA-Z*]*\s*(?:\[[^\]]*\]\s*)*(?:\{[^{}]*\}\s*)+", " ", s)
 
     # 6) Iteratively replace commands with braced args: \cmd{A}{B}[opt] -> "A B"
     #    This keeps the human text inside braces and discards the command + options.
     cmd_with_args = re.compile(
-        r'''
+        r"""
         \\[a-zA-Z]+[*]?      # command name (with optional *)
         (?:\s*\[[^\]]*\])*\s* # optional [..] args (any number)
         (?:\{[^{}]*\})+       # one or more {...} groups
-        ''',
+        """,
         re.VERBOSE | re.DOTALL,
     )
 
     def _keep_brace_text(m):
-        return ' '.join(re.findall(r'\{([^{}]*)\}', m.group(0)))
+        return " ".join(re.findall(r"\{([^{}]*)\}", m.group(0)))
 
     while True:
         new_s = cmd_with_args.sub(_keep_brace_text, s)
@@ -99,40 +98,40 @@ def latex_to_text(s: str) -> str:
         s = new_s
 
     # 7) Remove remaining standalone optional args after commands (rare stragglers)
-    s = re.sub(r'\\[a-zA-Z]+[*]?\s*\[[^\]]*\]', '', s)
+    s = re.sub(r"\\[a-zA-Z]+[*]?\s*\[[^\]]*\]", "", s)
 
     # 8) Remove remaining simple commands without args like \LaTeX, \alpha, \emph (bare)
-    s = re.sub(r'\\[a-zA-Z]+[*]?', '', s)
+    s = re.sub(r"\\[a-zA-Z]+[*]?", "", s)
 
     # 9) Unescape common LaTeX escapes and symbols
     replacements = {
-        r'\%': '%',
-        r'\_': '_',
-        r'\&': '&',
-        r'\#': '#',
-        r'\{': '{',
-        r'\}': '}',
-        r'\\': '\\',
-        '``': '“',
-        "''": '”',
-        '---': '—',  # em-dash
-        '--': '–',  # en-dash
-        r'\~{}': '~',
-        r'\^{}': '^',
-        '~': ' ',  # non-breaking space -> regular space
+        r"\%": "%",
+        r"\_": "_",
+        r"\&": "&",
+        r"\#": "#",
+        r"\{": "{",
+        r"\}": "}",
+        r"\\": "\\",
+        "``": "“",
+        "''": "”",
+        "---": "—",  # em-dash
+        "--": "–",  # en-dash
+        r"\~{}": "~",
+        r"\^{}": "^",
+        "~": " ",  # non-breaking space -> regular space
     }
     # Restore escaped dollars
-    s = s.replace('<<ESCAPED_DOLLAR>>', '$')
+    s = s.replace("<<ESCAPED_DOLLAR>>", "$")
     for k, v in replacements.items():
         s = s.replace(k, v)
 
     # 10) Remove leftover braces that are just grouping, but keep content already extracted
     #     (Be conservative: only strip if they don't look like part of code)
-    s = s.replace('{', '').replace('}', '')
+    s = s.replace("{", "").replace("}", "")
 
     # 11) Collapse whitespace
-    s = re.sub(r'[ \t\f\v]+', ' ', s)
-    s = re.sub(r'\n\s*\n+', '\n\n', s)  # collapse blank lines
+    s = re.sub(r"[ \t\f\v]+", " ", s)
+    s = re.sub(r"\n\s*\n+", "\n\n", s)  # collapse blank lines
     s = s.strip()
 
     return s
@@ -205,7 +204,9 @@ class LatexParser:
             line_number += 1
 
             # Check if line starts with a header command
-            is_header_start = any(line.strip().startswith(cmd) for cmd in self.HEADER_COMMANDS)
+            is_header_start = any(
+                line.strip().startswith(cmd) for cmd in self.HEADER_COMMANDS
+            )
 
             if is_header_start:
                 if "}" in line:
@@ -239,7 +240,9 @@ class LatexParser:
         break_pattern = "|".join(self.PARAGRAPH_BREAK_PATTERNS)
 
         # Split text and filter out empty paragraphs
-        paragraphs = [par.strip() for par in re.split(break_pattern, text) if par and par.strip()]
+        paragraphs = [
+            par.strip() for par in re.split(break_pattern, text) if par and par.strip()
+        ]
 
         return paragraphs
 
@@ -279,7 +282,9 @@ class LatexParser:
                     new_splits = []
                     for split_par in split_paragraphs:
                         par_lines = split_par.split("\n")
-                        end_indices = [i for i, line in enumerate(par_lines) if "end{" in line]
+                        end_indices = [
+                            i for i, line in enumerate(par_lines) if "end{" in line
+                        ]
 
                         for idx in reversed(end_indices):
                             if idx - 1 < 0 or par_lines[idx - 1].startswith("\\"):
@@ -289,7 +294,9 @@ class LatexParser:
                             # Split around the \end{ command
                             before = "\n".join(par_lines[:idx])
                             after = "\n".join(par_lines[idx + 1 :])
-                            new_splits.extend([before, after] if before.strip() else [after])
+                            new_splits.extend(
+                                [before, after] if before.strip() else [after]
+                            )
 
                     split_paragraphs = new_splits
                 else:
@@ -302,7 +309,9 @@ class LatexParser:
 
                         before = "\n".join(lines[:idx])
                         after = "\n".join(lines[idx + 1 :])
-                        split_paragraphs = [before, after] if before.strip() else [after]
+                        split_paragraphs = (
+                            [before, after] if before.strip() else [after]
+                        )
 
             # Add processed paragraphs
             if split_paragraphs:
@@ -367,7 +376,9 @@ class LatexParser:
                 if (
                     line.strip().startswith("\\")
                     and not line.strip().startswith("\\author")
-                    and not any(line.strip().startswith(cmd) for cmd in self.HEADER_COMMANDS)
+                    and not any(
+                        line.strip().startswith(cmd) for cmd in self.HEADER_COMMANDS
+                    )
                 ):
                     continue
                 filtered_lines.append(line)
@@ -390,27 +401,27 @@ class LatexParser:
         """
         # Basic LaTeX command patterns to remove
         latex_patterns = [
-            r'\\[a-zA-Z]+(\{[^}]*\})?',  # LaTeX commands with optional arguments
-            r'\\[a-zA-Z]+',  # Simple LaTeX commands
-            r'\\[^\w\s]',  # LaTeX symbols
+            r"\\[a-zA-Z]+(\{[^}]*\})?",  # LaTeX commands with optional arguments
+            r"\\[a-zA-Z]+",  # Simple LaTeX commands
+            r"\\[^\w\s]",  # LaTeX symbols
         ]
 
         # Remove LaTeX commands and symbols
         normalized = paragraph
         for pattern in latex_patterns:
-            normalized = re.sub(pattern, '', normalized)
+            normalized = re.sub(pattern, "", normalized)
 
         # Handle common LaTeX symbols
         replacements = {
-            '\\&': '&',
-            '\\%': '%',
-            '\\$': '$',
-            '\\#': '#',
-            '\\_': '_',
-            '\\{': '{',
-            '\\}': '}',
-            '\\~': '~',
-            '\\^': '^',
+            "\\&": "&",
+            "\\%": "%",
+            "\\$": "$",
+            "\\#": "#",
+            "\\_": "_",
+            "\\{": "{",
+            "\\}": "}",
+            "\\~": "~",
+            "\\^": "^",
             '\\"': '"',
             "\\'": "'",
         }
@@ -419,11 +430,13 @@ class LatexParser:
             normalized = normalized.replace(latex_symbol, replacement)
 
         # Remove extra whitespace and normalize
-        normalized = re.sub(r'\s+', ' ', normalized).strip().lower()
+        normalized = re.sub(r"\s+", " ", normalized).strip().lower()
 
         return normalized
 
-    def _classify_paragraph(self, paragraph: str, last_header_match: int) -> Tuple[int, int, int]:
+    def _classify_paragraph(
+        self, paragraph: str, last_header_match: int
+    ) -> Tuple[int, int, int]:
         """
         Classify a single paragraph as header, table, or regular text.
 
@@ -475,7 +488,13 @@ class LatexParser:
             return self.classify_latex_block(first_child, TextClass.BULLET_LIST)
         elif first_child and first_child.nodeName == "abstract":
             rows = [make_row("Abstract", TextClass.HEADING)]
-            text = " ".join([child.source for child in first_child._dom_childNodes if child.source != ""])
+            text = " ".join(
+                [
+                    child.source
+                    for child in first_child._dom_childNodes
+                    if child.source != ""
+                ]
+            )
             rows.append(make_row(text, TextClass.PARAGRAPH))
             return rows
         elif node_name == "itemize":
@@ -491,12 +510,14 @@ class LatexParser:
             item_text = block.childNodes[0].source
             return [make_row(item_text, parent_class)]
         elif node_name == "title":
-            title_name = " ".join([child.source for child in block.childNodes[0]._dom_childNodes])
+            title_name = " ".join(
+                [child.source for child in block.childNodes[0]._dom_childNodes]
+            )
             return [make_row(title_name, TextClass.HEADING)]
         elif node_name == "document":
             return self._process_child_nodes(block.childNodes)
         elif node_name.replace("sub", "") == "section":
-            section_name = block.attributes['title'].source
+            section_name = block.attributes["title"].source
             header_row = [make_row(section_name, TextClass.HEADING)]
             child_rows = self._process_child_nodes(block.childNodes)
             return header_row + child_rows
@@ -545,7 +566,7 @@ class LatexParser:
 
         try:
             # Read the file
-            with open(latex_file_path, 'r', encoding='utf-8') as f:
+            with open(latex_file_path, "r", encoding="utf-8") as f:
                 text = f.read()
 
             tex = TeX()
@@ -555,25 +576,25 @@ class LatexParser:
             for item in doc:
                 if item is not None:
                     rows.extend(self.classify_latex_block(item))
-            rows = [row for row in rows if row['text'] != '']
+            rows = [row for row in rows if row["text"] != ""]
             for i, row in enumerate(rows):
-                row['xml_idx'] = i
+                row["xml_idx"] = i
 
             # add line numbers
             for i, row in enumerate(rows):
-                row['LineNumbers'] = i + 1
+                row["LineNumbers"] = i + 1
 
             # Convert list to DataFrame first
             df = pd.DataFrame(rows)
-            df = df[['LineNumbers', 'text', 'PageNumber', 'SourceClass', 'xml_idx']]
-            df['SourceClassName'] = df['SourceClass'].apply(lambda x: TextClass(x).name)
-            
+            df = df[["LineNumbers", "text", "PageNumber", "SourceClass", "xml_idx"]]
+            df["SourceClassName"] = df["SourceClass"].apply(lambda x: TextClass(x).name)
+
             return df
 
         except Exception as e:
             log.error("Error parsing LaTeX file: %s", e)
             traceback.print_exc()
-            return pd.DataFrame({'text': []})
+            return pd.DataFrame({"text": []})
 
 
 def main() -> None:

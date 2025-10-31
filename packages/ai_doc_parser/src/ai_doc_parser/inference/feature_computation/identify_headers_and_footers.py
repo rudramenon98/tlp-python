@@ -77,7 +77,9 @@ def ordered_cluster(data: List[float], max_diff: float) -> List[Tuple[float, ...
     for item in data:
         test_group = current_group + (item,)
         test_group_mean = mean(test_group)
-        if all((abs(test_group_mean - test_item) < max_diff for test_item in test_group)):
+        if all(
+            (abs(test_group_mean - test_item) < max_diff for test_item in test_group)
+        ):
             current_group = test_group
         else:
             yield current_group
@@ -133,16 +135,18 @@ def check_footnote(row: pd.Series, bottom_margin: float, bottom_margin2: float) 
         True if line appears to be a footnote
     """
     # Portrait orientation check: line is below bottom margin and has short text
-    y1 = row['line_y0'] + float(row['major_font_size'])
-    portrait_footnote = y1 >= bottom_margin and row['line_len'] < row['page_width']
+    y1 = row["line_y0"] + float(row["major_font_size"])
+    portrait_footnote = y1 >= bottom_margin and row["line_len"] < row["page_width"]
 
     # Landscape orientation check: page is wider than tall and line is below bottom margin
-    landscape_footnote = row['page_width'] > row['page_height'] and y1 >= bottom_margin2
+    landscape_footnote = row["page_width"] > row["page_height"] and y1 >= bottom_margin2
 
     return portrait_footnote or landscape_footnote
 
 
-def calculate_top_margin(modal_line_space: List[float], modal_y_coordinate_top: float) -> float:
+def calculate_top_margin(
+    modal_line_space: List[float], modal_y_coordinate_top: float
+) -> float:
     """
     Calculate the top margin based on line spacing patterns.
 
@@ -200,21 +204,21 @@ def identify_headers_and_footnotes(df: pd.DataFrame) -> pd.DataFrame:
     num_lines = 0
 
     # Add line length column for analysis
-    df['line_len'] = df['text'].str.len()
+    df["line_len"] = df["text"].str.len()
 
     # Group data by page number for page-wise processing
-    groups = df.groupby('PageNumber')
+    groups = df.groupby("PageNumber")
 
     for _, each_file_json in groups:
         # Sort text blocks from top to bottom on the page
-        each_file_json.sort_values(by='line_y0', inplace=True)
+        each_file_json.sort_values(by="line_y0", inplace=True)
 
         # Initialize page-specific spacing array
         page_line_space = []
 
         # Get page dimensions
-        page_width = each_file_json.iloc[0]['page_width']
-        page_height = each_file_json.iloc[0]['page_height']
+        page_width = each_file_json.iloc[0]["page_width"]
+        page_height = each_file_json.iloc[0]["page_height"]
 
         # Determine page orientation (0=portrait, 1=landscape)
         page_orientation = 0 if page_height > page_width else 1
@@ -249,7 +253,7 @@ def identify_headers_and_footnotes(df: pd.DataFrame) -> pd.DataFrame:
 
             count += 1
 
-        max_y = max(each_file_json['line_y0'])
+        max_y = max(each_file_json["line_y0"])
         # Store bottom y-coordinate based on page orientation
         if page_orientation == 0:  # portrait
             all_y_coordinate_bottom.append(round(max_y, 2))
@@ -288,31 +292,35 @@ def identify_headers_and_footnotes(df: pd.DataFrame) -> pd.DataFrame:
     top_margin = calculate_top_margin(modal_line_space, modal_y_coordinate_top)
 
     # Mark lines above top margin as headers
-    df['is_header'] = np.where((df['line_y1'] + df['line_y0']) / 2 >= top_margin, False, True)
-    df['top_margin'] = top_margin
+    df["is_header"] = np.where(
+        (df["line_y1"] + df["line_y0"]) / 2 >= top_margin, False, True
+    )
+    df["top_margin"] = top_margin
 
     # Calculate bottom margins for both orientations
     bottom_margin = modal_y_coordinate_bottom
     bottom_margin2 = modal_y_coordinate_bottom2
-    df['bottom_margin'] = bottom_margin
+    df["bottom_margin"] = bottom_margin
 
     # Initialize footnote column
-    df['is_footnote'] = False
+    df["is_footnote"] = False
 
     # Apply footnote detection
-    df['is_footnote'] = df.apply(lambda row: check_footnote(row, bottom_margin, bottom_margin2), axis=1)
+    df["is_footnote"] = df.apply(
+        lambda row: check_footnote(row, bottom_margin, bottom_margin2), axis=1
+    )
 
     # Remove temporary line length column
-    df.drop(['line_len'], axis=1, inplace=True)
+    df.drop(["line_len"], axis=1, inplace=True)
 
     # Convert coordinate columns to integers for consistency
-    df['block_x0'] = df['block_x0'].apply(lambda x: int(x))
-    df['block_y0'] = df['block_y0'].apply(lambda x: int(x))
-    df['block_x1'] = df['block_x1'].apply(lambda x: int(x))
-    df['block_y1'] = df['block_y1'].apply(lambda x: int(x))
-    df['line_x0'] = df['line_x0'].apply(lambda x: int(x))
-    df['line_y0'] = df['line_y0'].apply(lambda x: int(x))
-    df['line_x1'] = df['line_x1'].apply(lambda x: int(x))
-    df['line_y1'] = df['line_y1'].apply(lambda x: int(x))
+    df["block_x0"] = df["block_x0"].apply(lambda x: int(x))
+    df["block_y0"] = df["block_y0"].apply(lambda x: int(x))
+    df["block_x1"] = df["block_x1"].apply(lambda x: int(x))
+    df["block_y1"] = df["block_y1"].apply(lambda x: int(x))
+    df["line_x0"] = df["line_x0"].apply(lambda x: int(x))
+    df["line_y0"] = df["line_y0"].apply(lambda x: int(x))
+    df["line_x1"] = df["line_x1"].apply(lambda x: int(x))
+    df["line_y1"] = df["line_y1"].apply(lambda x: int(x))
 
     return df

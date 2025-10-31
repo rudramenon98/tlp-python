@@ -47,8 +47,11 @@ def setup_logging(level: str = "INFO") -> None:
     """Setup logging configuration."""
     logging.basicConfig(
         level=getattr(logging, level.upper()),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s',
-        handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler('extract_and_label.log')],
+        format="%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s",
+        handlers=[
+            logging.StreamHandler(sys.stdout),
+            logging.FileHandler("extract_and_label.log"),
+        ],
     )
 
 
@@ -69,11 +72,23 @@ def create_output_directories(output_dir: Path) -> Tuple[Path, Path, Path, Path]
     ai_parsed_dir = output_dir / "ai_parsed_pdf"
 
     # Create directories if they don't exist
-    for dir_path in [pdf_extracted_dir, computed_features_dir, labelled_source_dir, labelled_pdf_dir, ai_parsed_dir]:
+    for dir_path in [
+        pdf_extracted_dir,
+        computed_features_dir,
+        labelled_source_dir,
+        labelled_pdf_dir,
+        ai_parsed_dir,
+    ]:
         dir_path.mkdir(parents=True, exist_ok=True)
         logging.info(f"Created/verified directory: {dir_path}")
 
-    return pdf_extracted_dir, computed_features_dir, labelled_source_dir, labelled_pdf_dir, ai_parsed_dir
+    return (
+        pdf_extracted_dir,
+        computed_features_dir,
+        labelled_source_dir,
+        labelled_pdf_dir,
+        ai_parsed_dir,
+    )
 
 
 def extract_and_label(
@@ -106,20 +121,30 @@ def extract_and_label(
 
     try:
         # Create output directories
-        (pdf_extracted_dir, computed_features_dir, labelled_source_dir, labelled_pdf_dir, ai_parsed_dir) = (
-            create_output_directories(document_dir)
-        )
+        (
+            pdf_extracted_dir,
+            computed_features_dir,
+            labelled_source_dir,
+            labelled_pdf_dir,
+            ai_parsed_dir,
+        ) = create_output_directories(document_dir)
         pdf_name = pdf_path.stem
         extracted_pdf_path = pdf_extracted_dir / f"{pdf_name}.csv"
         xml_labelled_df_path = labelled_source_dir / f"{xml_path.stem}.csv"
         feature_df_path = computed_features_dir / f"{pdf_name}.csv"
         final_labeled_df_path = labelled_pdf_dir / f"{pdf_name}.csv"
         ai_parsed_df_path = ai_parsed_dir / f"{pdf_name}.csv"
-        ai_results_no_heuristics_df_path = ai_parsed_dir.parent / "ai_parsed_pdf_no_heuristics" / f"{pdf_name}.csv"
-        prepared_features_df_path = ai_parsed_dir.parent / "prepared_features" / f"{pdf_name}.csv"
+        ai_results_no_heuristics_df_path = (
+            ai_parsed_dir.parent / "ai_parsed_pdf_no_heuristics" / f"{pdf_name}.csv"
+        )
+        prepared_features_df_path = (
+            ai_parsed_dir.parent / "prepared_features" / f"{pdf_name}.csv"
+        )
 
         ai_results_no_heuristics_df_path.parent.mkdir(parents=True, exist_ok=True)
-        ai_results_not_combined_df_path = ai_parsed_dir.parent / "ai_parsed_pdf_not_combined" / f"{pdf_name}.csv"
+        ai_results_not_combined_df_path = (
+            ai_parsed_dir.parent / "ai_parsed_pdf_not_combined" / f"{pdf_name}.csv"
+        )
         prepared_features_df_path.parent.mkdir(parents=True, exist_ok=True)
         ai_results_not_combined_df_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -156,7 +181,7 @@ def extract_and_label(
 
         else:
             features_df = pd.read_csv(feature_df_path)
-            features_df['pdf_idx'] = features_df.index
+            features_df["pdf_idx"] = features_df.index
             features_df.to_csv(feature_df_path, index=False)
 
         # Step 3: Parse XML
@@ -177,16 +202,24 @@ def extract_and_label(
 
         # Step 5: Parse PDF with AI
         # print(f"Parsing PDF with AI: {pdf_name}")
-        model_path = (
-            r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents\models\RandomForestClassifier.sav"
-        )
+        model_path = r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents\models\RandomForestClassifier.sav"
         if not ai_parsed_df_path.exists() or overwrite or True:
             model = load_model(model_path)
-            prepared_features, ai_parsed_df, ai_results_no_heuristics, ai_results_not_combined = parse_pdf_ai(
-                pdf_path, model, computed_features_df=features_df, extracted_df=extracted_df
+            (
+                prepared_features,
+                ai_parsed_df,
+                ai_results_no_heuristics,
+                ai_results_not_combined,
+            ) = parse_pdf_ai(
+                pdf_path,
+                model,
+                computed_features_df=features_df,
+                extracted_df=extracted_df,
             )
             ai_parsed_df.to_csv(ai_parsed_df_path, index=False)
-            ai_results_no_heuristics.to_csv(ai_results_no_heuristics_df_path, index=False)
+            ai_results_no_heuristics.to_csv(
+                ai_results_no_heuristics_df_path, index=False
+            )
             ai_results_not_combined.to_csv(ai_results_not_combined_df_path, index=False)
             prepared_features.to_csv(prepared_features_df_path, index=False)
         else:
@@ -225,7 +258,9 @@ def main_cfr_xml(overwrite: bool = False) -> None:
     for pdf_path in pdfs:
         xml_path = pdf_path.with_suffix(".xml")
         pdf_type = "CFR"  # Options: "CFR", "FAA_Advisory_Circulars_Data", "Arxiv"
-        extract_and_label(pdf_path, xml_path, pdf_type, document_dir, cfr_extracting, overwrite)
+        extract_and_label(
+            pdf_path, xml_path, pdf_type, document_dir, cfr_extracting, overwrite
+        )
 
 
 def main_xml_easa(overwrite: bool = False) -> None:
@@ -236,24 +271,26 @@ def main_xml_easa(overwrite: bool = False) -> None:
     pdfs = [
         EASA_DIR / f"{pdf_path}.pdf"
         for pdf_path in [
-            'Easy Access Rules for ATM_ANS Equipment _Regulations _EU_ 2023_1769 _ _EU_ 2023_1768_ _PDF_',
-            'Easy Access Rules for small category VCA _PDF_',
-            'Easy Access Rules for Large Aeroplanes _CS 25_ _Amendment 27_ _PDF_',
-            'Easy Access Rules for Master Minimum Equipment List _CS_MMEL_ _Issue 3_ _PDF_',
-            'Easy Access Rules for Airborne Communications_ Navigation and Surveillance _CS_ACNS_ Issue 4 _pdf_',
-            'Easy Access Rules for Large Rotorcraft _CS_29_ _Amendment 11_ _PDF_',
-            'Easy Access Rules for Normal_Category Aeroplanes _CS_23_ _CS Amendment 6_ AMC_GM Issue 4_ _PDF_',
-            'Easy Access Rules for Small Rotorcraft _CS_27_ Amendment 10 _pdf_',
-            'Easy Access Rules for U_space _PDF_',
-            'Easy Access Rules for Aerodromes _PDF_',
-            'Easy Access Rules for Information Security _PDF_',
-            'Easy Access Rules for Aircrew _Regulation _EU_ No 1178_2011_ _PDF_',
+            "Easy Access Rules for ATM_ANS Equipment _Regulations _EU_ 2023_1769 _ _EU_ 2023_1768_ _PDF_",
+            "Easy Access Rules for small category VCA _PDF_",
+            "Easy Access Rules for Large Aeroplanes _CS 25_ _Amendment 27_ _PDF_",
+            "Easy Access Rules for Master Minimum Equipment List _CS_MMEL_ _Issue 3_ _PDF_",
+            "Easy Access Rules for Airborne Communications_ Navigation and Surveillance _CS_ACNS_ Issue 4 _pdf_",
+            "Easy Access Rules for Large Rotorcraft _CS_29_ _Amendment 11_ _PDF_",
+            "Easy Access Rules for Normal_Category Aeroplanes _CS_23_ _CS Amendment 6_ AMC_GM Issue 4_ _PDF_",
+            "Easy Access Rules for Small Rotorcraft _CS_27_ Amendment 10 _pdf_",
+            "Easy Access Rules for U_space _PDF_",
+            "Easy Access Rules for Aerodromes _PDF_",
+            "Easy Access Rules for Information Security _PDF_",
+            "Easy Access Rules for Aircrew _Regulation _EU_ No 1178_2011_ _PDF_",
         ]
     ]
     for pdf_path in pdfs:
         xml_path = pdf_path.with_suffix(".xml")
         pdf_type = "EASA"  # Options: "CFR", "FAA_Advisory_Circulars_Data", "Arxiv"
-        extract_and_label(pdf_path, xml_path, pdf_type, document_dir, extract_easa_xml, overwrite)
+        extract_and_label(
+            pdf_path, xml_path, pdf_type, document_dir, extract_easa_xml, overwrite
+        )
 
 
 def main_latex(overwrite: bool = False) -> None:
@@ -271,7 +308,9 @@ def main_latex(overwrite: bool = False) -> None:
     parser = LatexParser()
     for pdf_path in pdfs:
         pdf_type = "Arvix"  # Options: "CFR",  "FAA_Advisory_Circulars_Data", "Arxiv"
-        extract_and_label(pdf_path, latex_files[0], pdf_type, document_dir, parser.parse, overwrite)
+        extract_and_label(
+            pdf_path, latex_files[0], pdf_type, document_dir, parser.parse, overwrite
+        )
 
     apply_heuristic_to_dir(document_dir / "labelled_pdf", latex_heuristics)
 
@@ -286,7 +325,9 @@ def latex_bullet_list(overwrite: bool = False) -> None:
     parser = LatexParser()
     for pdf_path in pdfs:
         pdf_type = "Arvix"  # Options: "CFR",  "FAA_Advisory_Circulars_Data", "Arxiv"
-        extract_and_label(pdf_path, latex_files[0], pdf_type, document_dir, parser.parse, overwrite)
+        extract_and_label(
+            pdf_path, latex_files[0], pdf_type, document_dir, parser.parse, overwrite
+        )
 
         DATA_DIR / "documents"
     apply_heuristic_to_dir(document_dir / "labelled_pdf", latex_heuristics)
@@ -301,7 +342,9 @@ def aus_mdr(overwrite: bool = False) -> None:
 
         pdf_type = "AUS"
         docx_path = pdf_path.with_suffix(".docx")
-        extract_and_label(pdf_path, docx_path, pdf_type, document_dir, extract_docx, overwrite)
+        extract_and_label(
+            pdf_path, docx_path, pdf_type, document_dir, extract_docx, overwrite
+        )
 
 
 def validation(overwrite: bool = False) -> None:
@@ -316,7 +359,20 @@ def validation(overwrite: bool = False) -> None:
     xml_paths.append(doc_dir / "CFR-2023-title14-vol5.xml")
     pdf_types.append("CFR")
 
-    latex_names = ['v19', 'v51', 'v60', 'v65', 'v70', 'v79', 'v82', 'v86', 'v89', 'v91', 'v94', 'v97']
+    latex_names = [
+        "v19",
+        "v51",
+        "v60",
+        "v65",
+        "v70",
+        "v79",
+        "v82",
+        "v86",
+        "v89",
+        "v91",
+        "v94",
+        "v97",
+    ]
 
     for latex_name in latex_names:
         pdf_paths.append(doc_dir / f"{latex_name}.pdf")
@@ -342,7 +398,9 @@ def validation(overwrite: bool = False) -> None:
             parsing_method = extract_docx
         else:
             raise ValueError(f"Invalid PDF type: {pdf_type}")
-        extract_and_label(pdf_path, xml_path, pdf_type, doc_dir, parsing_method, overwrite)
+        extract_and_label(
+            pdf_path, xml_path, pdf_type, doc_dir, parsing_method, overwrite
+        )
 
 
 def nist(overwrite: bool = False) -> None:
@@ -352,7 +410,9 @@ def nist(overwrite: bool = False) -> None:
     pdfs = list(document_dir.glob("*.pdf"))
     for pdf_path in pdfs:
         pdf_type = "NIST"
-        extract_and_label(pdf_path, pdf_path, pdf_type, document_dir, extract_docx, overwrite)
+        extract_and_label(
+            pdf_path, pdf_path, pdf_type, document_dir, extract_docx, overwrite
+        )
 
 
 if __name__ == "__main__":

@@ -17,7 +17,9 @@ from ai_doc_parser.tools.model_interpretability import ModelInterpretabilityAnal
 from ai_doc_parser.training.classifier_trainer import load_model, prepare_df_for_model
 
 
-def analyze_specific_row(model_path: str, data_path: str, row_index: int, output_dir: str = "row_analysis"):
+def analyze_specific_row(
+    model_path: str, data_path: str, row_index: int, output_dir: str = "row_analysis"
+):
     """
     Analyze what features are driving a specific row's classification.
 
@@ -34,9 +36,15 @@ def analyze_specific_row(model_path: str, data_path: str, row_index: int, output
     df = pd.read_csv(data_path)
 
     # Prepare data
-    df_processed, feature_columns = prepare_df_for_model(df, add_shifted_features=True, verbose=False)
+    df_processed, feature_columns = prepare_df_for_model(
+        df, add_shifted_features=True, verbose=False
+    )
     X = df_processed[feature_columns]
-    y_true = df_processed['LabelledClass'] if 'LabelledClass' in df_processed.columns else None
+    y_true = (
+        df_processed["LabelledClass"]
+        if "LabelledClass" in df_processed.columns
+        else None
+    )
 
     # Get the specific row
     if row_index >= len(X):
@@ -52,12 +60,18 @@ def analyze_specific_row(model_path: str, data_path: str, row_index: int, output
     prediction_proba = model.predict_proba(sample)[0]
 
     # Get class names
-    class_names = [TextClass(CLASS_MAP_INV[i]).name for i in sorted(CLASS_MAP_INV.keys())]
+    class_names = [
+        TextClass(CLASS_MAP_INV[i]).name for i in sorted(CLASS_MAP_INV.keys())
+    ]
     pred_class_name = (
-        TextClass(CLASS_MAP_INV[prediction]).name if prediction in CLASS_MAP_INV else f"Class_{prediction}"
+        TextClass(CLASS_MAP_INV[prediction]).name
+        if prediction in CLASS_MAP_INV
+        else f"Class_{prediction}"
     )
     true_class_name = (
-        TextClass(CLASS_MAP_INV[true_label]).name if true_label in CLASS_MAP_INV else f"Class_{true_label}"
+        TextClass(CLASS_MAP_INV[true_label]).name
+        if true_label in CLASS_MAP_INV
+        else f"Class_{true_label}"
     )
 
     print(f"\n{'='*60}")
@@ -82,18 +96,24 @@ def analyze_specific_row(model_path: str, data_path: str, row_index: int, output
 
     # Create feature contribution dataframe
     feature_contrib = pd.DataFrame(
-        {'feature': feature_columns, 'value': feature_values.values, 'importance': feature_importance}
+        {
+            "feature": feature_columns,
+            "value": feature_values.values,
+            "importance": feature_importance,
+        }
     )
 
     # Sort by importance and show top 15
-    top_features = feature_contrib.sort_values('importance', ascending=False).head(15)
+    top_features = feature_contrib.sort_values("importance", ascending=False).head(15)
 
     print(f"{'Feature':<30} {'Value':<10} {'Importance':<12} {'Contribution':<12}")
     print(f"{'-'*70}")
     for _, row in top_features.iterrows():
         # Contribution is value * importance (simplified)
-        contribution = row['value'] * row['importance']
-        print(f"{row['feature']:<30} {row['value']:<10.3f} {row['importance']:<12.4f} {contribution:<12.4f}")
+        contribution = row["value"] * row["importance"]
+        print(
+            f"{row['feature']:<30} {row['value']:<10.3f} {row['importance']:<12.4f} {contribution:<12.4f}"
+        )
 
     # Method 2: LIME Analysis (if available)
     print(f"\n{'='*60}")
@@ -108,12 +128,14 @@ def analyze_specific_row(model_path: str, data_path: str, row_index: int, output
             X.values,
             feature_names=feature_columns,
             class_names=class_names,
-            mode='classification',
+            mode="classification",
             discretize_continuous=True,
         )
 
         # Generate explanation
-        explanation = lime_explainer.explain_instance(sample.values[0], model.predict_proba, num_features=15)
+        explanation = lime_explainer.explain_instance(
+            sample.values[0], model.predict_proba, num_features=15
+        )
 
         print("LIME Explanation (Top 15 features):")
         print(f"{'Feature':<30} {'Weight':<10} {'Effect':<15}")
@@ -128,7 +150,9 @@ def analyze_specific_row(model_path: str, data_path: str, row_index: int, output
         # Save LIME explanation
         Path(output_dir).mkdir(exist_ok=True)
         explanation.save_to_file(f"{output_dir}/lime_explanation_row_{row_index}.html")
-        print(f"\nLIME explanation saved to: {output_dir}/lime_explanation_row_{row_index}.html")
+        print(
+            f"\nLIME explanation saved to: {output_dir}/lime_explanation_row_{row_index}.html"
+        )
 
     except ImportError:
         print("LIME not available. Install with: pip install lime")
@@ -165,21 +189,39 @@ def analyze_specific_row(model_path: str, data_path: str, row_index: int, output
 
         # Sort by absolute SHAP value
         shap_contrib = pd.DataFrame(
-            {'feature': feature_columns, 'value': sample.values[0], 'shap_value': class_shap_values}
-        ).sort_values('shap_value', key=abs, ascending=False)
+            {
+                "feature": feature_columns,
+                "value": sample.values[0],
+                "shap_value": class_shap_values,
+            }
+        ).sort_values("shap_value", key=abs, ascending=False)
 
         for _, row in shap_contrib.head(15).iterrows():
-            effect = "increases" if row['shap_value'] > 0 else "decreases"
-            print(f"{row['feature']:<30} {row['value']:<10.3f} {row['shap_value']:<12.3f} {effect:<15}")
+            effect = "increases" if row["shap_value"] > 0 else "decreases"
+            print(
+                f"{row['feature']:<30} {row['value']:<10.3f} {row['shap_value']:<12.3f} {effect:<15}"
+            )
 
         # Create SHAP waterfall plot
         Path(output_dir).mkdir(exist_ok=True)
-        shap.waterfall_plot(expected_value, class_shap_values, sample.iloc[0], show=False, max_display=15)
+        shap.waterfall_plot(
+            expected_value,
+            class_shap_values,
+            sample.iloc[0],
+            show=False,
+            max_display=15,
+        )
         import matplotlib.pyplot as plt
 
-        plt.savefig(f"{output_dir}/shap_waterfall_row_{row_index}.png", dpi=300, bbox_inches='tight')
+        plt.savefig(
+            f"{output_dir}/shap_waterfall_row_{row_index}.png",
+            dpi=300,
+            bbox_inches="tight",
+        )
         plt.close()
-        print(f"\nSHAP waterfall plot saved to: {output_dir}/shap_waterfall_row_{row_index}.png")
+        print(
+            f"\nSHAP waterfall plot saved to: {output_dir}/shap_waterfall_row_{row_index}.png"
+        )
 
     except ImportError:
         print("SHAP not available. Install with: pip install shap")
@@ -222,21 +264,25 @@ def analyze_specific_row(model_path: str, data_path: str, row_index: int, output
 def main():
     """Main function to analyze a specific row."""
 
-    model_path = (
-        r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents\models\RandomForestClassifier.sav"
+    model_path = r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents\models\RandomForestClassifier.sav"
+    data_path = Path(
+        r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents\FIPS\NIST.FIPS.204.pdf"
     )
-    data_path = Path(r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents\FIPS\NIST.FIPS.204.pdf")
     features_path = data_path.parent / "computed_features" / f"{data_path.stem}.csv"
-    prepared_features_path = data_path.parent / "prepared_features" / f"{data_path.stem}.csv"
+    prepared_features_path = (
+        data_path.parent / "prepared_features" / f"{data_path.stem}.csv"
+    )
     pdf_idx = 2
 
     feature_df = pd.read_csv(features_path)
     prepared_df = pd.read_csv(prepared_features_path)
-    row_index = feature_df[feature_df['pdf_idx'] == pdf_idx].index[0]
+    row_index = feature_df[feature_df["pdf_idx"] == pdf_idx].index[0]
     row = prepared_df.iloc[row_index]
     print(f"Row index: {row_index}")
     print(row)
-    analyze_specific_row(model_path, features_path, row_index, output_dir="row_analysis")
+    analyze_specific_row(
+        model_path, features_path, row_index, output_dir="row_analysis"
+    )
 
 
 if __name__ == "__main__":

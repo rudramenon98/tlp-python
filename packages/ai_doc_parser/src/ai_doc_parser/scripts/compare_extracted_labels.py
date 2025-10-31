@@ -35,7 +35,9 @@ def main():
             )
         pdf_text = " ".join([block_row["text"] for i, block_row in block_df.iterrows()])
         percent_words = len(pdf_text.split()) / len(xml_text.split()) * 100
-        summary_output = summary_output + f"{extracted_line_number:>6} | {percent_words:>6.2f}%\n"
+        summary_output = (
+            summary_output + f"{extracted_line_number:>6} | {percent_words:>6.2f}%\n"
+        )
 
         output = output + f"--------------{extracted_line_number}--------------\n"
         output = output + f"XML_text: {xml_text}\n"

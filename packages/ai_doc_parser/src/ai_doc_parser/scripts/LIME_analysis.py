@@ -30,7 +30,11 @@ except ImportError:
 
 
 def lime_analysis(
-    model: RandomForestClassifier, features_df: pd.DataFrame, pdf_idx: int, class_1: TextClass, class_2: TextClass
+    model: RandomForestClassifier,
+    features_df: pd.DataFrame,
+    pdf_idx: int,
+    class_1: TextClass,
+    class_2: TextClass,
 ) -> None:
     """
     Perform LIME analysis on a specific row to understand feature contributions
@@ -60,14 +64,16 @@ def lime_analysis(
         return
 
     # Filter the dataframe for the specific pdf_idx
-    filtered_df = features_df[features_df['pdf_idx'] == pdf_idx]
+    filtered_df = features_df[features_df["pdf_idx"] == pdf_idx]
 
     if len(filtered_df) == 0:
         print(f"Error: No rows found with pdf_idx = {pdf_idx}")
         return
 
     if len(filtered_df) > 1:
-        print(f"Warning: Multiple rows found with pdf_idx = {pdf_idx}. Using the first one.")
+        print(
+            f"Warning: Multiple rows found with pdf_idx = {pdf_idx}. Using the first one."
+        )
         filtered_df = filtered_df.iloc[:1]
 
     # Get the row data
@@ -83,8 +89,8 @@ def lime_analysis(
 
     # Convert to numeric, handling any remaining non-numeric values
     for col in feature_columns:
-        X_features[col] = pd.to_numeric(X_features[col], errors='coerce')
-        sample_features[col] = pd.to_numeric(sample_features[col], errors='coerce')
+        X_features[col] = pd.to_numeric(X_features[col], errors="coerce")
+        sample_features[col] = pd.to_numeric(sample_features[col], errors="coerce")
 
     # Fill any NaN values with 0 (this is a simple approach)
     X_features = X_features.fillna(0)
@@ -95,7 +101,9 @@ def lime_analysis(
     sample_features = sample_features.values.reshape(1, -1)
 
     # Get class names
-    class_names = [TextClass(CLASS_MAP_INV[i]).name for i in sorted(CLASS_MAP_INV.keys())]
+    class_names = [
+        TextClass(CLASS_MAP_INV[i]).name for i in sorted(CLASS_MAP_INV.keys())
+    ]
 
     # Get probabilities for the two classes of interest
     class_1_idx = None
@@ -108,7 +116,9 @@ def lime_analysis(
             class_2_idx = idx
 
     if class_1_idx is None or class_2_idx is None:
-        print(f"Error: Could not find class indices for {class_1.name} and {class_2.name}")
+        print(
+            f"Error: Could not find class indices for {class_1.name} and {class_2.name}"
+        )
         return
 
     # Create LIME explainer
@@ -116,7 +126,7 @@ def lime_analysis(
         X_features,
         feature_names=feature_columns,
         class_names=class_names,
-        mode='classification',
+        mode="classification",
         discretize_continuous=True,
         random_state=42,
     )
@@ -133,7 +143,9 @@ def lime_analysis(
     prediction = model.predict(sample_features)[0]
     prediction_proba = model.predict_proba(sample_features)[0]
     predicted_class = (
-        TextClass(CLASS_MAP_INV[prediction]).name if prediction in CLASS_MAP_INV else f"Class_{prediction}"
+        TextClass(CLASS_MAP_INV[prediction]).name
+        if prediction in CLASS_MAP_INV
+        else f"Class_{prediction}"
     )
 
     prob_class_1 = prediction_proba[class_1_idx]
@@ -167,7 +179,11 @@ def lime_analysis(
     for feature_name, lime_weight in exp_list_sorted:
         feature_name = feature_name.split(" ")[0]
         # Get the actual feature value
-        feature_idx = feature_columns.index(feature_name) if feature_name in feature_columns else -1
+        feature_idx = (
+            feature_columns.index(feature_name)
+            if feature_name in feature_columns
+            else -1
+        )
         feature_value = sample_features[0][feature_idx] if feature_idx >= 0 else np.nan
 
         # For the two-class comparison, we need to interpret the LIME weight in context
@@ -232,7 +248,11 @@ def lime_analysis(
 
     for feature_name, lime_weight in exp_list_sorted[:10]:  # Top 10 features
         feature_name = feature_name.split(" ")[0]
-        feature_idx = feature_columns.index(feature_name) if feature_name in feature_columns else -1
+        feature_idx = (
+            feature_columns.index(feature_name)
+            if feature_name in feature_columns
+            else -1
+        )
         if feature_idx >= 0:
             feature_value = sample_features[0][feature_idx]
             # Determine effect
@@ -240,7 +260,9 @@ def lime_analysis(
                 effect = f"Favors {class_1_name if prob_class_1 > prob_class_2 else class_2_name}"
             else:
                 effect = f"Opposes {class_1_name if prob_class_1 > prob_class_2 else class_2_name}"
-            print(f"{feature_name:<50} {feature_value:<12.4f} {lime_weight:<12.4f} {effect:<15}")
+            print(
+                f"{feature_name:<50} {feature_value:<12.4f} {lime_weight:<12.4f} {effect:<15}"
+            )
 
     print("\n" + "=" * 80)
     print("LIME Analysis Complete")

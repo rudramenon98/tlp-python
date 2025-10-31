@@ -15,7 +15,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def calculate_iou(rect1: Tuple[float, float, float, float], rect2: Tuple[float, float, float, float]) -> float:
+def calculate_iou(
+    rect1: Tuple[float, float, float, float], rect2: Tuple[float, float, float, float]
+) -> float:
     """
     Calculates the percent overlap between two rectangles using:
     (2 * intersection_area) / (area_rect1 + area_rect2)
@@ -87,7 +89,9 @@ def is_table_content(
     bx0, bx1, by0, by1 = map(float, (bx0, bx1, by0, by1))
     for table_coor in table_coordinate:
         tx0, ty0, tx1, ty1 = map(float, table_coor)
-        if (tx0 < bx0 < tx1 or tx0 < bx1 < tx1) and (ty0 < by0 < ty1 or ty0 < by1 < ty1):
+        if (tx0 < bx0 < tx1 or tx0 < bx1 < tx1) and (
+            ty0 < by0 < ty1 or ty0 < by1 < ty1
+        ):
             return True
     return False
 
@@ -151,10 +155,10 @@ def detect_number_of_columns(blocks_data: List[Dict]) -> Tuple[int, List[float]]
     text_lengths = []
 
     for block in blocks_data:
-        if block.get('text', '').strip():  # Only consider blocks with text
-            x0_coords.append(float(block['block_x0']))
-            x1_coords.append(float(block['block_x1']))
-            text_lengths.append(len(block['text'].strip()))
+        if block.get("text", "").strip():  # Only consider blocks with text
+            x0_coords.append(float(block["block_x0"]))
+            x1_coords.append(float(block["block_x1"]))
+            text_lengths.append(len(block["text"].strip()))
 
     if not x0_coords:
         return 1, []
@@ -210,8 +214,12 @@ def detect_number_of_columns(blocks_data: List[Dict]) -> Tuple[int, List[float]]
         mod2_x0 = max(sorted_x0[0][0], sorted_x0[1][0])
 
         # Find corresponding x1 values for these x0 positions
-        mod1_x1_values = [x1 for i, x1 in enumerate(x1_coords) if abs(x0_coords[i] - mod1_x0) < 1]
-        mod2_x1_values = [x1 for i, x1 in enumerate(x1_coords) if abs(x0_coords[i] - mod2_x0) < 1]
+        mod1_x1_values = [
+            x1 for i, x1 in enumerate(x1_coords) if abs(x0_coords[i] - mod1_x0) < 1
+        ]
+        mod2_x1_values = [
+            x1 for i, x1 in enumerate(x1_coords) if abs(x0_coords[i] - mod2_x0) < 1
+        ]
 
         if mod1_x1_values and mod2_x1_values:
             mod1_x1 = max(mod1_x1_values)  # Right edge of left column
@@ -222,10 +230,14 @@ def detect_number_of_columns(blocks_data: List[Dict]) -> Tuple[int, List[float]]
 
             # Check if we have significant content in both columns
             left_content = sum(
-                text_lengths[i] for i, x0 in enumerate(x0_coords) if (x0 + x1_coords[i]) / 2 < column_border
+                text_lengths[i]
+                for i, x0 in enumerate(x0_coords)
+                if (x0 + x1_coords[i]) / 2 < column_border
             )
             right_content = sum(
-                text_lengths[i] for i, x0 in enumerate(x0_coords) if (x0 + x1_coords[i]) / 2 >= column_border
+                text_lengths[i]
+                for i, x0 in enumerate(x0_coords)
+                if (x0 + x1_coords[i]) / 2 >= column_border
             )
 
             total_content = left_content + right_content
@@ -271,29 +283,29 @@ def get_column_info(blocks_data: List[Dict]) -> Dict:
     num_columns, column_borders = detect_number_of_columns(blocks_data)
 
     column_info = {
-        'ncols': num_columns,
-        'column_borders': column_borders,
-        'left_column_blocks': 0,
-        'right_column_blocks': 0,
-        'left_column_text': 0,
-        'right_column_text': 0,
+        "ncols": num_columns,
+        "column_borders": column_borders,
+        "left_column_blocks": 0,
+        "right_column_blocks": 0,
+        "left_column_text": 0,
+        "right_column_text": 0,
     }
 
     if num_columns == 2 and column_borders:
         column_border = column_borders[0]
         for block in blocks_data:
-            if block.get('text', '').strip():
-                x0 = float(block['block_x0'])
-                x1 = float(block['block_x1'])
-                text_len = len(block['text'].strip())
+            if block.get("text", "").strip():
+                x0 = float(block["block_x0"])
+                x1 = float(block["block_x1"])
+                text_len = len(block["text"].strip())
                 block_center = (x0 + x1) / 2
 
                 if block_center < column_border:
-                    column_info['left_column_blocks'] += 1
-                    column_info['left_column_text'] += text_len
+                    column_info["left_column_blocks"] += 1
+                    column_info["left_column_text"] += text_len
                 else:
-                    column_info['right_column_blocks'] += 1
-                    column_info['right_column_text'] += text_len
+                    column_info["right_column_blocks"] += 1
+                    column_info["right_column_text"] += text_len
 
     return column_info
 
@@ -345,7 +357,9 @@ def extract_pdf_text(
 
             # Get crop bounds for the PDF type, default to full page if not
             # specified
-            crop_x0, crop_x1, crop_y0, crop_y1 = crop_bounds.get(pdf_type, (0, width, 0, height))
+            crop_x0, crop_x1, crop_y0, crop_y1 = crop_bounds.get(
+                pdf_type, (0, width, 0, height)
+            )
 
             # crop each page to remove headings and footnotes,
             # crop borders are different in different pdf types
@@ -361,14 +375,16 @@ def extract_pdf_text(
             tables, table_coordinates = get_table_location(page)
             # if table coordinate for y1 value is larger than the crop_y1
             # value of the page, the table should be continued to the next page
-            table_continued_to_next_page = any(ext[3] > crop_y1 for ext in table_coordinates)
+            table_continued_to_next_page = any(
+                ext[3] > crop_y1 for ext in table_coordinates
+            )
 
             # Extract table cells firsts
             table_cells = extract_table_cells(tables, page, table_coordinates)
 
             # Add table cells to data rows
             for cell in table_cells:
-                cell['PageNumber'] = page_number
+                cell["PageNumber"] = page_number
                 page_rows.append(cell)
 
             text = page.get_text("xml")
@@ -391,7 +407,9 @@ def extract_pdf_text(
                 block_text = ""
                 for line in block:
                     block_text += return_line_of_text(line) + " "
-                page_blocks_data.append({'block_x0': bx0, 'block_x1': bx1, 'text': block_text.strip()})
+                page_blocks_data.append(
+                    {"block_x0": bx0, "block_x1": bx1, "text": block_text.strip()}
+                )
 
                 for i, line in enumerate(block):
                     next_line_page_number = np.nan
@@ -420,18 +438,24 @@ def extract_pdf_text(
                         list_font_size.append(font_size)
 
                         if font_family in font_family_info.keys():
-                            font_family_info[font_family] = font_family_info[font_family] + len_font_char
+                            font_family_info[font_family] = (
+                                font_family_info[font_family] + len_font_char
+                            )
                         else:
                             font_family_info[font_family] = len_font_char
 
                         if font_size in font_size_info.keys():
-                            font_size_info[font_size] = font_size_info[font_size] + len_font_char
+                            font_size_info[font_size] = (
+                                font_size_info[font_size] + len_font_char
+                            )
                         else:
                             font_size_info[font_size] = len_font_char
 
                         # Extract color from each character in this font
                         for char in font:
-                            char_color = char.attrib.get("color", "#000000")  # Default to black if no color attribute
+                            char_color = char.attrib.get(
+                                "color", "#000000"
+                            )  # Default to black if no color attribute
                             if char_color in color_info.keys():
                                 color_info[char_color] = color_info[char_color] + 1
                             else:
@@ -441,7 +465,9 @@ def extract_pdf_text(
                     # origin current line
                     text_line_origin = str(return_line_of_text(block[i]))
                     # correct current line by removing accent and bad text
-                    text_line_correct = str(accent_and_badtext_handler(text_line_origin)).strip()
+                    text_line_correct = str(
+                        accent_and_badtext_handler(text_line_origin)
+                    ).strip()
 
                     # if it is a merged line (parts of current_line are readed
                     # as separated lines, so we merged them in rest of the code),
@@ -514,11 +540,17 @@ def extract_pdf_text(
                     ]:
                         if next_line_page_number == 1:  # if in same page
                             if float(next_y0) < float(current_y0):
-                                next_line_space = abs(float(next_y0) - float(current_y0))
+                                next_line_space = abs(
+                                    float(next_y0) - float(current_y0)
+                                )
                             else:
-                                next_line_space = abs(float(next_y0) - float(current_y0))
+                                next_line_space = abs(
+                                    float(next_y0) - float(current_y0)
+                                )
                         else:  # if not in same page
-                            next_line_space = (float(height) - float(current_y0)) + float(next_y0)
+                            next_line_space = (
+                                float(height) - float(current_y0)
+                            ) + float(next_y0)
                     else:
                         # if it's last line
                         next_line_space = 0
@@ -531,7 +563,9 @@ def extract_pdf_text(
 
                         # below features are affected in merging:
                         # coordinates of first char and last char in a text_line
-                        char_coor.append([current_x0, current_y0, current_x1, current_y1])
+                        char_coor.append(
+                            [current_x0, current_y0, current_x1, current_y1]
+                        )
                         # coordinates of text_line
                         line_coor.append([linex0, liney0, linex1, liney1])
                         # coordinates of block
@@ -541,17 +575,33 @@ def extract_pdf_text(
                         font_size_info_proper.append(font_size_info)
                         color_info_proper.append(color_info)
 
-                        if str(next_line_correct).strip().startswith(str(text_line_correct).strip()):
+                        if (
+                            str(next_line_correct)
+                            .strip()
+                            .startswith(str(text_line_correct).strip())
+                        ):
                             proper_text_correct = next_line_correct
                             proper_text_origin = next_line
 
-                        elif str(text_line_correct).strip().endswith(str(next_line_correct).strip()):
+                        elif (
+                            str(text_line_correct)
+                            .strip()
+                            .endswith(str(next_line_correct).strip())
+                        ):
                             proper_text_correct = text_line_correct
                             proper_text_origin = text_line_origin
 
                         else:
-                            proper_text_correct = str(text_line_correct).strip() + " " + str(next_line_correct).strip()
-                            proper_text_origin = str(text_line_origin).strip() + " " + str(next_line).strip()
+                            proper_text_correct = (
+                                str(text_line_correct).strip()
+                                + " "
+                                + str(next_line_correct).strip()
+                            )
+                            proper_text_origin = (
+                                str(text_line_origin).strip()
+                                + " "
+                                + str(next_line).strip()
+                            )
 
                         continue
 
@@ -561,7 +611,9 @@ def extract_pdf_text(
                         proper_text_origin = ""
                         if len(char_coor) > 0:
 
-                            char_coor.append([current_x0, current_y0, current_x1, current_y1])
+                            char_coor.append(
+                                [current_x0, current_y0, current_x1, current_y1]
+                            )
                             line_coor.append([linex0, liney0, linex1, liney1])
                             block_coor.append([bx0, by0, bx1, by1])
 
@@ -616,12 +668,18 @@ def extract_pdf_text(
                         "line_y0": float(liney0),
                         "line_x1": float(linex1),
                         "line_y1": float(liney1),
-                        'PageNumber': page_number,
+                        "PageNumber": page_number,
                         "page_height": float(height),
                         "page_width": float(width),
-                        "major_font_family": max(font_family_info, key=font_family_info.get),
+                        "major_font_family": max(
+                            font_family_info, key=font_family_info.get
+                        ),
                         "major_font_size": max(font_size_info, key=font_size_info.get),
-                        "major_color": max(color_info, key=color_info.get) if color_info else "#000000",
+                        "major_color": (
+                            max(color_info, key=color_info.get)
+                            if color_info
+                            else "#000000"
+                        ),
                         "font_family_info": font_family_info,
                         "font_size_info": font_size_info,
                         "color_info": color_info,
@@ -653,7 +711,7 @@ def extract_pdf_text(
                     column_info = get_column_info(page_blocks_data)
                     # Add column info to all rows from this page
                     for row in page_rows:
-                        if row.get('PageNumber') == page_number:
+                        if row.get("PageNumber") == page_number:
                             row.update(column_info)
 
             # needs_ocr = not is_page_extraction_valid(page_rows)
@@ -662,10 +720,10 @@ def extract_pdf_text(
         df = pd.DataFrame(data_rows)
 
         # remove rows where text is nan or empty
-        df = df[df['text'].notna()]
-        df = df[df['text'] != '']
+        df = df[df["text"].notna()]
+        df = df[df["text"] != ""]
         df = df.reset_index(drop=True)
-        df['pdf_idx'] = df.index
+        df["pdf_idx"] = df.index
         return df
 
 
@@ -689,7 +747,9 @@ def get_table_location(
 
 
 def extract_table_cells(
-    tables: List[TableFinder], page: fitz.Page, table_coordinates: List[Tuple[float, float, float, float]]
+    tables: List[TableFinder],
+    page: fitz.Page,
+    table_coordinates: List[Tuple[float, float, float, float]],
 ) -> List[Dict]:
     """
     Extract individual table cells from detected tables.
@@ -727,7 +787,9 @@ def extract_table_cells(
 
                 # if cell overlaps with any other cell, skip it
                 if any(
-                    calculate_iou(cell_bbox, bbox) > 0.1 for bbox in cell_bboxs if bbox is not None and len(bbox) == 4
+                    calculate_iou(cell_bbox, bbox) > 0.1
+                    for bbox in cell_bboxs
+                    if bbox is not None and len(bbox) == 4
                 ):
                     continue
                 cell_content = table_text[row_idx][col_idx]
@@ -735,7 +797,9 @@ def extract_table_cells(
                     log.debug("Cell bbox: %s", cell_bbox)
                 # remove content from table text
                 table_text[row_idx][col_idx] = ""
-                if cell_content and cell_content.strip():  # Only process non-empty cells
+                if (
+                    cell_content and cell_content.strip()
+                ):  # Only process non-empty cells
                     # Create cell data dictionary
                     cell_dict = {
                         "origin_text": cell_content,
@@ -752,7 +816,7 @@ def extract_table_cells(
                         "line_y0": float(cell_bbox[1]),
                         "line_x1": float(cell_bbox[2]),
                         "line_y1": float(cell_bbox[3]),
-                        'PageNumber': page.number,
+                        "PageNumber": page.number,
                         "page_height": float(page.rect.height),
                         "page_width": float(page.rect.width),
                         "major_font_family": "table_cell",  # Placeholder

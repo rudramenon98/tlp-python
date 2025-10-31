@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 
 log = logging.getLogger(__name__)
 
+
 def plot_pstats_file(pstats_file_path: Path, png_file_path: Path) -> plt.Figure:
     """
     Visualizes profiling statistics by converting them to a call graph image.
@@ -28,9 +29,7 @@ def plot_pstats_file(pstats_file_path: Path, png_file_path: Path) -> plt.Figure:
     stats.strip_dirs().sort_stats(-1).print_stats()
     stats.sort_stats("cumtime").print_callers(20)
 
-    os.system(
-        f"gprof2dot -f pstats {pstats_file_path} | dot -Tpng -o {png_file_path}"
-    )
+    os.system(f"gprof2dot -f pstats {pstats_file_path} | dot -Tpng -o {png_file_path}")
     log.debug("Saved profiling graph to %s", png_file_path)
 
     output = cv2.imread(png_file_path)
@@ -42,8 +41,16 @@ def plot_pstats_file(pstats_file_path: Path, png_file_path: Path) -> plt.Figure:
     font_thickness = 1
     text_x = 10
     text_y = 20
-    cv2.putText(output, text, (text_x, text_y), font, font_scale, (0, 0, 0),
-        font_thickness, cv2.LINE_AA)
+    cv2.putText(
+        output,
+        text,
+        (text_x, text_y),
+        font,
+        font_scale,
+        (0, 0, 0),
+        font_thickness,
+        cv2.LINE_AA,
+    )
     cv2.imwrite(png_file_path, output)
 
     fig, ax = plt.subplots()
@@ -66,13 +73,14 @@ class TimingProfiler:
         total_time (float): Total execution time recorded in profiling (if extracted).
     """
 
-    def __init__(self, png_file_path: str,
-            pstats_file_path: str  = None,
-            save_files: bool = False):
+    def __init__(
+        self, png_file_path: str, pstats_file_path: str = None, save_files: bool = False
+    ):
         self.png_file_path = Path(png_file_path).with_suffix(".png").resolve()
         self.pstats_file_path = pstats_file_path or png_file_path
-        self.pstats_file_path = Path(self.pstats_file_path).with_suffix(
-            ".pstats").resolve()
+        self.pstats_file_path = (
+            Path(self.pstats_file_path).with_suffix(".pstats").resolve()
+        )
         self.profiler = cProfile.Profile()
         self.fig = None
         self.total_time = None
@@ -93,12 +101,18 @@ class TimingProfiler:
             # delete any saved files
             os.remove(self.png_file_path)
             os.remove(self.pstats_file_path)
-            log.info("Deleted profiling files: %s, %s", self.png_file_path,
-                self.pstats_file_path)
+            log.info(
+                "Deleted profiling files: %s, %s",
+                self.png_file_path,
+                self.pstats_file_path,
+            )
         else:
             # save the files
-            log.info("Saved profiling files: %s, %s", self.png_file_path,
-                self.pstats_file_path)
+            log.info(
+                "Saved profiling files: %s, %s",
+                self.png_file_path,
+                self.pstats_file_path,
+            )
 
 
 def main():
@@ -106,6 +120,7 @@ def main():
     Example usage of TimingProfiler to profile a block of code containing sample functions.
     """
     import time
+
     def slow_func():
         time.sleep(0.2)
 

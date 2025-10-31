@@ -182,7 +182,9 @@ def page_no(list1: List[float]) -> Optional[int]:
     return None
 
 
-def get_index(list1: List[str], list2: List[str], labels: List[str]) -> Dict[str, Optional[str]]:
+def get_index(
+    list1: List[str], list2: List[str], labels: List[str]
+) -> Dict[str, Optional[str]]:
     """
     Create a mapping from list1 items to their corresponding labels in list2.
 
@@ -234,7 +236,7 @@ def create_sliding_windows(
     line_word_counts = []
     for _, row in df.iterrows():
         # Use the first column as text if it's a string, otherwise convert to string
-        text = str(row['text'])
+        text = str(row["text"])
         word_count = len(text.split())
         line_word_counts.append(word_count)
 
@@ -311,7 +313,13 @@ def calculate_window_similarity(
     max_score = 0
     for xml_start_idx in range(len(xml_window)):
         # calculate the xml_end_idx such that the length of text in the xml_window is closest to pdf_text_len
-        xml_end_idx = np.argmin(np.abs(xml_line_lenths_cumsum - pdf_text_len - xml_line_lenths_cumsum[xml_start_idx]))
+        xml_end_idx = np.argmin(
+            np.abs(
+                xml_line_lenths_cumsum
+                - pdf_text_len
+                - xml_line_lenths_cumsum[xml_start_idx]
+            )
+        )
         xml_window_text = " ".join(xml_window[xml_start_idx : xml_end_idx + 1])
         if len(xml_window_text) < len(pdf_text) / 2:
             continue
@@ -344,13 +352,13 @@ def clean_for_matching(text: str) -> str:
     text = text.lower()
 
     # Remove extra whitespace
-    text = re.sub(r'\s+', ' ', text).strip()
+    text = re.sub(r"\s+", " ", text).strip()
 
     # Remove some punctuation but keep word boundaries
-    text = re.sub(r'[^\w\s]', ' ', text)
+    text = re.sub(r"[^\w\s]", " ", text)
 
     # Clean up whitespace again
-    text = re.sub(r'\s+', ' ', text).strip()
+    text = re.sub(r"\s+", " ", text).strip()
 
     return text
 
@@ -383,10 +391,12 @@ def find_best_xml_window(
     best_xml_idx = -1
 
     pdf_start, pdf_end = pdf_window_bounds
-    pdf_window = pdf_df.iloc[pdf_start:pdf_end]['cleaned_text'].tolist()
+    pdf_window = pdf_df.iloc[pdf_start:pdf_end]["cleaned_text"].tolist()
 
     search_start = max(0, expected_xml_idx - max_windows_searched // 2)
-    search_end = min(len(xml_window_bounds), expected_xml_idx + max_windows_searched // 2)
+    search_end = min(
+        len(xml_window_bounds), expected_xml_idx + max_windows_searched // 2
+    )
     search_indices = list(range(search_start, search_end))
     search_indices = sorted(search_indices, key=lambda x: abs(x - expected_xml_idx))
 
@@ -397,7 +407,7 @@ def find_best_xml_window(
 
         xml_start, xml_end, _ = xml_window_bounds[xml_i]
         # Extract the actual XML lines for this window
-        xml_window = xml_df.iloc[xml_start:xml_end]['cleaned_text'].tolist()
+        xml_window = xml_df.iloc[xml_start:xml_end]["cleaned_text"].tolist()
 
         # Calculate direct window similarity
         direct_similarity = calculate_window_similarity(pdf_window, xml_window)
@@ -476,7 +486,12 @@ def match_line_to_block(
         start_index = source_block.index(pdf_line)
         if index_mapping and start_index < len(index_mapping):
             original_start = index_mapping[start_index]
-            original_end = index_mapping[min(start_index + len(pdf_line) - 1, len(index_mapping) - 1)] + 1
+            original_end = (
+                index_mapping[
+                    min(start_index + len(pdf_line) - 1, len(index_mapping) - 1)
+                ]
+                + 1
+            )
             return 1.0, (original_start, original_end)
         return 1.0, (start_index, start_index + len(pdf_line))
 
@@ -504,7 +519,9 @@ def match_line_to_block(
         start_in_available = word_idxs[best_idx]
         end_in_available = word_idxs[best_idx] + len(pdf_line)
 
-        if start_in_available < len(index_mapping) and end_in_available <= len(index_mapping):
+        if start_in_available < len(index_mapping) and end_in_available <= len(
+            index_mapping
+        ):
             original_start = index_mapping[start_in_available]
             original_end = index_mapping[end_in_available - 1] + 1
             return best_score, (original_start, original_end)
@@ -561,20 +578,20 @@ def match_lines_within_windows(
     pdf_window_start_idx, pdf_window_end_idx, _ = pdf_windows[pdf_window_idx]
     for pdf_df_idx in range(pdf_window_start_idx, pdf_window_end_idx):
         pdf_row = pdf_df.iloc[pdf_df_idx]
-        if not pd.isna(pdf_row['ExtractedClass']):
+        if not pd.isna(pdf_row["ExtractedClass"]):
             continue
 
-        pdf_line = pdf_row['text']
-        pdf_cleaned = pdf_row['cleaned_text']
+        pdf_line = pdf_row["text"]
+        pdf_cleaned = pdf_row["cleaned_text"]
         len(pdf_line.split())
 
-        if pdf_line == 'nan' or not pdf_line.strip() or len(pdf_line) <= 1:
+        if pdf_line == "nan" or not pdf_line.strip() or len(pdf_line) <= 1:
             continue
         best_xml_idx = -1
         best_confidence = 0.0
         matches_beginning = False
 
-        pdf_cleaned = pdf_df.iloc[pdf_df_idx]['cleaned_text']
+        pdf_cleaned = pdf_df.iloc[pdf_df_idx]["cleaned_text"]
         best_start_idx = 0
         best_end_idx = 0
         best_matching_text = ""
@@ -582,16 +599,22 @@ def match_lines_within_windows(
         best_xml_row = None
         # Custom sorting: second element > first, third element < first
         xml_search_range = list(range(xml_start_idx, xml_end_idx))
-        xml_search_range.sort(key=lambda x: (abs(last_best_xml_idx - x), x > last_best_xml_idx, x))
+        xml_search_range.sort(
+            key=lambda x: (abs(last_best_xml_idx - x), x > last_best_xml_idx, x)
+        )
 
         for xml_idx in xml_search_range[:100]:
             # Check if xml_idx is within bounds of xml_df
             if xml_idx >= len(xml_df):
                 continue
             xml_row = xml_df.iloc[xml_idx]
-            if xml_row['SourceClass'] in [TextClass.TABLE, TextClass.HEADER, TextClass.FOOTER]:
+            if xml_row["SourceClass"] in [
+                TextClass.TABLE,
+                TextClass.HEADER,
+                TextClass.FOOTER,
+            ]:
                 continue
-            xml_cleaned = xml_row['cleaned_text']
+            xml_cleaned = xml_row["cleaned_text"]
             # xml_idx = xml_row['index']
             available_text = text_tracker.get_available_text(xml_idx, xml_cleaned)
             if available_text.strip() == "":
@@ -604,7 +627,9 @@ def match_lines_within_windows(
                 end_idx = start_idx + len(pdf_cleaned)
             else:
                 # Calculate similarity only for promising candidates
-                confidence, (start_idx, end_idx) = match_line_to_block(pdf_cleaned, xml_cleaned, text_tracker, xml_idx)
+                confidence, (start_idx, end_idx) = match_line_to_block(
+                    pdf_cleaned, xml_cleaned, text_tracker, xml_idx
+                )
 
                 # # Penalty for significant length differences
                 # if len(pdf_cleaned) > len(xml_cleaned):
@@ -632,17 +657,27 @@ def match_lines_within_windows(
             continue
 
         # Mark the matched text as used in the text tracker
-        if text_tracker is not None and best_xml_idx != -1 and best_xml_idx < len(xml_df):
+        if (
+            text_tracker is not None
+            and best_xml_idx != -1
+            and best_xml_idx < len(xml_df)
+        ):
             # Mark the matched range as used
             if abs(best_xml_idx - last_best_xml_idx) < 10:
-                text_tracker.mark_text_as_used(best_xml_idx, best_start_idx, best_end_idx)
+                text_tracker.mark_text_as_used(
+                    best_xml_idx, best_start_idx, best_end_idx
+                )
         last_best_xml_idx = best_xml_idx
 
-        if not pd.isna(pdf_row['ExtractedClass']):
-            assigned_class = pdf_row['ExtractedClass']
+        if not pd.isna(pdf_row["ExtractedClass"]):
+            assigned_class = pdf_row["ExtractedClass"]
         else:
             # Get the XML class for this line
-            xml_class = xml_df.iloc[best_xml_idx]['SourceClass'] if best_xml_idx < len(xml_df) else 0
+            xml_class = (
+                xml_df.iloc[best_xml_idx]["SourceClass"]
+                if best_xml_idx < len(xml_df)
+                else 0
+            )
 
             # Apply class assignment logic based on beginning match and XML class
             assigned_class = xml_class
@@ -661,24 +696,24 @@ def match_lines_within_windows(
 
         # Store the match with the assigned class
         labelled_row = pdf_row.copy()
-        labelled_row['ValidatedClass'] = assigned_class
+        labelled_row["ValidatedClass"] = assigned_class
         # Add bounds checking for best_xml_idx
         if best_xml_idx < len(xml_df):
-            labelled_row['XML_line_Number'] = xml_df.iloc[best_xml_idx]['LineNumbers']
-            labelled_row['XML_text'] = xml_df.iloc[best_xml_idx]['text']
+            labelled_row["XML_line_Number"] = xml_df.iloc[best_xml_idx]["LineNumbers"]
+            labelled_row["XML_text"] = xml_df.iloc[best_xml_idx]["text"]
         else:
-            labelled_row['XML_line_Number'] = 0
-            labelled_row['XML_text'] = ""
-        labelled_row['Match_Confidence'] = best_confidence
-        labelled_row['pdf_window_idx'] = pdf_window_idx
-        labelled_row['xml_window_idx'] = xml_window_idx
-        labelled_row['ValidatedClassName'] = TextClass(assigned_class).name
-        labelled_row['xml_idx'] = best_xml_row['xml_idx']
-        labelled_row['pdf_idx'] = pdf_row['pdf_idx']
-        labelled_row['xml_start_idx'] = best_start_idx
-        labelled_row['xml_end_idx'] = best_end_idx
-        labelled_row['source_matched_text'] = best_matching_text
-        labelled_row['pdf_cleaned'] = pdf_cleaned
+            labelled_row["XML_line_Number"] = 0
+            labelled_row["XML_text"] = ""
+        labelled_row["Match_Confidence"] = best_confidence
+        labelled_row["pdf_window_idx"] = pdf_window_idx
+        labelled_row["xml_window_idx"] = xml_window_idx
+        labelled_row["ValidatedClassName"] = TextClass(assigned_class).name
+        labelled_row["xml_idx"] = best_xml_row["xml_idx"]
+        labelled_row["pdf_idx"] = pdf_row["pdf_idx"]
+        labelled_row["xml_start_idx"] = best_start_idx
+        labelled_row["xml_end_idx"] = best_end_idx
+        labelled_row["source_matched_text"] = best_matching_text
+        labelled_row["pdf_cleaned"] = pdf_cleaned
         matches.append(labelled_row)
 
     window_matches_df = pd.DataFrame(matches)
@@ -719,7 +754,7 @@ def search_xml_for_match(
             continue
 
         xml_row = xml_df.iloc[xml_idx]
-        xml_cleaned = xml_row['cleaned_text']
+        xml_cleaned = xml_row["cleaned_text"]
         available_text = text_tracker.get_available_text(xml_idx, xml_cleaned)
 
         if available_text.strip() == "":
@@ -732,7 +767,9 @@ def search_xml_for_match(
             end_idx = start_idx + len(pdf_cleaned)
         else:
             # Calculate similarity for promising candidates
-            confidence, (start_idx, end_idx) = match_line_to_block(pdf_cleaned, xml_cleaned, text_tracker, xml_idx)
+            confidence, (start_idx, end_idx) = match_line_to_block(
+                pdf_cleaned, xml_cleaned, text_tracker, xml_idx
+            )
 
         if confidence > best_confidence:
             best_confidence = confidence
@@ -746,7 +783,14 @@ def search_xml_for_match(
             if confidence > 0.8:
                 break
 
-    return best_xml_idx, best_confidence, best_start_idx, best_end_idx, best_matching_text, best_xml_row
+    return (
+        best_xml_idx,
+        best_confidence,
+        best_start_idx,
+        best_end_idx,
+        best_matching_text,
+        best_xml_row,
+    )
 
 
 def line_to_line_validating(pdf_df: pd.DataFrame, xml_df: pd.DataFrame) -> pd.DataFrame:
@@ -761,39 +805,39 @@ def line_to_line_validating(pdf_df: pd.DataFrame, xml_df: pd.DataFrame) -> pd.Da
         DataFrame with added ClassLabel and XML_line_Number columns
     """
     # drop rows with no text or nan
-    pdf_df = pdf_df[pdf_df['text'].notna() & (pdf_df['text'] != '')]
-    xml_df = xml_df[xml_df['text'].notna() & (xml_df['text'] != '')]
-    xml_df = xml_df.sort_values(['xml_idx'], ascending=True)
+    pdf_df = pdf_df[pdf_df["text"].notna() & (pdf_df["text"] != "")]
+    xml_df = xml_df[xml_df["text"].notna() & (xml_df["text"] != "")]
+    xml_df = xml_df.sort_values(["xml_idx"], ascending=True)
 
     # Prepare data
-    pdf_lines = list(pdf_df['text'])
+    pdf_lines = list(pdf_df["text"])
     pdf_lines = [str(line) for line in pdf_lines]
 
-    xml_lines = list(xml_df['text'])
+    xml_lines = list(xml_df["text"])
     xml_lines = [str(line) for line in xml_lines]
 
     # add cleaned_text column to dataframes
     log.debug("Cleaning XML lines")
-    pdf_df['cleaned_text'] = [clean_text(line) for line in pdf_lines]
-    xml_df['cleaned_text'] = [clean_text(line) for line in xml_lines]
+    pdf_df["cleaned_text"] = [clean_text(line) for line in pdf_lines]
+    xml_df["cleaned_text"] = [clean_text(line) for line in xml_lines]
 
-    xml_df = xml_df[xml_df['SourceClass'].isin(AI_PARSED_CLASSES)]
-    pdf_df = pdf_df[pdf_df['FinalClass'].isin(AI_PARSED_CLASSES)]
+    xml_df = xml_df[xml_df["SourceClass"].isin(AI_PARSED_CLASSES)]
+    pdf_df = pdf_df[pdf_df["FinalClass"].isin(AI_PARSED_CLASSES)]
     # Handle edge cases
     if not pdf_lines:
         log.warning("No PDF lines found")
         result_df = pdf_df.copy()
-        result_df['ClassLabel'] = 0
-        result_df['XML_line_Number'] = np.nan
-        result_df['Match_Confidence'] = 0.0
+        result_df["ClassLabel"] = 0
+        result_df["XML_line_Number"] = np.nan
+        result_df["Match_Confidence"] = 0.0
         return result_df
 
     if not xml_lines:
         log.warning("No XML lines found")
         result_df = pdf_df.copy()
-        result_df['ClassLabel'] = 0
-        result_df['XML_line_Number'] = 0
-        result_df['Match_Confidence'] = 0.0
+        result_df["ClassLabel"] = 0
+        result_df["XML_line_Number"] = 0
+        result_df["Match_Confidence"] = 0.0
         return result_df
 
     # remove tables, headers, footers
@@ -819,10 +863,10 @@ def line_to_line_validating(pdf_df: pd.DataFrame, xml_df: pd.DataFrame) -> pd.Da
         if pdf_idx % 100 == 0:
             print(f"Processing PDF line ({pdf_idx}/{len(pdf_df)})")
             log.debug("Processing PDF line (%s/%s)", pdf_idx, len(pdf_df))
-        pdf_line = pdf_row['text']
-        pdf_cleaned = pdf_row['cleaned_text']
+        pdf_line = pdf_row["text"]
+        pdf_cleaned = pdf_row["cleaned_text"]
 
-        if pdf_line == 'nan' or not pdf_line.strip() or len(pdf_line) <= 1:
+        if pdf_line == "nan" or not pdf_line.strip() or len(pdf_line) <= 1:
             continue
 
         # Determine search range around the last best match
@@ -843,8 +887,15 @@ def line_to_line_validating(pdf_df: pd.DataFrame, xml_df: pd.DataFrame) -> pd.Da
         xml_search_range.sort(key=lambda x: abs(x - last_best_xml_idx))
 
         # First attempt: search in the local range
-        best_xml_idx, best_confidence, best_start_idx, best_end_idx, best_matching_text, best_xml_row = (
-            search_xml_for_match(pdf_cleaned, xml_df, xml_search_range, text_tracker, max_candidates=100)
+        (
+            best_xml_idx,
+            best_confidence,
+            best_start_idx,
+            best_end_idx,
+            best_matching_text,
+            best_xml_row,
+        ) = search_xml_for_match(
+            pdf_cleaned, xml_df, xml_search_range, text_tracker, max_candidates=100
         )
 
         # If confidence is low, try with a wider search range
@@ -852,13 +903,26 @@ def line_to_line_validating(pdf_df: pd.DataFrame, xml_df: pd.DataFrame) -> pd.Da
             # Expand search range significantly
             expected_xml_idx = pdf_idx * (len(xml_df) // len(pdf_df))
             wider_search_start = max(0, expected_xml_idx - search_window_size * 2)
-            wider_search_end = min(len(xml_df), expected_xml_idx + search_window_size * 2)
+            wider_search_end = min(
+                len(xml_df), expected_xml_idx + search_window_size * 2
+            )
             wider_search_range = list(range(wider_search_start, wider_search_end))
             wider_search_range.sort(key=lambda x: abs(x - expected_xml_idx))
 
             # Try wider search
-            wider_xml_idx, wider_confidence, wider_start_idx, wider_end_idx, wider_matching_text, wider_xml_row = (
-                search_xml_for_match(pdf_cleaned, xml_df, wider_search_range, text_tracker, max_candidates=200)
+            (
+                wider_xml_idx,
+                wider_confidence,
+                wider_start_idx,
+                wider_end_idx,
+                wider_matching_text,
+                wider_xml_row,
+            ) = search_xml_for_match(
+                pdf_cleaned,
+                xml_df,
+                wider_search_range,
+                text_tracker,
+                max_candidates=200,
             )
 
             # Use the better result
@@ -872,37 +936,49 @@ def line_to_line_validating(pdf_df: pd.DataFrame, xml_df: pd.DataFrame) -> pd.Da
 
         # Mark the matched text as used in the text tracker
         if best_confidence > 0.8:
-            if text_tracker is not None and best_xml_idx != -1 and best_xml_idx < len(xml_df):
-                text_tracker.mark_text_as_used(best_xml_idx, best_start_idx, best_end_idx)
+            if (
+                text_tracker is not None
+                and best_xml_idx != -1
+                and best_xml_idx < len(xml_df)
+            ):
+                text_tracker.mark_text_as_used(
+                    best_xml_idx, best_start_idx, best_end_idx
+                )
 
             # Update the last best XML index for the next iteration
             last_best_xml_idx = best_xml_idx
 
         # Determine assigned class
-        xml_class = xml_df.iloc[best_xml_idx]['SourceClass'] if best_xml_idx >= 0 and best_xml_idx < len(xml_df) else 0
+        xml_class = (
+            xml_df.iloc[best_xml_idx]["SourceClass"]
+            if best_xml_idx >= 0 and best_xml_idx < len(xml_df)
+            else 0
+        )
 
         # Apply class assignment logic based on beginning match and XML class
         assigned_class = xml_class
         # Store the match with the assigned class
         labelled_row = pdf_row.to_dict()
-        labelled_row['ValidatedClass'] = assigned_class
+        labelled_row["ValidatedClass"] = assigned_class
 
         # Add bounds checking for best_xml_idx
         if best_xml_idx < len(xml_df):
-            labelled_row['XML_line_Number'] = xml_df.iloc[best_xml_idx]['LineNumbers']
-            labelled_row['XML_text'] = xml_df.iloc[best_xml_idx]['text']
+            labelled_row["XML_line_Number"] = xml_df.iloc[best_xml_idx]["LineNumbers"]
+            labelled_row["XML_text"] = xml_df.iloc[best_xml_idx]["text"]
         else:
-            labelled_row['XML_line_Number'] = 0
-            labelled_row['XML_text'] = ""
+            labelled_row["XML_line_Number"] = 0
+            labelled_row["XML_text"] = ""
 
-        labelled_row['Match_Confidence'] = best_confidence
-        labelled_row['ValidatedClassName'] = TextClass(assigned_class).name
-        labelled_row['xml_idx'] = best_xml_row['xml_idx'] if best_xml_row is not None else 0
-        labelled_row['pdf_idx'] = pdf_row['pdf_idx']
-        labelled_row['xml_start_idx'] = best_start_idx
-        labelled_row['xml_end_idx'] = best_end_idx
-        labelled_row['source_matched_text'] = best_matching_text
-        labelled_row['pdf_cleaned'] = pdf_cleaned
+        labelled_row["Match_Confidence"] = best_confidence
+        labelled_row["ValidatedClassName"] = TextClass(assigned_class).name
+        labelled_row["xml_idx"] = (
+            best_xml_row["xml_idx"] if best_xml_row is not None else 0
+        )
+        labelled_row["pdf_idx"] = pdf_row["pdf_idx"]
+        labelled_row["xml_start_idx"] = best_start_idx
+        labelled_row["xml_end_idx"] = best_end_idx
+        labelled_row["source_matched_text"] = best_matching_text
+        labelled_row["pdf_cleaned"] = pdf_cleaned
 
         all_matches_dfs.append(labelled_row)
 
@@ -914,11 +990,13 @@ def line_to_line_validating(pdf_df: pd.DataFrame, xml_df: pd.DataFrame) -> pd.Da
     else:
         # If no matches found, create empty result
         result_df = pdf_df.copy()
-        result_df['ValidatedClass'] = 0
-        result_df['XML_line_Number'] = np.nan
-        result_df['Match_Confidence'] = 0.0
-    result_df['ValidatedClassName'] = result_df['ValidatedClass'].apply(lambda x: TextClass(x).name)
-    result_df = result_df[result_df['ValidatedClass'] != result_df['FinalClass']]
+        result_df["ValidatedClass"] = 0
+        result_df["XML_line_Number"] = np.nan
+        result_df["Match_Confidence"] = 0.0
+    result_df["ValidatedClassName"] = result_df["ValidatedClass"].apply(
+        lambda x: TextClass(x).name
+    )
+    result_df = result_df[result_df["ValidatedClass"] != result_df["FinalClass"]]
 
     return result_df
 
@@ -926,9 +1004,13 @@ def line_to_line_validating(pdf_df: pd.DataFrame, xml_df: pd.DataFrame) -> pd.Da
 def main() -> None:
     from ai_doc_parser import LATEX_PDF as pdf_path
 
-    pdf_path = Path("/home/rmenon/source/ai-pdf-parser/data/documents/CFR/CFR-2024-title21-vol8-chapI-subchapH.pdf")
+    pdf_path = Path(
+        "/home/rmenon/source/ai-pdf-parser/data/documents/CFR/CFR-2024-title21-vol8-chapI-subchapH.pdf"
+    )
 
-    pdf_path_2 = Path("/home/rmenon/source/ai-pdf-parser/data/documents/CFR/CFR-2024-title21-vol8-chapI-subchapH.pdf")
+    pdf_path_2 = Path(
+        "/home/rmenon/source/ai-pdf-parser/data/documents/CFR/CFR-2024-title21-vol8-chapI-subchapH.pdf"
+    )
 
     # pdf_path = (
     #     pdf_path.parent
@@ -961,21 +1043,25 @@ def main() -> None:
 
     # final_df = pd.read_csv(output_file)
 
-    unique_classes = np.unique(xml_df['SourceClass'] + final_df['FinalClass'])
+    unique_classes = np.unique(xml_df["SourceClass"] + final_df["FinalClass"])
 
     for class_label in unique_classes:
         if not np.isnan(class_label):
             class_label = int(class_label)
             class_label_name = TextClass(class_label).name
 
-            num_source = len(xml_df[xml_df['SourceClass'] == class_label])
-            num_final = len(final_df[final_df['FinalClass'] == class_label])
+            num_source = len(xml_df[xml_df["SourceClass"] == class_label])
+            num_final = len(final_df[final_df["FinalClass"] == class_label])
 
             if class_label == TextClass.PARAGRAPH:
-                num_final += len(final_df[final_df['FinalClass'] == TextClass.PARAGRAPH_CONT])
+                num_final += len(
+                    final_df[final_df["FinalClass"] == TextClass.PARAGRAPH_CONT]
+                )
 
-            ratio = num_final / num_source if num_source > 0 else 'nan'
-            print(f"{class_label_name=:<20} {num_source=:<10} {num_final=:<10} Ratio: {ratio=:<10}")
+            ratio = num_final / num_source if num_source > 0 else "nan"
+            print(
+                f"{class_label_name=:<20} {num_source=:<10} {num_final=:<10} Ratio: {ratio=:<10}"
+            )
 
     log.info("Labeling completed successfully!")
     log.info("Saved to %s", output_file)

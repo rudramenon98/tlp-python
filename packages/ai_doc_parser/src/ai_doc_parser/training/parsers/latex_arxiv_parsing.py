@@ -33,7 +33,6 @@ def gather_header_targetlabels(text):
             "\\title",
         ]
 
-
         flag = True
         start_line = ""
         line_number = 0
@@ -84,7 +83,11 @@ def remove_latex_environments_(text_line, especific_list):
 
 def remove_latex_commands_(text_line, especific_list):
     all_founded = []
-    for especific in especific_list:  # latex_commands+latex_math_commands+latex_symbols+paragraph_break+breaks:
+    for (
+        especific
+    ) in (
+        especific_list
+    ):  # latex_commands+latex_math_commands+latex_symbols+paragraph_break+breaks:
         TEXTO = especific
         try:
             re_finds = re.findall(rf"\{TEXTO}", text_line)
@@ -93,7 +96,9 @@ def remove_latex_commands_(text_line, especific_list):
         for finded in re_finds:
             all_founded.append(finded)
 
-    all_founded = sorted(list(set(all_founded)), key=len, reverse=True)  # sorted based on length
+    all_founded = sorted(
+        list(set(all_founded)), key=len, reverse=True
+    )  # sorted based on length
 
     not_all_char = []
     atleast_one_char = []
@@ -111,18 +116,20 @@ def remove_latex_commands_(text_line, especific_list):
 def accent_and_badtext_handler(badtext):
 
     try:
-        encoded = str(badtext).encode('cp1252')
-        goodtext = encoded.decode('utf-8')
+        encoded = str(badtext).encode("cp1252")
+        goodtext = encoded.decode("utf-8")
     except:
         accented_string = str(badtext)
         badtext = unidecode.unidecode(accented_string)
-        encoded = badtext.encode('cp1252')
-        goodtext = encoded.decode('utf-8')
+        encoded = badtext.encode("cp1252")
+        goodtext = encoded.decode("utf-8")
 
     return goodtext
 
 
-def gather_paragraph_targetlabels_from_latexfile(latex_file_path: Path | str, text: str)->tuple[list[int], pd.DataFrame]:
+def gather_paragraph_targetlabels_from_latexfile(
+    latex_file_path: Path | str, text: str
+) -> tuple[list[int], pd.DataFrame]:
     """
     Parse LaTeX file to extract paragraphs and classify them with target labels.
 
@@ -171,7 +178,11 @@ def gather_paragraph_targetlabels_from_latexfile(latex_file_path: Path | str, te
         # Step 2: Split text into paragraphs using regex patterns
         # Split on: multiple newlines, LaTeX paragraph commands, line breaks, bullets, list items
         line_break_pattern = "|".join(line_break_patterns)
-        paragraphs = [par for par in re.split(line_break_pattern, text) if par != None and len(par.strip()) > 0]
+        paragraphs = [
+            par
+            for par in re.split(line_break_pattern, text)
+            if par != None and len(par.strip()) > 0
+        ]
 
         # Step 3: Process LaTeX environments (like tables) by splitting around begin/end commands
         hdr_labels = []
@@ -272,7 +283,11 @@ def gather_paragraph_targetlabels_from_latexfile(latex_file_path: Path | str, te
 
             # Remove \label commands
             if "\\label" in paragraph:
-                indx = [_ for _, line in enumerate(lines) if line.strip().startswith("\\label")]
+                indx = [
+                    _
+                    for _, line in enumerate(lines)
+                    if line.strip().startswith("\\label")
+                ]
                 for ind in indx[::-1]:
                     p_list = paragraph.split("\n")
                     del p_list[ind]
@@ -280,7 +295,11 @@ def gather_paragraph_targetlabels_from_latexfile(latex_file_path: Path | str, te
 
             # Remove comment lines (starting with %)
             if "%" in paragraph:
-                indx = [_ for _, line in enumerate(paragraph.split("\n")) if line.strip().startswith("%")]
+                indx = [
+                    _
+                    for _, line in enumerate(paragraph.split("\n"))
+                    if line.strip().startswith("%")
+                ]
                 for ind in sorted(indx, reverse=True):
                     p_list = paragraph.split("\n")
                     del p_list[ind]
@@ -400,7 +419,9 @@ def compare_dataframes(df1: pd.DataFrame, df2: pd.DataFrame):
             print(f"Old: {df1.iloc[i]['correct_raw_text']}")
             print(f"New: {df2.iloc[i]['correct_raw_text']}")
             print("-" * 50)
-            diffs.append((i, df1.iloc[i]["correct_raw_text"], df2.iloc[i]["correct_raw_text"]))
+            diffs.append(
+                (i, df1.iloc[i]["correct_raw_text"], df2.iloc[i]["correct_raw_text"])
+            )
 
     if not diffs:
         print("DataFrames are identical.")

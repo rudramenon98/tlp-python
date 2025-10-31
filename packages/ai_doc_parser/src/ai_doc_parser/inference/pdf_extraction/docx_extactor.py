@@ -18,15 +18,19 @@ def _iter_block_items(parent):
     Based on the underlying XML order (w:p or w:tbl).
     """
     parent_elm = parent._element
-    for child in parent_elm.body.iterchildren() if hasattr(parent_elm, "body") else parent_elm.iterchildren():
-        if child.tag.endswith('}p'):  # paragraph
+    for child in (
+        parent_elm.body.iterchildren()
+        if hasattr(parent_elm, "body")
+        else parent_elm.iterchildren()
+    ):
+        if child.tag.endswith("}p"):  # paragraph
             # Count paragraphs before this one to get the correct index
             para_count = 0
             for sibling in child.itersiblings(preceding=True):
-                if sibling.tag.endswith('}p'):
+                if sibling.tag.endswith("}p"):
                     para_count += 1
             yield parent.paragraphs[para_count]
-        elif child.tag.endswith('}tbl'):
+        elif child.tag.endswith("}tbl"):
             # find the matching Table object by index
             # python-docx doesn't map elements directly, so we reconstruct via Table wrappers
             # Simpler approach: create a Table wrapper and iterate its cells' paragraphs
@@ -67,24 +71,26 @@ def _paragraph_has_toc_field(paragraph):
     # Access the underlying XML runs to look for w:instrText containing 'TOC'
     # Use iterdescendants to find all descendant elements with 'instrText' tag
     for elem in paragraph._p.iterdescendants():
-        if elem.tag.endswith('}instrText') and 'TOC' in (elem.text or ''):
+        if elem.tag.endswith("}instrText") and "TOC" in (elem.text or ""):
             return True
     return False
 
 
-def _classify_paragraph(paragraph, scope) -> TextClass:  # pyright: ignore[reportUndefinedVariable]
+def _classify_paragraph(
+    paragraph, scope
+) -> TextClass:  # pyright: ignore[reportUndefinedVariable]
     """
     scope: 'body' | 'header' | 'footer'
     Returns one of: TextClass.HEADING, TextClass.HEADER, TextClass.FOOTER, TextClass.TOC, TextClass.PARAGRAPH
     """
-    text = (paragraph.text or '').strip()
+    text = (paragraph.text or "").strip()
     if not text:
         return None  # skip empty
 
     # Header/Footer take precedence if we're in those scopes
-    if scope == 'header':
+    if scope == "header":
         return TextClass.HEADER
-    if scope == 'footer':
+    if scope == "footer":
         return TextClass.FOOTER
 
     # Body scope: check TOC first, then Heading
@@ -174,28 +180,28 @@ def extract_docx(docx_path):
         hdr = sec.header
         for block in _iter_block_items(hdr):
             for para in _iter_paragraphs_from_block(block):
-                klass = _classify_paragraph(para, scope='header')
-                if klass is not None:   
+                klass = _classify_paragraph(para, scope="header")
+                if klass is not None:
                     append_row(para.text, 0, klass)
 
         ftr = sec.footer
         for block in _iter_block_items(ftr):
             for para in _iter_paragraphs_from_block(block):
-                klass = _classify_paragraph(para, scope='footer')
+                klass = _classify_paragraph(para, scope="footer")
                 if klass is not None:
                     append_row(para.text, 0, klass)
 
     # 2) Body: paragraphs and tables in document order
     for block in _iter_block_items(doc):
         for para in _iter_paragraphs_from_block(block):
-            klass = _classify_paragraph(para, scope='body')
+            klass = _classify_paragraph(para, scope="body")
             if klass is not None:
                 append_row(para.text, 0, klass)
 
     df = pd.DataFrame(data_rows)
     if not df.empty:
         df = df.reset_index(drop=True)
-        df['xml_idx'] = df.index
+        df["xml_idx"] = df.index
     return df
 
 
@@ -212,7 +218,9 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.DEBUG)
 
-    input_path = EASA_DIR.parent / "AUSMDR" / "clinical-evidence-guidelines-medical-devices.docx"
+    input_path = (
+        EASA_DIR.parent / "AUSMDR" / "clinical-evidence-guidelines-medical-devices.docx"
+    )
     output_dir = input_path.parent / "docx_extracted"
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / f"{input_path.stem}.csv"

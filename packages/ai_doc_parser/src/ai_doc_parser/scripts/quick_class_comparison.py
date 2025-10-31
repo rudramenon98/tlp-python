@@ -19,7 +19,12 @@ from ai_doc_parser.training.classifier_trainer import load_model, prepare_df_for
 
 
 def compare_two_classes(
-    model_path: str, data_path: str, row_index: int, class1_name: str, class2_name: str, num_features: int = 10
+    model_path: str,
+    data_path: str,
+    row_index: int,
+    class1_name: str,
+    class2_name: str,
+    num_features: int = 10,
 ):
     """
     Quick comparison of probabilities between two specific classes.
@@ -40,9 +45,15 @@ def compare_two_classes(
     df = pd.read_csv(data_path)
 
     # Prepare data
-    df_processed, feature_columns = prepare_df_for_model(df, add_shifted_features=True, verbose=False)
+    df_processed, feature_columns = prepare_df_for_model(
+        df, add_shifted_features=True, verbose=False
+    )
     X = df_processed[feature_columns]
-    y_true = df_processed['LabelledClass'] if 'LabelledClass' in df_processed.columns else None
+    y_true = (
+        df_processed["LabelledClass"]
+        if "LabelledClass" in df_processed.columns
+        else None
+    )
 
     # Get the specific row
     if row_index >= len(X):
@@ -57,12 +68,18 @@ def compare_two_classes(
     prediction_proba = model.predict_proba(sample)[0]
 
     # Get class names and indices
-    class_names = [TextClass(CLASS_MAP_INV[i]).name for i in sorted(CLASS_MAP_INV.keys())]
+    class_names = [
+        TextClass(CLASS_MAP_INV[i]).name for i in sorted(CLASS_MAP_INV.keys())
+    ]
     pred_class_name = (
-        TextClass(CLASS_MAP_INV[prediction]).name if prediction in CLASS_MAP_INV else f"Class_{prediction}"
+        TextClass(CLASS_MAP_INV[prediction]).name
+        if prediction in CLASS_MAP_INV
+        else f"Class_{prediction}"
     )
     true_class_name = (
-        TextClass(CLASS_MAP_INV[true_label]).name if true_label in CLASS_MAP_INV else f"Class_{true_label}"
+        TextClass(CLASS_MAP_INV[true_label]).name
+        if true_label in CLASS_MAP_INV
+        else f"Class_{true_label}"
     )
 
     # Find class indices
@@ -120,65 +137,79 @@ def compare_two_classes(
         # Create feature comparison dataframe
         feature_comparison = pd.DataFrame(
             {
-                'feature': feature_columns,
-                'value': sample.values[0],
-                f'{class1_name}_shap': class1_shap,
-                f'{class2_name}_shap': class2_shap,
-                'shap_difference': shap_difference,
+                "feature": feature_columns,
+                "value": sample.values[0],
+                f"{class1_name}_shap": class1_shap,
+                f"{class2_name}_shap": class2_shap,
+                "shap_difference": shap_difference,
             }
         )
 
         # Sort by absolute SHAP difference
-        feature_comparison = feature_comparison.sort_values('shap_difference', key=abs, ascending=False)
+        feature_comparison = feature_comparison.sort_values(
+            "shap_difference", key=abs, ascending=False
+        )
 
         print(f"\nTop {num_features} Features Driving Class Difference:")
         print(f"{'Feature':<30} {'Value':<8} {'Difference':<12} {'Effect':<20}")
         print(f"{'-'*75}")
 
         for _, row in feature_comparison.head(num_features).iterrows():
-            effect = f"Favors {class2_name}" if row['shap_difference'] > 0 else f"Favors {class1_name}"
-            print(f"{row['feature']:<30} {row['value']:<8.3f} {row['shap_difference']:<12.3f} {effect:<20}")
+            effect = (
+                f"Favors {class2_name}"
+                if row["shap_difference"] > 0
+                else f"Favors {class1_name}"
+            )
+            print(
+                f"{row['feature']:<30} {row['value']:<8.3f} {row['shap_difference']:<12.3f} {effect:<20}"
+            )
 
         return {
-            'row_index': row_index,
-            'class1_name': class1_name,
-            'class2_name': class2_name,
-            'class1_prob': class1_prob,
-            'class2_prob': class2_prob,
-            'prob_difference': prob_difference,
-            'predicted_class': pred_class_name,
-            'true_class': true_class_name,
-            'feature_comparison': feature_comparison,
+            "row_index": row_index,
+            "class1_name": class1_name,
+            "class2_name": class2_name,
+            "class1_prob": class1_prob,
+            "class2_prob": class2_prob,
+            "prob_difference": prob_difference,
+            "predicted_class": pred_class_name,
+            "true_class": true_class_name,
+            "feature_comparison": feature_comparison,
         }
 
     except ImportError:
-        print("\nSHAP not available. Install with: pip install shap for detailed analysis.")
+        print(
+            "\nSHAP not available. Install with: pip install shap for detailed analysis."
+        )
         return {
-            'row_index': row_index,
-            'class1_name': class1_name,
-            'class2_name': class2_name,
-            'class1_prob': class1_prob,
-            'class2_prob': class2_prob,
-            'prob_difference': prob_difference,
-            'predicted_class': pred_class_name,
-            'true_class': true_class_name,
+            "row_index": row_index,
+            "class1_name": class1_name,
+            "class2_name": class2_name,
+            "class1_prob": class1_prob,
+            "class2_prob": class2_prob,
+            "prob_difference": prob_difference,
+            "predicted_class": pred_class_name,
+            "true_class": true_class_name,
         }
     except Exception as e:
         print(f"\nSHAP analysis failed: {e}")
         return {
-            'row_index': row_index,
-            'class1_name': class1_name,
-            'class2_name': class2_name,
-            'class1_prob': class1_prob,
-            'class2_prob': class2_prob,
-            'prob_difference': prob_difference,
-            'predicted_class': pred_class_name,
-            'true_class': true_class_name,
+            "row_index": row_index,
+            "class1_name": class1_name,
+            "class2_name": class2_name,
+            "class1_prob": class1_prob,
+            "class2_prob": class2_prob,
+            "prob_difference": prob_difference,
+            "predicted_class": pred_class_name,
+            "true_class": true_class_name,
         }
 
 
 def analyze_class_decision_boundary(
-    model_path: str, data_path: str, class1_name: str, class2_name: str, num_samples: int = 20
+    model_path: str,
+    data_path: str,
+    class1_name: str,
+    class2_name: str,
+    num_samples: int = 20,
 ):
     """
     Analyze the decision boundary between two classes by looking at multiple samples.
@@ -188,12 +219,20 @@ def analyze_class_decision_boundary(
     df = pd.read_csv(data_path)
 
     # Prepare data
-    df_processed, feature_columns = prepare_df_for_model(df, add_shifted_features=True, verbose=False)
+    df_processed, feature_columns = prepare_df_for_model(
+        df, add_shifted_features=True, verbose=False
+    )
     X = df_processed[feature_columns]
-    y_true = df_processed['LabelledClass'] if 'LabelledClass' in df_processed.columns else None
+    y_true = (
+        df_processed["LabelledClass"]
+        if "LabelledClass" in df_processed.columns
+        else None
+    )
 
     # Get class names and indices
-    class_names = [TextClass(CLASS_MAP_INV[i]).name for i in sorted(CLASS_MAP_INV.keys())]
+    class_names = [
+        TextClass(CLASS_MAP_INV[i]).name for i in sorted(CLASS_MAP_INV.keys())
+    ]
 
     class1_idx = None
     class2_idx = None
@@ -226,25 +265,33 @@ def analyze_class_decision_boundary(
         prob_difference = class2_prob - class1_prob
 
         pred_class_name = (
-            TextClass(CLASS_MAP_INV[prediction]).name if prediction in CLASS_MAP_INV else f"Class_{prediction}"
+            TextClass(CLASS_MAP_INV[prediction]).name
+            if prediction in CLASS_MAP_INV
+            else f"Class_{prediction}"
         )
-        true_class_name = TextClass(CLASS_MAP_INV[y_true.iloc[row_idx]]).name if y_true is not None else "Unknown"
+        true_class_name = (
+            TextClass(CLASS_MAP_INV[y_true.iloc[row_idx]]).name
+            if y_true is not None
+            else "Unknown"
+        )
 
         results.append(
             {
-                'row_index': row_idx,
-                'predicted': pred_class_name,
-                'true': true_class_name,
-                'class1_prob': class1_prob,
-                'class2_prob': class2_prob,
-                'prob_difference': prob_difference,
+                "row_index": row_idx,
+                "predicted": pred_class_name,
+                "true": true_class_name,
+                "class1_prob": class1_prob,
+                "class2_prob": class2_prob,
+                "prob_difference": prob_difference,
             }
         )
 
     # Sort by probability difference
-    results.sort(key=lambda x: x['prob_difference'])
+    results.sort(key=lambda x: x["prob_difference"])
 
-    print(f"{'Row':<5} {'Predicted':<15} {'True':<15} {f'{class1_name}':<12} {f'{class2_name}':<12} {'Difference':<12}")
+    print(
+        f"{'Row':<5} {'Predicted':<15} {'True':<15} {f'{class1_name}':<12} {f'{class2_name}':<12} {'Difference':<12}"
+    )
     print(f"{'-'*80}")
 
     for result in results:
@@ -253,7 +300,7 @@ def analyze_class_decision_boundary(
         )
 
     # Find the decision boundary (where probabilities are closest)
-    closest_to_boundary = min(results, key=lambda x: abs(x['prob_difference']))
+    closest_to_boundary = min(results, key=lambda x: abs(x["prob_difference"]))
 
     print(f"\nClosest to decision boundary: Row {closest_to_boundary['row_index']}")
     print(f"  {class1_name}: {closest_to_boundary['class1_prob']:.4f}")
@@ -267,24 +314,48 @@ def analyze_class_decision_boundary(
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Quick comparison of probabilities between two classes")
-    parser.add_argument("--model_path", type=str, required=True, help="Path to the trained model file")
-    parser.add_argument("--data_path", type=str, required=True, help="Path to the CSV data file")
-    parser.add_argument("--row_index", type=int, help="Index of the row to analyze")
-    parser.add_argument("--class1", type=str, required=True, help="First class name (e.g., HEADING)")
-    parser.add_argument("--class2", type=str, required=True, help="Second class name (e.g., HEADING_CONT)")
-    parser.add_argument("--num_features", type=int, default=10, help="Number of top features to show")
+    parser = argparse.ArgumentParser(
+        description="Quick comparison of probabilities between two classes"
+    )
     parser.add_argument(
-        "--boundary_analysis", action="store_true", help="Analyze decision boundary across multiple samples"
+        "--model_path", type=str, required=True, help="Path to the trained model file"
+    )
+    parser.add_argument(
+        "--data_path", type=str, required=True, help="Path to the CSV data file"
+    )
+    parser.add_argument("--row_index", type=int, help="Index of the row to analyze")
+    parser.add_argument(
+        "--class1", type=str, required=True, help="First class name (e.g., HEADING)"
+    )
+    parser.add_argument(
+        "--class2",
+        type=str,
+        required=True,
+        help="Second class name (e.g., HEADING_CONT)",
+    )
+    parser.add_argument(
+        "--num_features", type=int, default=10, help="Number of top features to show"
+    )
+    parser.add_argument(
+        "--boundary_analysis",
+        action="store_true",
+        help="Analyze decision boundary across multiple samples",
     )
 
     args = parser.parse_args()
 
     if args.boundary_analysis:
-        analyze_class_decision_boundary(args.model_path, args.data_path, args.class1, args.class2)
+        analyze_class_decision_boundary(
+            args.model_path, args.data_path, args.class1, args.class2
+        )
     elif args.row_index is not None:
         compare_two_classes(
-            args.model_path, args.data_path, args.row_index, args.class1, args.class2, args.num_features
+            args.model_path,
+            args.data_path,
+            args.row_index,
+            args.class1,
+            args.class2,
+            args.num_features,
         )
     else:
         print("Please specify either --row_index or --boundary_analysis")

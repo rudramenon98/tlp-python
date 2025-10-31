@@ -28,7 +28,9 @@ def update_labelled_pdf_features(feature_df_path: Path, labelled_pdf_path: Path)
         labelled_pdf_df.reset_index().to_csv(labelled_pdf_path, index=False)
         return
 
-    labelled_pdf_df.loc[common_idx, feature_df.columns] = feature_df.loc[common_idx, feature_df.columns]
+    labelled_pdf_df.loc[common_idx, feature_df.columns] = feature_df.loc[
+        common_idx, feature_df.columns
+    ]
 
     labelled_pdf_df.reset_index().to_csv(labelled_pdf_path, index=False)
 
@@ -36,7 +38,9 @@ def update_labelled_pdf_features(feature_df_path: Path, labelled_pdf_path: Path)
 def main():
     pass
 
-    document_dir = Path(r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents")
+    document_dir = Path(
+        r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents"
+    )
     csv_paths = []
     csv_paths += list((document_dir / "Latex" / "labelled_pdf").glob("*.csv"))
     csv_paths += list((document_dir / "Bullets" / "labelled_pdf").glob("*.csv"))
@@ -46,7 +50,9 @@ def main():
     # csv_paths += list((document_dir / "validation" / "labelled_pdf").glob("*.csv"))
     for i, csv_path in enumerate(csv_paths):
         print(f"Updating labelled pdf features for {csv_path} {i+1}/{len(csv_paths)}")
-        feature_df_path = csv_path.parent.parent / "computed_features" / f"{csv_path.stem}.csv"
+        feature_df_path = (
+            csv_path.parent.parent / "computed_features" / f"{csv_path.stem}.csv"
+        )
         labelled_pdf_path = csv_path
         update_labelled_pdf_features(feature_df_path, labelled_pdf_path)
 

@@ -30,12 +30,12 @@ from tqdm import tqdm
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
-'''
+"""
 # Console (stdout) handler
 console_handler = logging.StreamHandler(sys.stdout)
 console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 console_handler.setFormatter(console_formatter)
-'''
+"""
 
 # for logging
 logList = []
@@ -382,7 +382,7 @@ def download_cfr_document(
                 noOfParagraphs=0,
                 lastScrapeDate=datetime.today().date(),
                 # scrapingLog = 'scraped successfully on ' + str(datetime.today().date())
-                sourceProject = 0,
+                sourceProject=0,
             )
 
             # insert document in DB
@@ -522,9 +522,9 @@ if __name__ == "__main__":
 
     try:
         props = None
-        
-        #configure the logging level
-        remaining_args = configure_logging_from_argv(default_level='INFO')
+
+        # configure the logging level
+        remaining_args = configure_logging_from_argv(default_level="INFO")
 
         docIdsList = []
         if len(remaining_args) >= 1:

@@ -33,13 +33,22 @@ def identify_header_footer_regressor(pdf_df: pd.DataFrame) -> pd.DataFrame:
     df = pdf_df.copy()
 
     # Ensure we have the required y-coordinate columns
-    required_cols = ['y0', 'y1', 'block_y0', 'block_y1', 'line_y0', 'line_y1', 'PageNumber', 'page_height']
+    required_cols = [
+        "y0",
+        "y1",
+        "block_y0",
+        "block_y1",
+        "line_y0",
+        "line_y1",
+        "PageNumber",
+        "page_height",
+    ]
     missing_cols = [col for col in required_cols if col not in df.columns]
     if missing_cols:
         raise ValueError(f"Missing required columns: {missing_cols}")
 
     # Initialize the classification column
-    df['header_footer_type'] = TextType.BODY.value
+    df["header_footer_type"] = TextType.BODY.value
 
     # Define features to use for regression
     feature_columns = [
@@ -53,7 +62,7 @@ def identify_header_footer_regressor(pdf_df: pd.DataFrame) -> pd.DataFrame:
         "is_bold",
         "is_italic",
         "bold_changed",
-        'font_size_changed',
+        "font_size_changed",
         "italic_changed",
         "font_color_changed",
         "font_family_changed",
@@ -77,13 +86,15 @@ def identify_header_footer_regressor(pdf_df: pd.DataFrame) -> pd.DataFrame:
     if not available_features:
         raise ValueError("No feature columns available for regression")
 
-    log.debug(f"Using {len(available_features)} features for regression: {available_features}")
+    log.debug(
+        f"Using {len(available_features)} features for regression: {available_features}"
+    )
 
     # Prepare feature matrix
     X = df[available_features].copy()
 
     # Handle categorical features by encoding them
-    categorical_features = ['font_family_changed', 'font_color_changed']
+    categorical_features = ["font_family_changed", "font_color_changed"]
     for feature in categorical_features:
         if feature in X.columns:
             # Simple label encoding for categorical features
@@ -94,11 +105,11 @@ def identify_header_footer_regressor(pdf_df: pd.DataFrame) -> pd.DataFrame:
 
     # Target variable: normalized y-coordinate within each page
     y_targets = []
-    for page_num in df['PageNumber'].unique():
-        page_mask = df['PageNumber'] == page_num
-        page_height = df[page_mask]['page_height'].iloc[0]
+    for page_num in df["PageNumber"].unique():
+        page_mask = df["PageNumber"] == page_num
+        page_height = df[page_mask]["page_height"].iloc[0]
         # Normalize y-coordinates to 0-1 within each page
-        normalized_y = df.loc[page_mask, 'block_y0'] / page_height
+        normalized_y = df.loc[page_mask, "block_y0"] / page_height
         y_targets.extend(normalized_y.values)
 
     y = np.array(y_targets)
@@ -107,12 +118,14 @@ def identify_header_footer_regressor(pdf_df: pd.DataFrame) -> pd.DataFrame:
     log.debug(f"Target variable shape: {y.shape}")
 
     # Train Random Forest Regressor
-    rf_regressor = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42, n_jobs=-1)
+    rf_regressor = RandomForestRegressor(
+        n_estimators=100, max_depth=10, random_state=42, n_jobs=-1
+    )
 
     # Fit the model
     rf_regressor.fit(X, y)
 
-    # Predict y-coordinates 
+    # Predict y-coordinates
     y_pred = rf_regressor.predict(X)
 
     # Calculate performance metrics
@@ -123,8 +136,8 @@ def identify_header_footer_regressor(pdf_df: pd.DataFrame) -> pd.DataFrame:
 
     # Get feature importance
     feature_importance = pd.DataFrame(
-        {'feature': available_features, 'importance': rf_regressor.feature_importances_}
-    ).sort_values('importance', ascending=False)
+        {"feature": available_features, "importance": rf_regressor.feature_importances_}
+    ).sort_values("importance", ascending=False)
 
     log.debug(f"Top 5 most important features:")
     for _, row in feature_importance.head().iterrows():
@@ -146,8 +159,8 @@ def identify_header_footer_regressor(pdf_df: pd.DataFrame) -> pd.DataFrame:
         else:
             classifications.append(TextType.BODY.value)
 
-    df['header_footer_type'] = classifications
-    df['predicted_y'] = y_pred
+    df["header_footer_type"] = classifications
+    df["predicted_y"] = y_pred
 
     log.debug(f"Document-wide regression-based classification completed")
     log.debug(f"Num Headers: {np.bincount(classifications)[TextType.HEADER.value]}")
@@ -177,13 +190,15 @@ def main():
 
     # Print classification summary
     print("\nRegression-based Classification Summary:")
-    print(result_df['header_footer_type'].value_counts())
+    print(result_df["header_footer_type"].value_counts())
 
     # Print type names for better readability
-    header_footer_type_names = {0: 'HEADER', 1: 'BODY', 2: 'FOOTER'}
-    result_df['header_footer_type_name'] = result_df['header_footer_type'].map(header_footer_type_names)
+    header_footer_type_names = {0: "HEADER", 1: "BODY", 2: "FOOTER"}
+    result_df["header_footer_type_name"] = result_df["header_footer_type"].map(
+        header_footer_type_names
+    )
     print("\nClassification Summary by Type:")
-    print(result_df['header_footer_type_name'].value_counts())
+    print(result_df["header_footer_type_name"].value_counts())
 
 
 if __name__ == "__main__":

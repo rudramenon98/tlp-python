@@ -11,7 +11,11 @@ def main():
     labelled_path = Path(
         r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents\validation\labelled_pdf\CFR-2025-title4-vol1.csv"
     )
-    inference_diff_path = labelled_path.parent.parent / "label_inference_diff" / f"{labelled_path.stem}.csv"
+    inference_diff_path = (
+        labelled_path.parent.parent
+        / "label_inference_diff"
+        / f"{labelled_path.stem}.csv"
+    )
     inference_diff_path.parent.mkdir(parents=True, exist_ok=True)
     print(f"Saving output to {inference_diff_path}")
     inference_df = pd.read_csv(inference_path)
@@ -19,15 +23,15 @@ def main():
 
     output_df = []
     for _, row in inference_df.iterrows():
-        pdf_idx = int(row['pdf_idx'])
-        labelled_row = labelled_df[labelled_df['pdf_idx'] == pdf_idx]
+        pdf_idx = int(row["pdf_idx"])
+        labelled_row = labelled_df[labelled_df["pdf_idx"] == pdf_idx]
         if labelled_row.empty:
             continue
-        labelled_class = labelled_row['LabelledClass'].values[0]
-        inference_class = row['PredictedClass']
+        labelled_class = labelled_row["LabelledClass"].values[0]
+        inference_class = row["PredictedClass"]
         if labelled_class != inference_class:
-            row['LabelledClass'] = labelled_class
-            row['LabelledClassName'] = TextClass(labelled_class).name
+            row["LabelledClass"] = labelled_class
+            row["LabelledClassName"] = TextClass(labelled_class).name
             row.update(labelled_row.iloc[0].to_dict())
             output_df.append(row.to_dict())
 

@@ -35,12 +35,12 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
-'''
+"""
 # Console (stdout) handler
 console_handler = logging.StreamHandler(sys.stdout)
 console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 console_handler.setFormatter(console_formatter)
-'''
+"""
 
 from app.utils.MySQLFactory import MySQLDriver
 from app.utils.util import get_dir_safe
@@ -206,7 +206,6 @@ def check_links(x, docker_url):
 
 def page_extraction(driver, mysql_driver, scrapeURLId, docker_url):
     global logList
-
 
     dataset = {
         "Number": [],
@@ -375,7 +374,9 @@ def process_page(config: ScriptsConfig, dfs, mysql_driver, scrapeURLId):
             scrape_url_append_log(mysql_driver2, scrapeURLId, msgText)
 
     if len(redownloaded_documents) > 0:
-        update_documents2(mysql_driver2, redownloaded_documents, doc_class=StaticPublicDocument)
+        update_documents2(
+            mysql_driver2, redownloaded_documents, doc_class=StaticPublicDocument
+        )
 
     print("final download  list size:")
     print(download_list)
@@ -492,12 +493,14 @@ def scrape_fda_guidance_documents(
         # Step 1: Scrape and collect all pages
         for page_num in range(number_of_pages):
             print(f"Scraping page: {page_num + 1}")
-            
+
             df = page_extraction(driver, mysql_driver, scrapeURLId, docker_url)
             all_dfs.append(df)
-            
-#            if page_num < number_of_pages - 1:
-            next_page = driver.find_element(By.XPATH, '//*[@id="DataTables_Table_0_next"]/a').click()
+
+            #            if page_num < number_of_pages - 1:
+            next_page = driver.find_element(
+                By.XPATH, '//*[@id="DataTables_Table_0_next"]/a'
+            ).click()
             time.sleep(30)
 
         # Step 2: Process each page's DataFrame individually
@@ -572,7 +575,9 @@ def check_for_new_documents(
                     print(logText)
                     continue
 
-            docInDB = find_document_by_url(mysql_driver, file_url, doc_class=StaticPublicDocument)
+            docInDB = find_document_by_url(
+                mysql_driver, file_url, doc_class=StaticPublicDocument
+            )
         except Exception:
             logText = f"Failed for : {file_url} \n"
             logText += traceback.format_exc()
@@ -610,11 +615,13 @@ def check_for_new_documents(
                     noOfParagraphs=0,
                     lastScrapeDate=datetime.today().date(),
                     # scrapingLog = 'scraped successfully',
-                    sourceProject = 0,
+                    sourceProject=0,
                 )
                 download_list.append(document)
             except Exception:
-                logText = f"New StaticPublicDocument row creation failure for : {file_url} \n"
+                logText = (
+                    f"New StaticPublicDocument row creation failure for : {file_url} \n"
+                )
                 logText += traceback.format_exc()
                 logList.append(logText)
                 scrape_url_append_log(mysql_driver, scrapeURLId, logText)
@@ -732,7 +739,9 @@ def check_for_cancelled_documents(
     cancel_list = []
 
     # get the documents in documents table which were not scraped today
-    old_documents_list = find_documents_not_scraped_on_date(mysql_driver, current_date, doc_class=StaticPublicDocument)
+    old_documents_list = find_documents_not_scraped_on_date(
+        mysql_driver, current_date, doc_class=StaticPublicDocument
+    )
 
     if not old_documents_list or len(old_documents_list) == 0:
         return None
@@ -821,13 +830,14 @@ def run(config: ScriptsConfig, scrapeURLId):
     # save_log_data_to_db(logList, mysql_driver)
     print("Scaped URL:" + main_URL)
 
+
 def parse_remaining_args(cleaned_args):
     repo_id = None
     values = []
 
     i = 0
     while i < len(cleaned_args):
-        if cleaned_args[i] == '--repo_id':
+        if cleaned_args[i] == "--repo_id":
             i += 1
             if i >= len(cleaned_args):
                 print("Missing value for --repo_id")
@@ -855,8 +865,8 @@ if __name__ == "__main__":
     try:
         props = None
 
-        #configure the logging level
-        remaining_args = configure_logging_from_argv(default_level='INFO')
+        # configure the logging level
+        remaining_args = configure_logging_from_argv(default_level="INFO")
         repo_id, docIdsList = parse_remaining_args(remaining_args)
 
         if len(docIdsList) > 0:

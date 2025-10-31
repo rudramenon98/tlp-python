@@ -30,12 +30,12 @@ from tqdm import tqdm
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
-'''
+"""
 # Console (stdout) handler
 console_handler = logging.StreamHandler(sys.stdout)
 console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 console_handler.setFormatter(console_formatter)
-'''
+"""
 
 # for logging
 logList = []
@@ -309,7 +309,9 @@ def download_cfr_document(
         PDF_URL = df["pdf_file_url"]
 
         # check if document exists in documents table
-        docInDB = find_document_by_url(mysql_driver, PDF_URL, doc_class=StaticPublicDocument)
+        docInDB = find_document_by_url(
+            mysql_driver, PDF_URL, doc_class=StaticPublicDocument
+        )
 
         if not docInDB:
 
@@ -383,7 +385,7 @@ def download_cfr_document(
                 noOfParagraphs=0,
                 lastScrapeDate=datetime.today().date(),
                 # scrapingLog = 'scraped successfully on ' + str(datetime.today().date()),
-                sourceProject = 0,
+                sourceProject=0,
             )
 
             # insert document in DB
@@ -453,7 +455,9 @@ def cancel_previous_editions(
             pdf_url_to_check = PDF_URL.replace(str(curr_year), str(curr_year - y))
 
             # check if document exists in documents table
-            docInDB = find_document_by_url(mysql_driver, pdf_url_to_check, doc_class=StaticPublicDocument)
+            docInDB = find_document_by_url(
+                mysql_driver, pdf_url_to_check, doc_class=StaticPublicDocument
+            )
 
             if docInDB:
                 # Mark as Cancelled/Archived
@@ -518,13 +522,14 @@ def run(config: ScriptsConfig, scrapeURLId: int):
     #    save_log_data_to_db(logList, mysql_driver, scrapeURLId)
     print("Scraped CFR FDA documents")
 
+
 def parse_remaining_args(cleaned_args):
     repo_id = None
     values = []
 
     i = 0
     while i < len(cleaned_args):
-        if cleaned_args[i] == '--repo_id':
+        if cleaned_args[i] == "--repo_id":
             i += 1
             if i >= len(cleaned_args):
                 print("Missing value for --repo_id")
@@ -552,8 +557,8 @@ if __name__ == "__main__":
 
     try:
         props = None
-        #configure the logging level
-        remaining_args = configure_logging_from_argv(default_level='INFO')
+        # configure the logging level
+        remaining_args = configure_logging_from_argv(default_level="INFO")
         repo_id, docIdsList = parse_remaining_args(remaining_args)
 
         if len(docIdsList) > 0:

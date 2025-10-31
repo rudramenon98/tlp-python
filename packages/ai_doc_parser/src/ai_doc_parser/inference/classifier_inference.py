@@ -9,17 +9,23 @@ from ai_doc_parser.training.parsers.base_parser import TextClass
 from sklearn.ensemble import RandomForestClassifier
 
 
-def predict_single(model: RandomForestClassifier, features: Union[List[float], pd.Series]) -> int:
+def predict_single(
+    model: RandomForestClassifier, features: Union[List[float], pd.Series]
+) -> int:
     """Make a prediction on a single sample."""
     return model.predict([features])[0]
 
 
-def predict_proba_single(model: RandomForestClassifier, features: Union[List[float], pd.Series]) -> np.ndarray:
+def predict_proba_single(
+    model: RandomForestClassifier, features: Union[List[float], pd.Series]
+) -> np.ndarray:
     """Get prediction probabilities for a single sample."""
     return model.predict_proba([features])[0]
 
 
-def prepare_features_for_inference(df: pd.DataFrame, feature_columns: List[str]) -> tuple[pd.DataFrame, List[str]]:
+def prepare_features_for_inference(
+    df: pd.DataFrame, feature_columns: List[str]
+) -> tuple[pd.DataFrame, List[str]]:
     """
     Prepare features for inference by ensuring all required columns exist
     and handling missing values.
@@ -32,10 +38,10 @@ def prepare_features_for_inference(df: pd.DataFrame, feature_columns: List[str])
         Tuple of (prepared_features, available_columns)
     """
     # Create text-based features if text column exists
-    if 'text' in df.columns:
+    if "text" in df.columns:
         # Create text length feature
-        df['text_length'] = df['text'].str.len()
-        feature_columns.append('text_length')
+        df["text_length"] = df["text"].str.len()
+        feature_columns.append("text_length")
 
     # Ensure all feature columns exist
     available_columns = [col for col in feature_columns if col in df.columns]
@@ -59,29 +65,31 @@ def prepare_features_for_inference(df: pd.DataFrame, feature_columns: List[str])
 def get_feature_columns() -> List[str]:
     """Get the standard feature columns used for classification."""
     return [
-        'x0',
-        'y0',
-        'x1',
-        'y1',
-        'block_x0',
-        'block_y0',
-        'block_x1',
-        'block_y1',
-        'line_x0',
-        'line_y0',
-        'line_x1',
-        'line_y1',
-        'page_number',
-        'page_height',
-        'page_width',
-        'major_font_size',
-        'ncols',
-        'is_table',
+        "x0",
+        "y0",
+        "x1",
+        "y1",
+        "block_x0",
+        "block_y0",
+        "block_x1",
+        "block_y1",
+        "line_x0",
+        "line_y0",
+        "line_x1",
+        "line_y1",
+        "page_number",
+        "page_height",
+        "page_width",
+        "major_font_size",
+        "ncols",
+        "is_table",
     ]
 
 
 def classify_dataframe(
-    df: pd.DataFrame, model: RandomForestClassifier, removed_columns: Optional[List[str]] = None
+    df: pd.DataFrame,
+    model: RandomForestClassifier,
+    removed_columns: Optional[List[str]] = None,
 ) -> pd.DataFrame:
     """
     Classify a dataframe using a trained model.
@@ -109,13 +117,13 @@ def classify_dataframe(
     prediction_probas = model.predict_proba(x)
 
     # Add predictions to dataframe
-    df['predicted_class'] = predictions
-    df['predicted_class_name'] = [TextClass(pred).name for pred in predictions]
+    df["predicted_class"] = predictions
+    df["predicted_class_name"] = [TextClass(pred).name for pred in predictions]
 
     # Add prediction probabilities for each class
     class_names = [TextClass(i).name for i in range(len(model.classes_))]
     for i, class_name in enumerate(class_names):
-        df[f'prob_{class_name.lower()}'] = prediction_probas[:, i]
+        df[f"prob_{class_name.lower()}"] = prediction_probas[:, i]
 
     return df
 
@@ -138,7 +146,9 @@ def save_classification_results(df: pd.DataFrame, output_path: Path) -> Path:
     return output_path
 
 
-def print_classification_summary(df: pd.DataFrame, available_columns: List[str]) -> None:
+def print_classification_summary(
+    df: pd.DataFrame, available_columns: List[str]
+) -> None:
     """
     Print a summary of classification results.
 
@@ -153,7 +163,7 @@ def print_classification_summary(df: pd.DataFrame, available_columns: List[str])
     print(f"Feature columns used: {len(available_columns)}")
 
     # Class distribution
-    class_counts = df['predicted_class'].value_counts().sort_index()
+    class_counts = df["predicted_class"].value_counts().sort_index()
     print("\nPredicted Class Distribution:")
     for class_id, count in class_counts.items():
         class_name = TextClass(class_id).name
@@ -164,7 +174,9 @@ def print_classification_summary(df: pd.DataFrame, available_columns: List[str])
 
 
 def run_inference(
-    model: RandomForestClassifier, features_df: pd.DataFrame, removed_columns: Optional[List[str]] = None
+    model: RandomForestClassifier,
+    features_df: pd.DataFrame,
+    removed_columns: Optional[List[str]] = None,
 ) -> pd.DataFrame:
     """
     Run inference on a features CSV file using a trained model.
@@ -195,7 +207,12 @@ def main():
 
     # Paths
     model_path = data_dir / "models" / "RandomForestClassifier.sav"
-    features_csv_path = data_dir / "xml_cfr" / "computed_features" / "CFR-2024-title14-vol2_features.csv"
+    features_csv_path = (
+        data_dir
+        / "xml_cfr"
+        / "computed_features"
+        / "CFR-2024-title14-vol2_features.csv"
+    )
     features_df = pd.read_csv(features_csv_path)
     print(f"Features dataframe loaded from {features_csv_path}")
     output_dir = data_dir / "xml_cfr" / "classified_pdf"
@@ -219,7 +236,7 @@ def main():
     df = run_inference(
         model=model,
         features_df=features_df,
-        removed_columns=['page_number'],  # Same as in training
+        removed_columns=["page_number"],  # Same as in training
     )
 
     output_name = features_csv_path.name.replace("features", "classified")

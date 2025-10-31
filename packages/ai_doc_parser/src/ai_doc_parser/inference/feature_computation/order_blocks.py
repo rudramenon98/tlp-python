@@ -110,7 +110,7 @@ def estimate_number_of_columns(boxes, width):
 
 def order_blocks(df):
 
-    groups = df.groupby('PageNumber')  # group page-wise
+    groups = df.groupby("PageNumber")  # group page-wise
 
     list(df.columns)
 
@@ -130,32 +130,32 @@ def order_blocks(df):
             currRow = each_file_json.iloc[i]
 
             #
-            if pd.notna(currRow['ExtractedClass']):
+            if pd.notna(currRow["ExtractedClass"]):
                 #                each_file_json.iloc[i]['new_block_order'] = -1
                 continue
 
             # get the block extents
-            bx0 = currRow['block_x0']
-            bx1 = currRow['block_x1']
-            by0 = currRow['block_y0']
-            by1 = currRow['block_y1']
+            bx0 = currRow["block_x0"]
+            bx1 = currRow["block_x1"]
+            by0 = currRow["block_y0"]
+            by1 = currRow["block_y1"]
 
             # get the intial block id
-            block_id = currRow['ID']
+            block_id = currRow["ID"]
 
             if block_id not in block_ids_set:
                 block_ids_set.add(block_id)
             else:
                 continue
 
-            text_len = len(str(each_file_json.iloc[i]['text']))
+            text_len = len(str(each_file_json.iloc[i]["text"]))
             boxes.append([bx0, by0, bx1, by1, text_len, block_id])
 
-        ncols = estimate_number_of_columns(boxes, each_file_json.iloc[0]['page_width'])
-        each_file_json['ncols'] = ncols
+        ncols = estimate_number_of_columns(boxes, each_file_json.iloc[0]["page_width"])
+        each_file_json["ncols"] = ncols
 
         if ncols != 2:
-            each_file_json['new_block_order'] = each_file_json['ID']
+            each_file_json["new_block_order"] = each_file_json["ID"]
             df2 = pd.concat([df2, each_file_json])
             continue
 
@@ -165,22 +165,22 @@ def order_blocks(df):
         try:
 
             def get_new_block_id(x, page_no):
-                if page_no != x['PageNumber']:
+                if page_no != x["PageNumber"]:
                     # print('wrong page')
                     return -1
                 else:
                     pass
                     # print('correct page')
-                y = new_block_ids.get(x['ID'], -1)
+                y = new_block_ids.get(x["ID"], -1)
                 if y != -1:
                     return y
                 else:
                     # print('Key not found =  ' + str(x['Block_ID']))
-                    return x['ID']
+                    return x["ID"]
 
             # df['new_block_order'] = df.apply(get_new_block_id, page_no = each_file_json.iloc[0]['Page_No'], axis=1)
-            each_file_json['new_block_order'] = each_file_json.apply(
-                get_new_block_id, page_no=each_file_json.iloc[0]['PageNumber'], axis=1
+            each_file_json["new_block_order"] = each_file_json.apply(
+                get_new_block_id, page_no=each_file_json.iloc[0]["PageNumber"], axis=1
             )
             # df2.append(each_file_json)
             df2 = pd.concat([df2, each_file_json])

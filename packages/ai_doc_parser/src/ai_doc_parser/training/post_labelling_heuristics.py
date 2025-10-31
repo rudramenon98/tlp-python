@@ -9,9 +9,12 @@ from ai_doc_parser.text_class import TextClass
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-def apply_heuristic_to_dir(dir_path: Path,
-                           heuristic_function: Callable[[pd.DataFrame], pd.DataFrame],
-                           output_dir: Path = None) -> None:
+
+def apply_heuristic_to_dir(
+    dir_path: Path,
+    heuristic_function: Callable[[pd.DataFrame], pd.DataFrame],
+    output_dir: Path = None,
+) -> None:
     """
     Apply a heuristic function to all the files in a directory
     """
@@ -26,16 +29,15 @@ def apply_heuristic_to_dir(dir_path: Path,
         df = heuristic_function(df)
         df.to_csv(file, index=False)
 
+
 def latex_heuristics(df: pd.DataFrame) -> pd.DataFrame:
     """
     Apply heuristics to the dataframe
     """
     # if the font_size > 18, then it is a heading
-    df.loc[df['font_size'] > 12, 'LabelledClass'] = TextClass.HEADING.value
-    df.loc[df['font_size'] > 12, 'LabelledClassName'] = TextClass.HEADING.name
-    
-    
-    
+    df.loc[df["font_size"] > 12, "LabelledClass"] = TextClass.HEADING.value
+    df.loc[df["font_size"] > 12, "LabelledClassName"] = TextClass.HEADING.name
+
     return df
 
 

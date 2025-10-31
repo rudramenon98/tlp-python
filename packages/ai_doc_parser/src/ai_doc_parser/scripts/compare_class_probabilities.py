@@ -18,7 +18,12 @@ from ai_doc_parser.training.classifier_trainer import load_model, prepare_df_for
 
 
 def compare_class_probabilities(
-    model_path: str, data_path: str, row_index: int, class1_name: str, class2_name: str, num_features: int = 15
+    model_path: str,
+    data_path: str,
+    row_index: int,
+    class1_name: str,
+    class2_name: str,
+    num_features: int = 15,
 ):
     """
     Compare probability differences between two specific classes.
@@ -36,9 +41,15 @@ def compare_class_probabilities(
     df = pd.read_csv(data_path)
 
     # Prepare data
-    df_processed, feature_columns = prepare_df_for_model(df, add_shifted_features=True, verbose=False)
+    df_processed, feature_columns = prepare_df_for_model(
+        df, add_shifted_features=True, verbose=False
+    )
     X = df_processed[feature_columns]
-    y_true = df_processed['LabelledClass'] if 'LabelledClass' in df_processed.columns else None
+    y_true = (
+        df_processed["LabelledClass"]
+        if "LabelledClass" in df_processed.columns
+        else None
+    )
 
     # Get the specific row
     if row_index >= len(X):
@@ -53,12 +64,18 @@ def compare_class_probabilities(
     prediction_proba = model.predict_proba(sample)[0]
 
     # Get class names and indices
-    class_names = [TextClass(CLASS_MAP_INV[i]).name for i in sorted(CLASS_MAP_INV.keys())]
+    class_names = [
+        TextClass(CLASS_MAP_INV[i]).name for i in sorted(CLASS_MAP_INV.keys())
+    ]
     pred_class_name = (
-        TextClass(CLASS_MAP_INV[prediction]).name if prediction in CLASS_MAP_INV else f"Class_{prediction}"
+        TextClass(CLASS_MAP_INV[prediction]).name
+        if prediction in CLASS_MAP_INV
+        else f"Class_{prediction}"
     )
     true_class_name = (
-        TextClass(CLASS_MAP_INV[true_label]).name if true_label in CLASS_MAP_INV else f"Class_{true_label}"
+        TextClass(CLASS_MAP_INV[true_label]).name
+        if true_label in CLASS_MAP_INV
+        else f"Class_{true_label}"
     )
 
     # Find class indices
@@ -135,16 +152,18 @@ def compare_class_probabilities(
         # Create feature comparison dataframe
         feature_comparison = pd.DataFrame(
             {
-                'feature': feature_columns,
-                'value': sample.values[0],
-                f'{class1_name}_shap': class1_shap,
-                f'{class2_name}_shap': class2_shap,
-                'shap_difference': shap_difference,
+                "feature": feature_columns,
+                "value": sample.values[0],
+                f"{class1_name}_shap": class1_shap,
+                f"{class2_name}_shap": class2_shap,
+                "shap_difference": shap_difference,
             }
         )
 
         # Sort by absolute SHAP difference
-        feature_comparison = feature_comparison.sort_values('shap_difference', key=abs, ascending=False)
+        feature_comparison = feature_comparison.sort_values(
+            "shap_difference", key=abs, ascending=False
+        )
 
         print(f"\nTop {num_features} Features Driving Class Difference:")
         print(
@@ -153,7 +172,11 @@ def compare_class_probabilities(
         print(f"{'-'*100}")
 
         for _, row in feature_comparison.head(num_features).iterrows():
-            effect = f"Favors {class2_name}" if row['shap_difference'] > 0 else f"Favors {class1_name}"
+            effect = (
+                f"Favors {class2_name}"
+                if row["shap_difference"] > 0
+                else f"Favors {class1_name}"
+            )
             print(
                 f"{row['feature']:<35} {row['value']:<8.3f} {row[f'{class1_name}_shap']:<12.3f} {row[f'{class2_name}_shap']:<12.3f} {row['shap_difference']:<12.3f} {effect:<15}"
             )
@@ -162,20 +185,36 @@ def compare_class_probabilities(
         Path("class_comparison_output").mkdir(exist_ok=True)
 
         # Waterfall plot for class1
-        shap.waterfall_plot(class1_expected, class1_shap, sample.iloc[0], show=False, max_display=num_features)
+        shap.waterfall_plot(
+            class1_expected,
+            class1_shap,
+            sample.iloc[0],
+            show=False,
+            max_display=num_features,
+        )
         import matplotlib.pyplot as plt
 
-        plt.title(f'SHAP Waterfall: {class1_name}')
+        plt.title(f"SHAP Waterfall: {class1_name}")
         plt.savefig(
-            f"class_comparison_output/{class1_name.lower()}_waterfall_row_{row_index}.png", dpi=300, bbox_inches='tight'
+            f"class_comparison_output/{class1_name.lower()}_waterfall_row_{row_index}.png",
+            dpi=300,
+            bbox_inches="tight",
         )
         plt.close()
 
         # Waterfall plot for class2
-        shap.waterfall_plot(class2_expected, class2_shap, sample.iloc[0], show=False, max_display=num_features)
-        plt.title(f'SHAP Waterfall: {class2_name}')
+        shap.waterfall_plot(
+            class2_expected,
+            class2_shap,
+            sample.iloc[0],
+            show=False,
+            max_display=num_features,
+        )
+        plt.title(f"SHAP Waterfall: {class2_name}")
         plt.savefig(
-            f"class_comparison_output/{class2_name.lower()}_waterfall_row_{row_index}.png", dpi=300, bbox_inches='tight'
+            f"class_comparison_output/{class2_name.lower()}_waterfall_row_{row_index}.png",
+            dpi=300,
+            bbox_inches="tight",
         )
         plt.close()
 
@@ -199,17 +238,23 @@ def compare_class_probabilities(
             X.values,
             feature_names=feature_columns,
             class_names=class_names,
-            mode='classification',
+            mode="classification",
             discretize_continuous=True,
         )
 
         # Generate explanations for both classes
         explanation1 = lime_explainer.explain_instance(
-            sample.values[0], model.predict_proba, num_features=num_features, labels=[class1_idx]
+            sample.values[0],
+            model.predict_proba,
+            num_features=num_features,
+            labels=[class1_idx],
         )
 
         explanation2 = lime_explainer.explain_instance(
-            sample.values[0], model.predict_proba, num_features=num_features, labels=[class2_idx]
+            sample.values[0],
+            model.predict_proba,
+            num_features=num_features,
+            labels=[class2_idx],
         )
 
         # Get explanation lists
@@ -218,7 +263,9 @@ def compare_class_probabilities(
 
         # Create comparison dataframe
         lime_comparison = []
-        all_features = set([item[0] for item in exp1_list] + [item[0] for item in exp2_list])
+        all_features = set(
+            [item[0] for item in exp1_list] + [item[0] for item in exp2_list]
+        )
 
         for feature in all_features:
             weight1 = next((item[1] for item in exp1_list if item[0] == feature), 0)
@@ -227,22 +274,28 @@ def compare_class_probabilities(
 
             lime_comparison.append(
                 {
-                    'feature': feature,
-                    f'{class1_name}_weight': weight1,
-                    f'{class2_name}_weight': weight2,
-                    'weight_difference': weight_diff,
+                    "feature": feature,
+                    f"{class1_name}_weight": weight1,
+                    f"{class2_name}_weight": weight2,
+                    "weight_difference": weight_diff,
                 }
             )
 
         lime_df = pd.DataFrame(lime_comparison)
-        lime_df = lime_df.sort_values('weight_difference', key=abs, ascending=False)
+        lime_df = lime_df.sort_values("weight_difference", key=abs, ascending=False)
 
         print(f"LIME Weight Comparison (Top {num_features}):")
-        print(f"{'Feature':<35} {f'{class1_name}':<12} {f'{class2_name}':<12} {'Difference':<12} {'Effect':<15}")
+        print(
+            f"{'Feature':<35} {f'{class1_name}':<12} {f'{class2_name}':<12} {'Difference':<12} {'Effect':<15}"
+        )
         print(f"{'-'*90}")
 
         for _, row in lime_df.head(num_features).iterrows():
-            effect = f"Favors {class2_name}" if row['weight_difference'] > 0 else f"Favors {class1_name}"
+            effect = (
+                f"Favors {class2_name}"
+                if row["weight_difference"] > 0
+                else f"Favors {class1_name}"
+            )
             print(
                 f"{row['feature']:<35} {row[f'{class1_name}_weight']:<12.3f} {row[f'{class2_name}_weight']:<12.3f} {row['weight_difference']:<12.3f} {effect:<15}"
             )
@@ -262,19 +315,25 @@ def compare_class_probabilities(
 
     # Create feature analysis dataframe
     feature_analysis = pd.DataFrame(
-        {'feature': feature_columns, 'value': feature_values.values, 'importance': feature_importance}
+        {
+            "feature": feature_columns,
+            "value": feature_values.values,
+            "importance": feature_importance,
+        }
     )
 
     # Sort by importance
-    feature_analysis = feature_analysis.sort_values('importance', ascending=False)
+    feature_analysis = feature_analysis.sort_values("importance", ascending=False)
 
     print(f"Top {num_features} Most Important Features:")
     print(f"{'Feature':<35} {'Value':<8} {'Importance':<12} {'Contribution':<12}")
     print(f"{'-'*70}")
 
     for _, row in feature_analysis.head(num_features).iterrows():
-        contribution = row['value'] * row['importance']
-        print(f"{row['feature']:<35} {row['value']:<8.3f} {row['importance']:<12.4f} {contribution:<12.4f}")
+        contribution = row["value"] * row["importance"]
+        print(
+            f"{row['feature']:<35} {row['value']:<8.3f} {row['importance']:<12.4f} {contribution:<12.4f}"
+        )
 
     # Summary
     print(f"\n{'='*80}")
@@ -304,18 +363,24 @@ def compare_class_probabilities(
         print(f"  → Strong preference for {class1_name}")
 
     return {
-        'row_index': row_index,
-        'class1_name': class1_name,
-        'class2_name': class2_name,
-        'class1_prob': class1_prob,
-        'class2_prob': class2_prob,
-        'prob_difference': prob_difference,
-        'predicted_class': pred_class_name,
-        'true_class': true_class_name,
+        "row_index": row_index,
+        "class1_name": class1_name,
+        "class2_name": class2_name,
+        "class1_prob": class1_prob,
+        "class2_prob": class2_prob,
+        "prob_difference": prob_difference,
+        "predicted_class": pred_class_name,
+        "true_class": true_class_name,
     }
 
 
-def compare_multiple_rows(model_path: str, data_path: str, row_indices: list, class1_name: str, class2_name: str):
+def compare_multiple_rows(
+    model_path: str,
+    data_path: str,
+    row_indices: list,
+    class1_name: str,
+    class2_name: str,
+):
     """
     Compare class probabilities across multiple rows.
     """
@@ -329,7 +394,9 @@ def compare_multiple_rows(model_path: str, data_path: str, row_indices: list, cl
         print(f"ROW {row_idx}")
         print(f"{'-'*40}")
 
-        result = compare_class_probabilities(model_path, data_path, row_idx, class1_name, class2_name, num_features=10)
+        result = compare_class_probabilities(
+            model_path, data_path, row_idx, class1_name, class2_name, num_features=10
+        )
         if result:
             results.append(result)
 
@@ -356,24 +423,48 @@ def main():
     """Main function."""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Compare probabilities between two specific classes")
-    parser.add_argument("--model_path", type=str, required=True, help="Path to the trained model file")
-    parser.add_argument("--data_path", type=str, required=True, help="Path to the CSV data file")
+    parser = argparse.ArgumentParser(
+        description="Compare probabilities between two specific classes"
+    )
+    parser.add_argument(
+        "--model_path", type=str, required=True, help="Path to the trained model file"
+    )
+    parser.add_argument(
+        "--data_path", type=str, required=True, help="Path to the CSV data file"
+    )
     parser.add_argument("--row_index", type=int, help="Index of the row to analyze")
-    parser.add_argument("--row_indices", type=str, help="Comma-separated list of row indices to compare")
-    parser.add_argument("--class1", type=str, required=True, help="First class name (e.g., HEADING)")
-    parser.add_argument("--class2", type=str, required=True, help="Second class name (e.g., HEADING_CONT)")
-    parser.add_argument("--num_features", type=int, default=15, help="Number of top features to show")
+    parser.add_argument(
+        "--row_indices", type=str, help="Comma-separated list of row indices to compare"
+    )
+    parser.add_argument(
+        "--class1", type=str, required=True, help="First class name (e.g., HEADING)"
+    )
+    parser.add_argument(
+        "--class2",
+        type=str,
+        required=True,
+        help="Second class name (e.g., HEADING_CONT)",
+    )
+    parser.add_argument(
+        "--num_features", type=int, default=15, help="Number of top features to show"
+    )
 
     args = parser.parse_args()
 
     if args.row_index is not None:
         compare_class_probabilities(
-            args.model_path, args.data_path, args.row_index, args.class1, args.class2, args.num_features
+            args.model_path,
+            args.data_path,
+            args.row_index,
+            args.class1,
+            args.class2,
+            args.num_features,
         )
     elif args.row_indices is not None:
-        row_indices = [int(x.strip()) for x in args.row_indices.split(',')]
-        compare_multiple_rows(args.model_path, args.data_path, row_indices, args.class1, args.class2)
+        row_indices = [int(x.strip()) for x in args.row_indices.split(",")]
+        compare_multiple_rows(
+            args.model_path, args.data_path, row_indices, args.class1, args.class2
+        )
     else:
         print("Please specify either --row_index or --row_indices")
 

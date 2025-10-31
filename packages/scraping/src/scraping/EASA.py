@@ -30,7 +30,7 @@ log.setLevel(logging.INFO)
 
 # Console (stdout) handler
 console_handler = logging.StreamHandler(sys.stdout)
-console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
+console_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
 console_handler.setFormatter(console_formatter)
 
 from app.utils.util import get_dir_safe
@@ -78,7 +78,6 @@ def emptydir(top):
 def extract_xml_from_zip_file(zip_file, download_dir):
     # dir_name = '/home/dshah/Inspird-2023-dev/Web_Scrapping/Easa_Reg_Docs'
     dir_name = download_dir
-
 
     temp_extract_path = get_dir_safe(download_dir + "/temp_extract")
 
@@ -392,7 +391,7 @@ def check_for_new_documents(
                     noOfParagraphs=0,
                     lastScrapeDate=datetime.today().date(),
                     # scrapingLog = 'scraped successfully'
-                    sourceProject = 0,
+                    sourceProject=0,
                 )
                 download_list.append(document)
                 pdf_urls.append(pdf_file_url)
@@ -650,8 +649,8 @@ def run(config: ScriptsConfig, scrapeURLId):
 if __name__ == "__main__":
     try:
         props = None
-        #configure the logging level
-        remaining_args = configure_logging_from_argv(default_level='INFO')
+        # configure the logging level
+        remaining_args = configure_logging_from_argv(default_level="INFO")
 
         docIdsList = []
         if len(remaining_args) >= 1:

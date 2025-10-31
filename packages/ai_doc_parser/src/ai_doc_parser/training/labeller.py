@@ -188,7 +188,9 @@ def page_no(list1: List[float]) -> Optional[int]:
     return None
 
 
-def get_index(list1: List[str], list2: List[str], labels: List[str]) -> Dict[str, Optional[str]]:
+def get_index(
+    list1: List[str], list2: List[str], labels: List[str]
+) -> Dict[str, Optional[str]]:
     """
     Create a mapping from list1 items to their corresponding labels in list2.
 
@@ -240,7 +242,7 @@ def create_sliding_windows(
     line_word_counts = []
     for _, row in df.iterrows():
         # Use the first column as text if it's a string, otherwise convert to string
-        text = str(row['text'])
+        text = str(row["text"])
         word_count = len(text.split())
         line_word_counts.append(word_count)
 
@@ -317,7 +319,13 @@ def calculate_window_similarity(
     max_score = 0
     for xml_start_idx in range(len(xml_window)):
         # calculate the xml_end_idx such that the length of text in the xml_window is closest to pdf_text_len
-        xml_end_idx = np.argmin(np.abs(xml_line_lenths_cumsum - pdf_text_len - xml_line_lenths_cumsum[xml_start_idx]))
+        xml_end_idx = np.argmin(
+            np.abs(
+                xml_line_lenths_cumsum
+                - pdf_text_len
+                - xml_line_lenths_cumsum[xml_start_idx]
+            )
+        )
         xml_window_text = " ".join(xml_window[xml_start_idx : xml_end_idx + 1])
         if len(xml_window_text) < len(pdf_text) / 2:
             continue
@@ -350,13 +358,13 @@ def clean_for_matching(text: str) -> str:
     text = text.lower()
 
     # Remove extra whitespace
-    text = re.sub(r'\s+', ' ', text).strip()
+    text = re.sub(r"\s+", " ", text).strip()
 
     # Remove some punctuation but keep word boundaries
-    text = re.sub(r'[^\w\s]', ' ', text)
+    text = re.sub(r"[^\w\s]", " ", text)
 
     # Clean up whitespace again
-    text = re.sub(r'\s+', ' ', text).strip()
+    text = re.sub(r"\s+", " ", text).strip()
 
     return text
 
@@ -389,10 +397,12 @@ def find_best_xml_window(
     best_xml_idx = -1
 
     pdf_start, pdf_end = pdf_window_bounds
-    pdf_window = pdf_df.iloc[pdf_start:pdf_end]['cleaned_text'].tolist()
+    pdf_window = pdf_df.iloc[pdf_start:pdf_end]["cleaned_text"].tolist()
 
     search_start = max(0, expected_xml_idx - max_windows_searched // 2)
-    search_end = min(len(xml_window_bounds), expected_xml_idx + max_windows_searched // 2)
+    search_end = min(
+        len(xml_window_bounds), expected_xml_idx + max_windows_searched // 2
+    )
     search_indices = list(range(search_start, search_end))
     search_indices = sorted(search_indices, key=lambda x: abs(x - expected_xml_idx))
 
@@ -403,7 +413,7 @@ def find_best_xml_window(
 
         xml_start, xml_end, _ = xml_window_bounds[xml_i]
         # Extract the actual XML lines for this window
-        xml_window = xml_df.iloc[xml_start:xml_end]['cleaned_text'].tolist()
+        xml_window = xml_df.iloc[xml_start:xml_end]["cleaned_text"].tolist()
 
         # Calculate direct window similarity
         direct_similarity = calculate_window_similarity(pdf_window, xml_window)
@@ -482,7 +492,12 @@ def match_line_to_block(
         start_index = source_block.index(pdf_line)
         if index_mapping and start_index < len(index_mapping):
             original_start = index_mapping[start_index]
-            original_end = index_mapping[min(start_index + len(pdf_line) - 1, len(index_mapping) - 1)] + 1
+            original_end = (
+                index_mapping[
+                    min(start_index + len(pdf_line) - 1, len(index_mapping) - 1)
+                ]
+                + 1
+            )
             return 1.0, (original_start, original_end)
         return 1.0, (start_index, start_index + len(pdf_line))
 
@@ -510,7 +525,9 @@ def match_line_to_block(
         start_in_available = word_idxs[best_idx]
         end_in_available = word_idxs[best_idx] + len(pdf_line)
 
-        if start_in_available < len(index_mapping) and end_in_available <= len(index_mapping):
+        if start_in_available < len(index_mapping) and end_in_available <= len(
+            index_mapping
+        ):
             original_start = index_mapping[start_in_available]
             original_end = index_mapping[end_in_available - 1] + 1
             return best_score, (original_start, original_end)
@@ -521,15 +538,15 @@ def match_line_to_block(
 
 def is_toc(line: str) -> bool:
     line = line.lower()
-    line = line.replace(' ', '')
+    line = line.replace(" ", "")
     # if there are more than 5 consecutive dots, then it is a table of contents
-    if re.search(r'\.{5,}', line):
+    if re.search(r"\.{5,}", line):
         return True
     # if there are more than 5 consecutive '-', then it is a table of contents
-    if re.search(r'-{5,}', line):
+    if re.search(r"-{5,}", line):
         return True
     # if there are more than 5 consecutive '_'
-    if re.search(r'_{5,}', line):
+    if re.search(r"_{5,}", line):
         return True
     return False
 
@@ -582,37 +599,37 @@ def match_lines_within_windows(
     pdf_window_start_idx, pdf_window_end_idx, _ = pdf_windows[pdf_window_idx]
     for pdf_df_idx in range(pdf_window_start_idx, pdf_window_end_idx):
         pdf_row = pdf_df.iloc[pdf_df_idx]
-        if not pd.isna(pdf_row['ExtractedClass']):
+        if not pd.isna(pdf_row["ExtractedClass"]):
             continue
 
-        pdf_line = pdf_row['text']
-        pdf_cleaned = pdf_row['cleaned_text']
+        pdf_line = pdf_row["text"]
+        pdf_cleaned = pdf_row["cleaned_text"]
         len(pdf_line.split())
 
         if is_toc(pdf_line):
             # Store the match with the assigned class
             labelled_row = pdf_row.copy()
-            labelled_row['LabelledClass'] = TextClass.TOC.value
-            labelled_row['XML_text'] = ""
-            labelled_row['Match_Confidence'] = 0
-            labelled_row['pdf_window_idx'] = pdf_window_idx
-            labelled_row['xml_window_idx'] = 0
-            labelled_row['LabelledClassName'] = TextClass.TOC.name
-            labelled_row['xml_idx'] = -1
-            labelled_row['pdf_idx'] = pdf_row['pdf_idx']
-            labelled_row['xml_start_idx'] = 0
-            labelled_row['xml_end_idx'] = 0
-            labelled_row['source_matched_text'] = ""
-            labelled_row['pdf_cleaned'] = pdf_cleaned
+            labelled_row["LabelledClass"] = TextClass.TOC.value
+            labelled_row["XML_text"] = ""
+            labelled_row["Match_Confidence"] = 0
+            labelled_row["pdf_window_idx"] = pdf_window_idx
+            labelled_row["xml_window_idx"] = 0
+            labelled_row["LabelledClassName"] = TextClass.TOC.name
+            labelled_row["xml_idx"] = -1
+            labelled_row["pdf_idx"] = pdf_row["pdf_idx"]
+            labelled_row["xml_start_idx"] = 0
+            labelled_row["xml_end_idx"] = 0
+            labelled_row["source_matched_text"] = ""
+            labelled_row["pdf_cleaned"] = pdf_cleaned
             matches.append(labelled_row)
             continue
-        if pdf_line == 'nan' or not pdf_line.strip() or len(pdf_line) <= 1:
+        if pdf_line == "nan" or not pdf_line.strip() or len(pdf_line) <= 1:
             continue
         best_xml_idx = -1
         best_confidence = 0.0
         matches_beginning = False
 
-        pdf_cleaned = pdf_df.iloc[pdf_df_idx]['cleaned_text']
+        pdf_cleaned = pdf_df.iloc[pdf_df_idx]["cleaned_text"]
         best_start_idx = 0
         best_end_idx = 0
         best_matching_text = ""
@@ -620,16 +637,22 @@ def match_lines_within_windows(
         best_xml_row = None
         # Custom sorting: second element > first, third element < first
         xml_search_range = list(range(xml_start_idx, xml_end_idx))
-        xml_search_range.sort(key=lambda x: (abs(last_best_xml_idx - x), x > last_best_xml_idx, x))
+        xml_search_range.sort(
+            key=lambda x: (abs(last_best_xml_idx - x), x > last_best_xml_idx, x)
+        )
 
         for xml_idx in xml_search_range[:100]:
             # Check if xml_idx is within bounds of xml_df
             if xml_idx >= len(xml_df):
                 continue
             xml_row = xml_df.iloc[xml_idx]
-            if xml_row['SourceClass'] in [TextClass.TABLE, TextClass.HEADER, TextClass.FOOTER]:
+            if xml_row["SourceClass"] in [
+                TextClass.TABLE,
+                TextClass.HEADER,
+                TextClass.FOOTER,
+            ]:
                 continue
-            xml_cleaned = xml_row['cleaned_text']
+            xml_cleaned = xml_row["cleaned_text"]
             # xml_idx = xml_row['index']
             available_text = text_tracker.get_available_text(xml_idx, xml_cleaned)
             if available_text.strip() == "":
@@ -642,13 +665,23 @@ def match_lines_within_windows(
                 end_idx = start_idx + len(pdf_cleaned)
             else:
                 # Calculate similarity only for promising candidates
-                confidence, (start_idx, end_idx) = match_line_to_block(pdf_cleaned, xml_cleaned, text_tracker, xml_idx)
+                confidence, (start_idx, end_idx) = match_line_to_block(
+                    pdf_cleaned, xml_cleaned, text_tracker, xml_idx
+                )
 
                 # if confidence is low and first word is compound, try to match without first word
-                if first_word_compound({"text": pdf_cleaned}) and len(pdf_cleaned.split(" ")) > 1:
-                    pdf_cleaned_without_first_word = " ".join(pdf_cleaned.split(" ")[1:])
+                if (
+                    first_word_compound({"text": pdf_cleaned})
+                    and len(pdf_cleaned.split(" ")) > 1
+                ):
+                    pdf_cleaned_without_first_word = " ".join(
+                        pdf_cleaned.split(" ")[1:]
+                    )
                     new_confidence, (new_start_idx, new_end_idx) = match_line_to_block(
-                        pdf_cleaned_without_first_word, xml_cleaned, text_tracker, xml_idx
+                        pdf_cleaned_without_first_word,
+                        xml_cleaned,
+                        text_tracker,
+                        xml_idx,
                     )
                     if new_confidence > confidence:
                         confidence = new_confidence
@@ -683,17 +716,27 @@ def match_lines_within_windows(
             continue
 
         # Mark the matched text as used in the text tracker
-        if text_tracker is not None and best_xml_idx != -1 and best_xml_idx < len(xml_df):
+        if (
+            text_tracker is not None
+            and best_xml_idx != -1
+            and best_xml_idx < len(xml_df)
+        ):
             # Mark the matched range as used
             if abs(best_xml_idx - last_best_xml_idx) < 10:
-                text_tracker.mark_text_as_used(best_xml_idx, best_start_idx, best_end_idx)
+                text_tracker.mark_text_as_used(
+                    best_xml_idx, best_start_idx, best_end_idx
+                )
         last_best_xml_idx = best_xml_idx
 
-        if not pd.isna(pdf_row['ExtractedClass']):
-            assigned_class = pdf_row['ExtractedClass']
+        if not pd.isna(pdf_row["ExtractedClass"]):
+            assigned_class = pdf_row["ExtractedClass"]
         else:
             # Get the XML class for this line
-            xml_class = xml_df.iloc[best_xml_idx]['SourceClass'] if best_xml_idx < len(xml_df) else 0
+            xml_class = (
+                xml_df.iloc[best_xml_idx]["SourceClass"]
+                if best_xml_idx < len(xml_df)
+                else 0
+            )
 
             # Apply class assignment logic based on beginning match and XML class
             assigned_class = xml_class
@@ -712,24 +755,24 @@ def match_lines_within_windows(
 
         # Store the match with the assigned class
         labelled_row = pdf_row.copy()
-        labelled_row['LabelledClass'] = assigned_class
+        labelled_row["LabelledClass"] = assigned_class
         # Add bounds checking for best_xml_idx
         if best_xml_idx < len(xml_df):
             # labelled_row['XML_line_Number'] = xml_df.iloc[best_xml_idx]['LineNumbers']
-            labelled_row['XML_text'] = xml_df.iloc[best_xml_idx]['text']
+            labelled_row["XML_text"] = xml_df.iloc[best_xml_idx]["text"]
         else:
             # labelled_row['XML_line_Number'] = 0
-            labelled_row['XML_text'] = ""
-        labelled_row['Match_Confidence'] = best_confidence
-        labelled_row['pdf_window_idx'] = pdf_window_idx
-        labelled_row['xml_window_idx'] = xml_window_idx
-        labelled_row['LabelledClassName'] = TextClass(assigned_class).name
-        labelled_row['xml_idx'] = best_xml_row['xml_idx']
-        labelled_row['pdf_idx'] = pdf_row['pdf_idx']
-        labelled_row['xml_start_idx'] = best_start_idx
-        labelled_row['xml_end_idx'] = best_end_idx
-        labelled_row['source_matched_text'] = best_matching_text
-        labelled_row['pdf_cleaned'] = pdf_cleaned
+            labelled_row["XML_text"] = ""
+        labelled_row["Match_Confidence"] = best_confidence
+        labelled_row["pdf_window_idx"] = pdf_window_idx
+        labelled_row["xml_window_idx"] = xml_window_idx
+        labelled_row["LabelledClassName"] = TextClass(assigned_class).name
+        labelled_row["xml_idx"] = best_xml_row["xml_idx"]
+        labelled_row["pdf_idx"] = pdf_row["pdf_idx"]
+        labelled_row["xml_start_idx"] = best_start_idx
+        labelled_row["xml_end_idx"] = best_end_idx
+        labelled_row["source_matched_text"] = best_matching_text
+        labelled_row["pdf_cleaned"] = pdf_cleaned
         matches.append(labelled_row)
 
     window_matches_df = pd.DataFrame(matches)
@@ -737,7 +780,10 @@ def match_lines_within_windows(
 
 
 def sliding_window_labeling(
-    pdf_df: pd.DataFrame, xml_df: pd.DataFrame, window_size: int = 2000, overlap: int = 1500
+    pdf_df: pd.DataFrame,
+    xml_df: pd.DataFrame,
+    window_size: int = 2000,
+    overlap: int = 1500,
 ) -> pd.DataFrame:
     """
     Perform labeling using sliding window approach without page numbers.
@@ -752,37 +798,37 @@ def sliding_window_labeling(
         DataFrame with added ClassLabel and XML_line_Number columns
     """
     # drop rows with no text or nan
-    pdf_df = pdf_df[pdf_df['text'].notna() & (pdf_df['text'] != '')]
-    xml_df = xml_df[xml_df['text'].notna() & (xml_df['text'] != '')]
-    xml_df = xml_df.sort_values(['xml_idx'], ascending=True)
+    pdf_df = pdf_df[pdf_df["text"].notna() & (pdf_df["text"] != "")]
+    xml_df = xml_df[xml_df["text"].notna() & (xml_df["text"] != "")]
+    xml_df = xml_df.sort_values(["xml_idx"], ascending=True)
 
     # Prepare data
-    pdf_lines = list(pdf_df['text'])
+    pdf_lines = list(pdf_df["text"])
     pdf_lines = [str(line) for line in pdf_lines]
 
-    xml_lines = list(xml_df['text'])
+    xml_lines = list(xml_df["text"])
     xml_lines = [str(line) for line in xml_lines]
 
     # add cleaned_text column to dataframes
     log.debug("Cleaning XML lines")
-    pdf_df['cleaned_text'] = [clean_text(line) for line in pdf_lines]
-    xml_df['cleaned_text'] = [clean_text(line) for line in xml_lines]
+    pdf_df["cleaned_text"] = [clean_text(line) for line in pdf_lines]
+    xml_df["cleaned_text"] = [clean_text(line) for line in xml_lines]
 
     # Handle edge cases
     if not pdf_lines:
         log.warning("No PDF lines found")
         result_df = pdf_df.copy()
-        result_df['ClassLabel'] = 0
-        result_df['XML_line_Number'] = np.nan
-        result_df['Match_Confidence'] = 0.0
+        result_df["ClassLabel"] = 0
+        result_df["XML_line_Number"] = np.nan
+        result_df["Match_Confidence"] = 0.0
         return result_df
 
     if not xml_lines:
         log.warning("No XML lines found")
         result_df = pdf_df.copy()
-        result_df['ClassLabel'] = 0
-        result_df['XML_line_Number'] = np.nan
-        result_df['Match_Confidence'] = 0.0
+        result_df["ClassLabel"] = 0
+        result_df["XML_line_Number"] = np.nan
+        result_df["Match_Confidence"] = 0.0
         return result_df
 
     # Calculate total words in each dataset
@@ -799,13 +845,23 @@ def sliding_window_labeling(
         log.debug("Adjusted window size to %s words due to small XML", window_size)
 
     # remove tables, headers, footers
-    xml_df = xml_df[~xml_df['SourceClass'].isin([TextClass.TABLE, TextClass.HEADER, TextClass.FOOTER])]
-    pdf_df = pdf_df[~pdf_df['ExtractedClass'].isin([TextClass.TABLE, TextClass.HEADER, TextClass.FOOTER])]
+    xml_df = xml_df[
+        ~xml_df["SourceClass"].isin(
+            [TextClass.TABLE, TextClass.HEADER, TextClass.FOOTER]
+        )
+    ]
+    pdf_df = pdf_df[
+        ~pdf_df["ExtractedClass"].isin(
+            [TextClass.TABLE, TextClass.HEADER, TextClass.FOOTER]
+        )
+    ]
 
     pdf_windows = create_sliding_windows(pdf_df, 200, 1)
     xml_windows = create_sliding_windows(xml_df, 800, 300)
 
-    log.debug("Created %s PDF windows and %s XML windows", len(pdf_windows), len(xml_windows))
+    log.debug(
+        "Created %s PDF windows and %s XML windows", len(pdf_windows), len(xml_windows)
+    )
 
     # Initialize text tracker to prevent re-matching of used text segments
     text_tracker = UsedTextTracker()
@@ -823,8 +879,14 @@ def sliding_window_labeling(
         if not (min_pdf_window <= pdf_window_idx <= max_pdf_window):
             continue
         time_elapsed = time.time() - start_time
-        time_remaining_sec = (len(pdf_windows) - pdf_window_idx - 1) * time_elapsed / (pdf_window_idx + 1)
-        time_remaining_formatted = time.strftime("%H:%M:%S", time.gmtime(time_remaining_sec))
+        time_remaining_sec = (
+            (len(pdf_windows) - pdf_window_idx - 1)
+            * time_elapsed
+            / (pdf_window_idx + 1)
+        )
+        time_remaining_formatted = time.strftime(
+            "%H:%M:%S", time.gmtime(time_remaining_sec)
+        )
 
         # Find best matching XML window with optimized search
         xml_window_idx, similarity_score = find_best_xml_window(
@@ -837,7 +899,12 @@ def sliding_window_labeling(
         )
 
         if similarity_score < 0.7:
-            pdf_word_count = sum([pdf_word_count for _, _, pdf_word_count in pdf_windows[:pdf_window_idx]])
+            pdf_word_count = sum(
+                [
+                    pdf_word_count
+                    for _, _, pdf_word_count in pdf_windows[:pdf_window_idx]
+                ]
+            )
             expected_xml_idx = int(pdf_word_count / pdf_total_words * len(xml_windows))
             wider_xml_window_idx, wider_similarity_score = find_best_xml_window(
                 (pdf_start, pdf_end),
@@ -886,19 +953,26 @@ def sliding_window_labeling(
     if all_matches_dfs:
         result_df = pd.concat(all_matches_dfs, ignore_index=True)
         # Remove duplicates based on pdf_idx (keep the first occurrence)
-        result_df = result_df.drop_duplicates(subset=['pdf_idx'], keep='first')
+        result_df = result_df.drop_duplicates(subset=["pdf_idx"], keep="first")
 
-    matched_pdf_indices = set(result_df['pdf_idx'])
+    matched_pdf_indices = set(result_df["pdf_idx"])
 
     # Add summary statistics
     total_lines = len(pdf_lines)
     matched_lines = len(matched_pdf_indices)
     match_percentage = (matched_lines / total_lines) * 100 if total_lines > 0 else 0
 
-    log.info("Matched %s lines out of %s total lines (%.1f%%)", matched_lines, total_lines, match_percentage)
+    log.info(
+        "Matched %s lines out of %s total lines (%.1f%%)",
+        matched_lines,
+        total_lines,
+        match_percentage,
+    )
 
     # Calculate average confidence from the result DataFrame
-    matched_confidences = result_df[result_df['Match_Confidence'] > 0]['Match_Confidence']
+    matched_confidences = result_df[result_df["Match_Confidence"] > 0][
+        "Match_Confidence"
+    ]
     if len(matched_confidences) > 0:
         log.debug(f"Average confidence: {matched_confidences.mean():.3f}")
     else:
@@ -915,13 +989,15 @@ def main() -> None:
     from enginius_parser import EASA_PDF as pdf_path
     from enginius_parser import EASA_SOURCE as source_path
 
-    pdf_path = Path(r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents\Latex\v28.pdf")
-    source_path = Path(r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents\Latex\inspird.tex")
+    pdf_path = Path(
+        r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents\Latex\v28.pdf"
+    )
+    source_path = Path(
+        r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents\Latex\inspird.tex"
+    )
     pdf_df_path = pdf_path.parent / "computed_features" / f"{pdf_path.stem}.csv"
     xml_df_path = source_path.parent / "labelled_source" / f"{source_path.stem}.csv"
-    xml_df_path = (
-        r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents\Latex\labelled_source\inspird.csv"
-    )
+    xml_df_path = r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents\Latex\labelled_source\inspird.csv"
     document_dir = pdf_path.parent
 
     # pdf_df_path = DATA_DIR / "documents" / "CFR" / "computed_features" / "CFR-2024-title21-vol8-chapI-subchapH.csv"
@@ -943,7 +1019,9 @@ def main() -> None:
     extracted_labels_path = document_dir / "labelled_source" / f"{source_path.stem}.csv"
     labelled_pdf_path = document_dir / "labelled_pdf" / f"{pdf_path.stem}.csv"
     classified_pdf_path = document_dir / "ai_parsed_pdf" / f"{pdf_path.stem}.csv"
-    generate_metrics_report(extracted_labels_path, labelled_pdf_path, classified_pdf_path)
+    generate_metrics_report(
+        extracted_labels_path, labelled_pdf_path, classified_pdf_path
+    )
 
 
 min_pdf_window = 0

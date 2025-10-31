@@ -30,7 +30,9 @@ from ai_doc_parser.tools.model_interpretability import (
 from ai_doc_parser.training.classifier_trainer import load_model, prepare_df_for_model
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 log = logging.getLogger(__name__)
 
 
@@ -74,7 +76,9 @@ def analyze_specific_predictions(
 
         # Get class name
         pred_class_name = (
-            TextClass(CLASS_MAP_INV[prediction]).name if prediction in CLASS_MAP_INV else f"Class_{prediction}"
+            TextClass(CLASS_MAP_INV[prediction]).name
+            if prediction in CLASS_MAP_INV
+            else f"Class_{prediction}"
         )
 
         log.info(f"Predicted Class: {pred_class_name} (Class {prediction})")
@@ -83,7 +87,9 @@ def analyze_specific_predictions(
         if y_true is not None:
             true_label = y_true.iloc[idx]
             true_class_name = (
-                TextClass(CLASS_MAP_INV[true_label]).name if true_label in CLASS_MAP_INV else f"Class_{true_label}"
+                TextClass(CLASS_MAP_INV[true_label]).name
+                if true_label in CLASS_MAP_INV
+                else f"Class_{true_label}"
             )
             log.info(f"True Class: {true_class_name} (Class {true_label})")
             log.info(f"Correct: {'Yes' if prediction == true_label else 'No'}")
@@ -94,20 +100,28 @@ def analyze_specific_predictions(
 
         # Create feature contribution dataframe
         feature_contrib = pd.DataFrame(
-            {'feature': analyzer.feature_names, 'value': feature_values.values, 'importance': feature_importance}
+            {
+                "feature": analyzer.feature_names,
+                "value": feature_values.values,
+                "importance": feature_importance,
+            }
         )
 
         # Sort by importance and show top 10
-        top_features = feature_contrib.sort_values('importance', ascending=False).head(10)
+        top_features = feature_contrib.sort_values("importance", ascending=False).head(
+            10
+        )
 
         log.info(f"\nTop 10 Contributing Features:")
         log.info(f"{'Feature':<25} {'Value':<10} {'Importance':<12}")
         log.info(f"{'-'*50}")
         for _, row in top_features.iterrows():
-            log.info(f"{row['feature']:<25} {row['value']:<10.3f} {row['importance']:<12.4f}")
+            log.info(
+                f"{row['feature']:<25} {row['value']:<10.3f} {row['importance']:<12.4f}"
+            )
 
         # LIME explanation if available
-        if hasattr(analyzer, 'lime_explainer') and analyzer.lime_explainer is not None:
+        if hasattr(analyzer, "lime_explainer") and analyzer.lime_explainer is not None:
             try:
                 explanation = analyzer.lime_explainer.explain_instance(
                     sample.values[0], analyzer.model.predict_proba, num_features=10
@@ -123,19 +137,21 @@ def analyze_specific_predictions(
                 log.warning(f"Could not generate LIME explanation: {e}")
 
         results[idx] = {
-            'prediction': prediction,
-            'prediction_proba': prediction_proba,
-            'pred_class_name': pred_class_name,
-            'true_label': true_label if y_true is not None else None,
-            'true_class_name': true_class_name if y_true is not None else None,
-            'top_features': top_features,
+            "prediction": prediction,
+            "prediction_proba": prediction_proba,
+            "pred_class_name": pred_class_name,
+            "true_label": true_label if y_true is not None else None,
+            "true_class_name": true_class_name if y_true is not None else None,
+            "top_features": top_features,
         }
 
     return results
 
 
 def generate_analysis_report(
-    analyzer: ModelInterpretabilityAnalyzer, analysis_results: dict, output_dir: str = "analysis_output"
+    analyzer: ModelInterpretabilityAnalyzer,
+    analysis_results: dict,
+    output_dir: str = "analysis_output",
 ):
     """
     Generate a comprehensive analysis report.
@@ -149,7 +165,7 @@ def generate_analysis_report(
 
     report_path = Path(output_dir) / "analysis_report.txt"
 
-    with open(report_path, 'w') as f:
+    with open(report_path, "w") as f:
         f.write("MODEL INTERPRETABILITY ANALYSIS REPORT\n")
         f.write("=" * 50 + "\n\n")
 
@@ -161,37 +177,43 @@ def generate_analysis_report(
         f.write(f"Classes: {analyzer.class_names}\n\n")
 
         # Feature importance summary
-        if 'feature_importance' in analysis_results:
+        if "feature_importance" in analysis_results:
             f.write("FEATURE IMPORTANCE SUMMARY:\n")
             f.write("-" * 30 + "\n")
-            top_features = analysis_results['feature_importance']['top_features']
+            top_features = analysis_results["feature_importance"]["top_features"]
             for _, row in top_features.head(10).iterrows():
                 f.write(f"{row['feature']:<25}: {row['importance']:.4f}\n")
             f.write("\n")
 
         # SHAP analysis summary
-        if 'shap' in analysis_results and analysis_results['shap']:
+        if "shap" in analysis_results and analysis_results["shap"]:
             f.write("SHAP ANALYSIS SUMMARY:\n")
             f.write("-" * 25 + "\n")
-            shap_importance = analysis_results['shap']['feature_importance']
+            shap_importance = analysis_results["shap"]["feature_importance"]
             for _, row in shap_importance.head(10).iterrows():
                 f.write(f"{row['feature']:<25}: {row['shap_importance']:.4f}\n")
             f.write("\n")
 
         # Error analysis summary
-        if 'error_analysis' in analysis_results:
+        if "error_analysis" in analysis_results:
             f.write("ERROR ANALYSIS SUMMARY:\n")
             f.write("-" * 25 + "\n")
-            error_analysis = analysis_results['error_analysis']
+            error_analysis = analysis_results["error_analysis"]
             f.write(f"Total Samples: {error_analysis['total_samples']}\n")
             f.write(f"Total Errors: {error_analysis['total_errors']}\n")
             f.write(f"Error Rate: {error_analysis['error_rate']:.3f}\n")
-            f.write(f"Mean Confidence (Errors): {error_analysis['error_confidences'].mean():.3f}\n")
-            f.write(f"Mean Confidence (Correct): {error_analysis['correct_confidences'].mean():.3f}\n\n")
+            f.write(
+                f"Mean Confidence (Errors): {error_analysis['error_confidences'].mean():.3f}\n"
+            )
+            f.write(
+                f"Mean Confidence (Correct): {error_analysis['correct_confidences'].mean():.3f}\n\n"
+            )
 
         f.write("RECOMMENDATIONS:\n")
         f.write("-" * 15 + "\n")
-        f.write("1. Focus on the top contributing features identified in the analysis\n")
+        f.write(
+            "1. Focus on the top contributing features identified in the analysis\n"
+        )
         f.write("2. Investigate samples with low prediction confidence\n")
         f.write("3. Consider feature engineering based on SHAP and LIME insights\n")
         f.write("4. Review misclassified samples to understand model limitations\n")
@@ -201,16 +223,35 @@ def generate_analysis_report(
 
 def main():
     """Main function to run the analysis."""
-    parser = argparse.ArgumentParser(description="Analyze model predictions using interpretability tools")
-    parser.add_argument("--model_path", type=str, required=True, help="Path to the trained model file")
-    parser.add_argument("--data_path", type=str, required=True, help="Path to the CSV data file")
-    parser.add_argument("--output_dir", type=str, default="analysis_output", help="Output directory for results")
-    parser.add_argument("--sample_size", type=int, default=100, help="Sample size for SHAP analysis")
-    parser.add_argument(
-        "--analyze_samples", type=str, help="Comma-separated list of sample indices to analyze in detail"
+    parser = argparse.ArgumentParser(
+        description="Analyze model predictions using interpretability tools"
     )
-    parser.add_argument("--skip_shap", action="store_true", help="Skip SHAP analysis (faster)")
-    parser.add_argument("--skip_lime", action="store_true", help="Skip LIME analysis (faster)")
+    parser.add_argument(
+        "--model_path", type=str, required=True, help="Path to the trained model file"
+    )
+    parser.add_argument(
+        "--data_path", type=str, required=True, help="Path to the CSV data file"
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=str,
+        default="analysis_output",
+        help="Output directory for results",
+    )
+    parser.add_argument(
+        "--sample_size", type=int, default=100, help="Sample size for SHAP analysis"
+    )
+    parser.add_argument(
+        "--analyze_samples",
+        type=str,
+        help="Comma-separated list of sample indices to analyze in detail",
+    )
+    parser.add_argument(
+        "--skip_shap", action="store_true", help="Skip SHAP analysis (faster)"
+    )
+    parser.add_argument(
+        "--skip_lime", action="store_true", help="Skip LIME analysis (faster)"
+    )
 
     args = parser.parse_args()
 
@@ -220,11 +261,17 @@ def main():
 
     # Prepare data for analysis
     log.info("Preparing data for analysis...")
-    df_processed, feature_columns = prepare_df_for_model(df, add_shifted_features=True, verbose=True)
+    df_processed, feature_columns = prepare_df_for_model(
+        df, add_shifted_features=True, verbose=True
+    )
 
     # Separate features and labels
     X = df_processed[feature_columns]
-    y_true = df_processed['LabelledClass'] if 'LabelledClass' in df_processed.columns else None
+    y_true = (
+        df_processed["LabelledClass"]
+        if "LabelledClass" in df_processed.columns
+        else None
+    )
 
     log.info(f"Data shape: {X.shape}")
     log.info(f"Number of features: {len(feature_columns)}")
@@ -234,7 +281,9 @@ def main():
     model = load_model(args.model_path)
 
     # Initialize analyzer
-    class_names = [TextClass(CLASS_MAP_INV[i]).name for i in sorted(CLASS_MAP_INV.keys())]
+    class_names = [
+        TextClass(CLASS_MAP_INV[i]).name for i in sorted(CLASS_MAP_INV.keys())
+    ]
     analyzer = ModelInterpretabilityAnalyzer(model, feature_columns, class_names)
 
     # Run comprehensive analysis
@@ -243,21 +292,24 @@ def main():
 
     # Feature importance analysis
     log.info("Running feature importance analysis...")
-    analysis_results['feature_importance'] = analyzer.analyze_feature_importance(
+    analysis_results["feature_importance"] = analyzer.analyze_feature_importance(
         top_n=20, save_plot=True, output_dir=args.output_dir
     )
 
     # Tree structure analysis
     log.info("Running tree structure analysis...")
-    analysis_results['tree_structure'] = analyzer.analyze_tree_structure(
+    analysis_results["tree_structure"] = analyzer.analyze_tree_structure(
         tree_index=0, max_depth=3, save_text=True, output_dir=args.output_dir
     )
 
     # SHAP analysis (if not skipped)
     if not args.skip_shap:
         log.info("Running SHAP analysis...")
-        analysis_results['shap'] = analyzer.analyze_shap_values(
-            X=X, sample_size=args.sample_size, save_plots=True, output_dir=args.output_dir
+        analysis_results["shap"] = analyzer.analyze_shap_values(
+            X=X,
+            sample_size=args.sample_size,
+            save_plots=True,
+            output_dir=args.output_dir,
         )
     else:
         log.info("Skipping SHAP analysis as requested")
@@ -265,14 +317,16 @@ def main():
     # LIME analysis (if not skipped)
     if not args.skip_lime:
         log.info("Running LIME analysis...")
-        analysis_results['lime'] = analyzer.analyze_lime_explanations(X=X, save_plots=True, output_dir=args.output_dir)
+        analysis_results["lime"] = analyzer.analyze_lime_explanations(
+            X=X, save_plots=True, output_dir=args.output_dir
+        )
     else:
         log.info("Skipping LIME analysis as requested")
 
     # Error analysis (if true labels available)
     if y_true is not None:
         log.info("Running error analysis...")
-        analysis_results['error_analysis'] = analyzer.analyze_prediction_errors(
+        analysis_results["error_analysis"] = analyzer.analyze_prediction_errors(
             X=X, y_true=y_true, save_plots=True, output_dir=args.output_dir
         )
     else:
@@ -280,10 +334,12 @@ def main():
 
     # Analyze specific samples if requested
     if args.analyze_samples:
-        sample_indices = [int(x.strip()) for x in args.analyze_samples.split(',')]
+        sample_indices = [int(x.strip()) for x in args.analyze_samples.split(",")]
         log.info(f"Analyzing specific samples: {sample_indices}")
-        specific_results = analyze_specific_predictions(analyzer, X, y_true, sample_indices, args.output_dir)
-        analysis_results['specific_predictions'] = specific_results
+        specific_results = analyze_specific_predictions(
+            analyzer, X, y_true, sample_indices, args.output_dir
+        )
+        analysis_results["specific_predictions"] = specific_results
 
     # Generate comprehensive report
     generate_analysis_report(analyzer, analysis_results, args.output_dir)

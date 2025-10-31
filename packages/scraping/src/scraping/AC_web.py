@@ -30,14 +30,14 @@ from bs4 import BeautifulSoup
 from logconfig import configure_logging_from_argv
 
 log = logging.getLogger(__name__)
-'''
+"""
 log.setLevel(logging.DEBUG)
 
 # Console (stdout) handler
 console_handler = logging.StreamHandler(sys.stdout)
 console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 console_handler.setFormatter(console_formatter)
-'''
+"""
 
 # for logging
 logList = []
@@ -291,7 +291,7 @@ def check_for_new_documents(
                     embeddingLog="notEmbedded",
                     noOfParagraphs=0,
                     lastScrapeDate=datetime.today().date(),
-                    sourceProject = 0,
+                    sourceProject=0,
                 )
                 download_list.append(document)
             except Exception:
@@ -598,8 +598,8 @@ if __name__ == "__main__":
     try:
         props = None
 
-        #configure the logging level
-        remaining_args = configure_logging_from_argv(default_level='INFO')
+        # configure the logging level
+        remaining_args = configure_logging_from_argv(default_level="INFO")
 
         docIdsList = []
         if len(remaining_args) >= 1:

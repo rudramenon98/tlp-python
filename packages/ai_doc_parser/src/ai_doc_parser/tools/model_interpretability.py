@@ -27,7 +27,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.tree import export_text
 
 # Suppress warnings for cleaner output
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
 
 # Try to import optional dependencies
 try:
@@ -58,7 +58,10 @@ class ModelInterpretabilityAnalyzer:
     """
 
     def __init__(
-        self, model: RandomForestClassifier, feature_names: List[str], class_names: Optional[List[str]] = None
+        self,
+        model: RandomForestClassifier,
+        feature_names: List[str],
+        class_names: Optional[List[str]] = None,
     ):
         """
         Initialize the analyzer with a trained model.
@@ -70,7 +73,9 @@ class ModelInterpretabilityAnalyzer:
         """
         self.model = model
         self.feature_names = feature_names
-        self.class_names = class_names or [f"Class_{i}" for i in range(len(model.classes_))]
+        self.class_names = class_names or [
+            f"Class_{i}" for i in range(len(model.classes_))
+        ]
         self.shap_explainer = None
         self.lime_explainer = None
 
@@ -82,7 +87,10 @@ class ModelInterpretabilityAnalyzer:
             )
 
     def analyze_feature_importance(
-        self, top_n: int = 20, save_plot: bool = True, output_dir: str = "analysis_output"
+        self,
+        top_n: int = 20,
+        save_plot: bool = True,
+        output_dir: str = "analysis_output",
     ) -> Dict[str, Any]:
         """
         Analyze and visualize feature importance from the RandomForest model.
@@ -101,9 +109,9 @@ class ModelInterpretabilityAnalyzer:
         importance_scores = self.model.feature_importances_
 
         # Create feature importance dataframe
-        importance_df = pd.DataFrame({'feature': self.feature_names, 'importance': importance_scores}).sort_values(
-            'importance', ascending=False
-        )
+        importance_df = pd.DataFrame(
+            {"feature": self.feature_names, "importance": importance_scores}
+        ).sort_values("importance", ascending=False)
 
         # Get top N features
         top_features = importance_df.head(top_n)
@@ -112,21 +120,28 @@ class ModelInterpretabilityAnalyzer:
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
 
         # Horizontal bar plot
-        ax1.barh(range(len(top_features)), top_features['importance'])
+        ax1.barh(range(len(top_features)), top_features["importance"])
         ax1.set_yticks(range(len(top_features)))
-        ax1.set_yticklabels(top_features['feature'], fontsize=10)
-        ax1.set_xlabel('Feature Importance')
-        ax1.set_title(f'Top {top_n} Feature Importance')
+        ax1.set_yticklabels(top_features["feature"], fontsize=10)
+        ax1.set_xlabel("Feature Importance")
+        ax1.set_title(f"Top {top_n} Feature Importance")
         ax1.invert_yaxis()
 
         # Cumulative importance plot
-        cumulative_importance = importance_df['importance'].cumsum()
-        ax2.plot(range(1, len(cumulative_importance) + 1), cumulative_importance, 'b-', linewidth=2)
-        ax2.axhline(y=0.8, color='r', linestyle='--', label='80% of total importance')
-        ax2.axhline(y=0.9, color='orange', linestyle='--', label='90% of total importance')
-        ax2.set_xlabel('Number of Features')
-        ax2.set_ylabel('Cumulative Importance')
-        ax2.set_title('Cumulative Feature Importance')
+        cumulative_importance = importance_df["importance"].cumsum()
+        ax2.plot(
+            range(1, len(cumulative_importance) + 1),
+            cumulative_importance,
+            "b-",
+            linewidth=2,
+        )
+        ax2.axhline(y=0.8, color="r", linestyle="--", label="80% of total importance")
+        ax2.axhline(
+            y=0.9, color="orange", linestyle="--", label="90% of total importance"
+        )
+        ax2.set_xlabel("Number of Features")
+        ax2.set_ylabel("Cumulative Importance")
+        ax2.set_title("Cumulative Feature Importance")
         ax2.legend()
         ax2.grid(True, alpha=0.3)
 
@@ -135,26 +150,36 @@ class ModelInterpretabilityAnalyzer:
         # Save plot if requested
         if save_plot:
             os.makedirs(output_dir, exist_ok=True)
-            plot_path = os.path.join(output_dir, 'feature_importance_analysis.png')
-            plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+            plot_path = os.path.join(output_dir, "feature_importance_analysis.png")
+            plt.savefig(plot_path, dpi=300, bbox_inches="tight")
             log.info(f"Feature importance plot saved to: {plot_path}")
 
         # Print summary statistics
         log.info(f"\nFeature Importance Analysis Summary:")
         log.info(f"Total features: {len(importance_df)}")
-        log.info(f"Top {top_n} features account for {top_features['importance'].sum():.3f} of total importance")
-        log.info(f"Features needed for 80% importance: {len(cumulative_importance[cumulative_importance <= 0.8])}")
-        log.info(f"Features needed for 90% importance: {len(cumulative_importance[cumulative_importance <= 0.9])}")
+        log.info(
+            f"Top {top_n} features account for {top_features['importance'].sum():.3f} of total importance"
+        )
+        log.info(
+            f"Features needed for 80% importance: {len(cumulative_importance[cumulative_importance <= 0.8])}"
+        )
+        log.info(
+            f"Features needed for 90% importance: {len(cumulative_importance[cumulative_importance <= 0.9])}"
+        )
 
         return {
-            'importance_df': importance_df,
-            'top_features': top_features,
-            'cumulative_importance': cumulative_importance,
-            'plot': fig,
+            "importance_df": importance_df,
+            "top_features": top_features,
+            "cumulative_importance": cumulative_importance,
+            "plot": fig,
         }
 
     def analyze_tree_structure(
-        self, tree_index: int = 0, max_depth: int = 3, save_text: bool = True, output_dir: str = "analysis_output"
+        self,
+        tree_index: int = 0,
+        max_depth: int = 3,
+        save_text: bool = True,
+        output_dir: str = "analysis_output",
     ) -> str:
         """
         Analyze the structure of a specific tree in the RandomForest.
@@ -171,18 +196,22 @@ class ModelInterpretabilityAnalyzer:
         log.info(f"Analyzing tree {tree_index} structure...")
 
         if tree_index >= len(self.model.estimators_):
-            raise ValueError(f"Tree index {tree_index} out of range. Model has {len(self.model.estimators_)} trees.")
+            raise ValueError(
+                f"Tree index {tree_index} out of range. Model has {len(self.model.estimators_)} trees."
+            )
 
         tree = self.model.estimators_[tree_index]
 
         # Export tree as text
-        tree_text = export_text(tree, feature_names=self.feature_names, max_depth=max_depth)
+        tree_text = export_text(
+            tree, feature_names=self.feature_names, max_depth=max_depth
+        )
 
         # Save to file if requested
         if save_text:
             os.makedirs(output_dir, exist_ok=True)
-            tree_path = os.path.join(output_dir, f'tree_{tree_index}_structure.txt')
-            with open(tree_path, 'w') as f:
+            tree_path = os.path.join(output_dir, f"tree_{tree_index}_structure.txt")
+            with open(tree_path, "w") as f:
                 f.write(tree_text)
             log.info(f"Tree structure saved to: {tree_path}")
 
@@ -190,7 +219,11 @@ class ModelInterpretabilityAnalyzer:
         return tree_text
 
     def analyze_shap_values(
-        self, X: pd.DataFrame, sample_size: int = 100, save_plots: bool = True, output_dir: str = "analysis_output"
+        self,
+        X: pd.DataFrame,
+        sample_size: int = 100,
+        save_plots: bool = True,
+        output_dir: str = "analysis_output",
     ) -> Dict[str, Any]:
         """
         Perform SHAP analysis for global and local explanations.
@@ -236,20 +269,28 @@ class ModelInterpretabilityAnalyzer:
 
         # 1. Summary plot
         plt.subplot(2, 3, 1)
-        shap.summary_plot(shap_values_global, X_sample, feature_names=self.feature_names, show=False, max_display=15)
-        plt.title('SHAP Summary Plot')
+        shap.summary_plot(
+            shap_values_global,
+            X_sample,
+            feature_names=self.feature_names,
+            show=False,
+            max_display=15,
+        )
+        plt.title("SHAP Summary Plot")
 
         # 2. Feature importance from SHAP
         plt.subplot(2, 3, 2)
         shap_importance = np.abs(shap_values_global).mean(0)
         feature_importance_df = pd.DataFrame(
-            {'feature': self.feature_names, 'shap_importance': shap_importance}
-        ).sort_values('shap_importance', ascending=True)
+            {"feature": self.feature_names, "shap_importance": shap_importance}
+        ).sort_values("shap_importance", ascending=True)
 
-        plt.barh(range(len(feature_importance_df)), feature_importance_df['shap_importance'])
-        plt.yticks(range(len(feature_importance_df)), feature_importance_df['feature'])
-        plt.xlabel('Mean |SHAP value|')
-        plt.title('SHAP Feature Importance')
+        plt.barh(
+            range(len(feature_importance_df)), feature_importance_df["shap_importance"]
+        )
+        plt.yticks(range(len(feature_importance_df)), feature_importance_df["feature"])
+        plt.xlabel("Mean |SHAP value|")
+        plt.title("SHAP Feature Importance")
 
         # 3. Waterfall plot for first sample
         plt.subplot(2, 3, 3)
@@ -263,9 +304,13 @@ class ModelInterpretabilityAnalyzer:
             )
         else:
             shap.waterfall_plot(
-                self.shap_explainer.expected_value, shap_values[0], X_sample.iloc[0], show=False, max_display=10
+                self.shap_explainer.expected_value,
+                shap_values[0],
+                X_sample.iloc[0],
+                show=False,
+                max_display=10,
             )
-        plt.title('SHAP Waterfall Plot (First Sample)')
+        plt.title("SHAP Waterfall Plot (First Sample)")
 
         # 4. Partial dependence plot for top feature
         plt.subplot(2, 3, 4)
@@ -280,15 +325,15 @@ class ModelInterpretabilityAnalyzer:
             feature_expected_value=True,
             show=False,
         )
-        plt.title(f'Partial Dependence: {top_feature_name}')
+        plt.title(f"Partial Dependence: {top_feature_name}")
 
         # 5. SHAP values distribution
         plt.subplot(2, 3, 5)
-        plt.hist(shap_values_global.flatten(), bins=50, alpha=0.7, edgecolor='black')
-        plt.xlabel('SHAP Value')
-        plt.ylabel('Frequency')
-        plt.title('SHAP Values Distribution')
-        plt.axvline(x=0, color='red', linestyle='--', alpha=0.7)
+        plt.hist(shap_values_global.flatten(), bins=50, alpha=0.7, edgecolor="black")
+        plt.xlabel("SHAP Value")
+        plt.ylabel("Frequency")
+        plt.title("SHAP Values Distribution")
+        plt.axvline(x=0, color="red", linestyle="--", alpha=0.7)
 
         # 6. Feature correlation with SHAP values
         plt.subplot(2, 3, 6)
@@ -297,34 +342,34 @@ class ModelInterpretabilityAnalyzer:
             corr = np.corrcoef(X_sample.iloc[:, i], shap_values_global[:, i])[0, 1]
             correlations.append(corr)
 
-        corr_df = pd.DataFrame({'feature': self.feature_names, 'correlation': correlations}).sort_values(
-            'correlation', key=abs, ascending=True
-        )
+        corr_df = pd.DataFrame(
+            {"feature": self.feature_names, "correlation": correlations}
+        ).sort_values("correlation", key=abs, ascending=True)
 
-        plt.barh(range(len(corr_df)), corr_df['correlation'])
-        plt.yticks(range(len(corr_df)), corr_df['feature'])
-        plt.xlabel('Correlation with SHAP Values')
-        plt.title('Feature-SHAP Correlation')
-        plt.axvline(x=0, color='red', linestyle='--', alpha=0.7)
+        plt.barh(range(len(corr_df)), corr_df["correlation"])
+        plt.yticks(range(len(corr_df)), corr_df["feature"])
+        plt.xlabel("Correlation with SHAP Values")
+        plt.title("Feature-SHAP Correlation")
+        plt.axvline(x=0, color="red", linestyle="--", alpha=0.7)
 
         plt.tight_layout()
 
         # Save plots if requested
         if save_plots:
             os.makedirs(output_dir, exist_ok=True)
-            plot_path = os.path.join(output_dir, 'shap_analysis.png')
-            plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+            plot_path = os.path.join(output_dir, "shap_analysis.png")
+            plt.savefig(plot_path, dpi=300, bbox_inches="tight")
             log.info(f"SHAP analysis plot saved to: {plot_path}")
 
         log.info("SHAP analysis completed")
 
         return {
-            'shap_values': shap_values,
-            'explainer': self.shap_explainer,
-            'feature_importance': feature_importance_df,
-            'correlations': corr_df,
-            'plot': fig,
-            'sample_indices': sample_indices,
+            "shap_values": shap_values,
+            "explainer": self.shap_explainer,
+            "feature_importance": feature_importance_df,
+            "correlations": corr_df,
+            "plot": fig,
+            "sample_indices": sample_indices,
         }
 
     def analyze_lime_explanations(
@@ -363,7 +408,7 @@ class ModelInterpretabilityAnalyzer:
             X.values,
             feature_names=self.feature_names,
             class_names=self.class_names,
-            mode='classification',
+            mode="classification",
             discretize_continuous=True,
         )
 
@@ -397,35 +442,41 @@ class ModelInterpretabilityAnalyzer:
             features = [item[0] for item in exp_list]
             weights = [item[1] for item in exp_list]
 
-            colors = ['red' if w < 0 else 'green' for w in weights]
+            colors = ["red" if w < 0 else "green" for w in weights]
             axes[i].barh(range(len(features)), weights, color=colors, alpha=0.7)
             axes[i].set_yticks(range(len(features)))
             axes[i].set_yticklabels(features)
-            axes[i].set_xlabel('LIME Weight')
-            axes[i].set_title(f'Sample {sample_indices[i]} - Predicted: {self.class_names[pred]}')
-            axes[i].axvline(x=0, color='black', linestyle='-', alpha=0.3)
+            axes[i].set_xlabel("LIME Weight")
+            axes[i].set_title(
+                f"Sample {sample_indices[i]} - Predicted: {self.class_names[pred]}"
+            )
+            axes[i].axvline(x=0, color="black", linestyle="-", alpha=0.3)
 
         plt.tight_layout()
 
         # Save plots if requested
         if save_plots:
             os.makedirs(output_dir, exist_ok=True)
-            plot_path = os.path.join(output_dir, 'lime_analysis.png')
-            plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+            plot_path = os.path.join(output_dir, "lime_analysis.png")
+            plt.savefig(plot_path, dpi=300, bbox_inches="tight")
             log.info(f"LIME analysis plot saved to: {plot_path}")
 
         log.info("LIME analysis completed")
 
         return {
-            'explanations': explanations,
-            'explainer': self.lime_explainer,
-            'sample_indices': sample_indices,
-            'predictions': predictions,
-            'plot': fig,
+            "explanations": explanations,
+            "explainer": self.lime_explainer,
+            "sample_indices": sample_indices,
+            "predictions": predictions,
+            "plot": fig,
         }
 
     def analyze_prediction_errors(
-        self, X: pd.DataFrame, y_true: pd.Series, save_plots: bool = True, output_dir: str = "analysis_output"
+        self,
+        X: pd.DataFrame,
+        y_true: pd.Series,
+        save_plots: bool = True,
+        output_dir: str = "analysis_output",
     ) -> Dict[str, Any]:
         """
         Analyze prediction errors to understand misclassifications.
@@ -454,39 +505,51 @@ class ModelInterpretabilityAnalyzer:
 
         # Create analysis
         error_analysis = {
-            'total_samples': len(X),
-            'total_errors': len(error_indices),
-            'error_rate': len(error_indices) / len(X),
-            'error_indices': error_indices,
-            'error_confidences': max_proba[error_indices],
-            'correct_confidences': max_proba[~errors],
+            "total_samples": len(X),
+            "total_errors": len(error_indices),
+            "error_rate": len(error_indices) / len(X),
+            "error_indices": error_indices,
+            "error_confidences": max_proba[error_indices],
+            "correct_confidences": max_proba[~errors],
         }
 
         # Create visualizations
         fig, axes = plt.subplots(2, 2, figsize=(15, 12))
 
         # 1. Error rate by class
-        error_by_class = pd.crosstab(y_true, errors, normalize='index')
-        error_by_class.plot(kind='bar', ax=axes[0, 0])
-        axes[0, 0].set_title('Error Rate by True Class')
-        axes[0, 0].set_xlabel('True Class')
-        axes[0, 0].set_ylabel('Proportion')
-        axes[0, 0].legend(['Correct', 'Error'])
+        error_by_class = pd.crosstab(y_true, errors, normalize="index")
+        error_by_class.plot(kind="bar", ax=axes[0, 0])
+        axes[0, 0].set_title("Error Rate by True Class")
+        axes[0, 0].set_xlabel("True Class")
+        axes[0, 0].set_ylabel("Proportion")
+        axes[0, 0].legend(["Correct", "Error"])
 
         # 2. Confidence distribution for errors vs correct
-        axes[0, 1].hist(error_analysis['error_confidences'], bins=30, alpha=0.7, label='Errors', color='red')
-        axes[0, 1].hist(error_analysis['correct_confidences'], bins=30, alpha=0.7, label='Correct', color='green')
-        axes[0, 1].set_xlabel('Prediction Confidence')
-        axes[0, 1].set_ylabel('Frequency')
-        axes[0, 1].set_title('Confidence Distribution: Errors vs Correct')
+        axes[0, 1].hist(
+            error_analysis["error_confidences"],
+            bins=30,
+            alpha=0.7,
+            label="Errors",
+            color="red",
+        )
+        axes[0, 1].hist(
+            error_analysis["correct_confidences"],
+            bins=30,
+            alpha=0.7,
+            label="Correct",
+            color="green",
+        )
+        axes[0, 1].set_xlabel("Prediction Confidence")
+        axes[0, 1].set_ylabel("Frequency")
+        axes[0, 1].set_title("Confidence Distribution: Errors vs Correct")
         axes[0, 1].legend()
 
         # 3. Confusion matrix
         cm = confusion_matrix(y_true, y_pred)
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=axes[1, 0])
-        axes[1, 0].set_title('Confusion Matrix')
-        axes[1, 0].set_xlabel('Predicted')
-        axes[1, 0].set_ylabel('True')
+        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", ax=axes[1, 0])
+        axes[1, 0].set_title("Confusion Matrix")
+        axes[1, 0].set_xlabel("Predicted")
+        axes[1, 0].set_ylabel("True")
 
         # 4. Feature importance for errors vs correct
         if len(error_indices) > 0:
@@ -495,28 +558,33 @@ class ModelInterpretabilityAnalyzer:
             axes[1, 1].text(
                 0.5,
                 0.5,
-                'Feature importance\nanalysis for errors\nwould go here',
-                ha='center',
-                va='center',
+                "Feature importance\nanalysis for errors\nwould go here",
+                ha="center",
+                va="center",
                 transform=axes[1, 1].transAxes,
             )
-            axes[1, 1].set_title('Error Analysis (Placeholder)')
+            axes[1, 1].set_title("Error Analysis (Placeholder)")
 
         plt.tight_layout()
 
         # Save plots if requested
         if save_plots:
             os.makedirs(output_dir, exist_ok=True)
-            plot_path = os.path.join(output_dir, 'prediction_error_analysis.png')
-            plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+            plot_path = os.path.join(output_dir, "prediction_error_analysis.png")
+            plt.savefig(plot_path, dpi=300, bbox_inches="tight")
             log.info(f"Prediction error analysis plot saved to: {plot_path}")
 
-        log.info(f"Error analysis completed. Error rate: {error_analysis['error_rate']:.3f}")
+        log.info(
+            f"Error analysis completed. Error rate: {error_analysis['error_rate']:.3f}"
+        )
 
         return error_analysis
 
     def comprehensive_analysis(
-        self, X: pd.DataFrame, y_true: Optional[pd.Series] = None, output_dir: str = "analysis_output"
+        self,
+        X: pd.DataFrame,
+        y_true: Optional[pd.Series] = None,
+        output_dir: str = "analysis_output",
     ) -> Dict[str, Any]:
         """
         Run a comprehensive analysis using all available methods.
@@ -537,13 +605,15 @@ class ModelInterpretabilityAnalyzer:
         log.info("=" * 50)
         log.info("1. FEATURE IMPORTANCE ANALYSIS")
         log.info("=" * 50)
-        results['feature_importance'] = self.analyze_feature_importance(top_n=20, save_plot=True, output_dir=output_dir)
+        results["feature_importance"] = self.analyze_feature_importance(
+            top_n=20, save_plot=True, output_dir=output_dir
+        )
 
         # 2. Tree Structure Analysis
         log.info("=" * 50)
         log.info("2. TREE STRUCTURE ANALYSIS")
         log.info("=" * 50)
-        results['tree_structure'] = self.analyze_tree_structure(
+        results["tree_structure"] = self.analyze_tree_structure(
             tree_index=0, max_depth=3, save_text=True, output_dir=output_dir
         )
 
@@ -552,7 +622,9 @@ class ModelInterpretabilityAnalyzer:
             log.info("=" * 50)
             log.info("3. SHAP ANALYSIS")
             log.info("=" * 50)
-            results['shap'] = self.analyze_shap_values(X=X, sample_size=100, save_plots=True, output_dir=output_dir)
+            results["shap"] = self.analyze_shap_values(
+                X=X, sample_size=100, save_plots=True, output_dir=output_dir
+            )
         else:
             log.warning("Skipping SHAP analysis - not available")
 
@@ -561,8 +633,11 @@ class ModelInterpretabilityAnalyzer:
             log.info("=" * 50)
             log.info("4. LIME ANALYSIS")
             log.info("=" * 50)
-            results['lime'] = self.analyze_lime_explanations(
-                X=X, sample_indices=list(range(min(5, len(X)))), save_plots=True, output_dir=output_dir
+            results["lime"] = self.analyze_lime_explanations(
+                X=X,
+                sample_indices=list(range(min(5, len(X)))),
+                save_plots=True,
+                output_dir=output_dir,
             )
         else:
             log.warning("Skipping LIME analysis - not available")
@@ -572,7 +647,7 @@ class ModelInterpretabilityAnalyzer:
             log.info("=" * 50)
             log.info("5. PREDICTION ERROR ANALYSIS")
             log.info("=" * 50)
-            results['error_analysis'] = self.analyze_prediction_errors(
+            results["error_analysis"] = self.analyze_prediction_errors(
                 X=X, y_true=y_true, save_plots=True, output_dir=output_dir
             )
         else:
@@ -619,8 +694,14 @@ def load_model_and_analyze(
 if __name__ == "__main__":
     # This would be used with actual model and data
     print("Model Interpretability Analysis Tool")
-    print("This module provides comprehensive analysis tools for understanding model predictions.")
+    print(
+        "This module provides comprehensive analysis tools for understanding model predictions."
+    )
     print("\nUsage:")
-    print("1. Initialize analyzer: analyzer = ModelInterpretabilityAnalyzer(model, feature_names)")
+    print(
+        "1. Initialize analyzer: analyzer = ModelInterpretabilityAnalyzer(model, feature_names)"
+    )
     print("2. Run analysis: results = analyzer.comprehensive_analysis(X, y_true)")
-    print("3. Or use convenience function: results = load_model_and_analyze(model_path, feature_names, X, y_true)")
+    print(
+        "3. Or use convenience function: results = load_model_and_analyze(model_path, feature_names, X, y_true)"
+    )

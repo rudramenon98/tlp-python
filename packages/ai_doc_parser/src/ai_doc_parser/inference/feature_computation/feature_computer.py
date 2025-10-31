@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 def bin_feature(df: pd.DataFrame, feature: str) -> pd.Series:
     # split into 9 bins based on mean and standard deviation
     # Coerce to numeric and work with finite values for stats
-    feature_series = pd.to_numeric(df[feature], errors='coerce')
+    feature_series = pd.to_numeric(df[feature], errors="coerce")
     feature_values = feature_series.values
     finite_mask = np.isfinite(feature_values)
     finite_values = feature_values[finite_mask]
@@ -91,11 +91,11 @@ def bin_feature(df: pd.DataFrame, feature: str) -> pd.Series:
         bins=edges,
         labels=False,
         include_lowest=True,
-        duplicates='drop',
+        duplicates="drop",
     )
 
     # Normalize codes to start at 0 and cap at 8
-    binned_series = binned_codes.astype('Float64')  # preserve NaN
+    binned_series = binned_codes.astype("Float64")  # preserve NaN
     if not binned_series.isna().all():
         # Determine the bin index where the mean value falls (pre-normalization)
         mean_code_raw = int(
@@ -104,7 +104,7 @@ def bin_feature(df: pd.DataFrame, feature: str) -> pd.Series:
                 bins=edges,
                 labels=False,
                 include_lowest=True,
-                duplicates='drop',
+                duplicates="drop",
             ).iloc[0]
         )
 
@@ -164,26 +164,26 @@ def space_below(row: pd.Series, prev_row: pd.Series, next_row: pd.Series) -> flo
 
 def more_space_below(row: pd.Series) -> int:
     """Check if there is more space below than above."""
-    return get_ternary_diff(row['space_below'], row['space_above'])
+    return get_ternary_diff(row["space_below"], row["space_above"])
 
 
 #### Font Features ####
 def font_size(row: pd.Series) -> float:
-    return float(row['major_font_size'])
+    return float(row["major_font_size"])
 
 
 def is_bold(row: pd.Series) -> int:
-    major_font_family = row['major_font_family']
+    major_font_family = row["major_font_family"]
     return int("bold" in str(major_font_family).lower())
 
 
 def is_italic(row: pd.Series) -> int:
-    major_font_family = row['major_font_family']
+    major_font_family = row["major_font_family"]
     return int("italic" in str(major_font_family).lower())
 
 
 def font_color(row: pd.Series) -> str:
-    return row['major_color']
+    return row["major_color"]
 
 
 #### Text Features ####
@@ -300,7 +300,9 @@ def starts_with_keyword(row: pd.Series) -> int:
     text = row["text"]
     special_words = ["appendix", "reference", "chapter", "section", "subsection"]
     is_special_word = bool(list(filter(text.lower().startswith, special_words)))
-    is_special_word_in_first_word = any(ext in text.lower().split()[0] for ext in special_words)
+    is_special_word_in_first_word = any(
+        ext in text.lower().split()[0] for ext in special_words
+    )
     return int(is_special_word or is_special_word_in_first_word)
 
 
@@ -346,7 +348,7 @@ def prev_page_diff(row: pd.Series, prev_row: pd.Series, next_row: pd.Series) -> 
     """Get difference in page number between previous and current row."""
     if prev_row is None:
         return np.nan
-    return int(row['PageNumber'] != prev_row['PageNumber'])
+    return int(row["PageNumber"] != prev_row["PageNumber"])
 
 
 def get_ternary_diff(row: pd.Series, row2: pd.Series, feature: str) -> float:
@@ -368,18 +370,25 @@ def get_ternary_diff(row: pd.Series, row2: pd.Series, feature: str) -> float:
     return -1
 
 
-def get_diff_vectorized(df: pd.DataFrame, df_shifted: pd.DataFrame, feature: str) -> pd.Series:
+def get_diff_vectorized(
+    df: pd.DataFrame, df_shifted: pd.DataFrame, feature: str
+) -> pd.Series:
     """Vectorized version of get_diff for entire DataFrame."""
     return df[feature] - df_shifted[feature]
 
 
-def get_binary_diff_vectorized(df: pd.DataFrame, df_shifted: pd.DataFrame, feature: str) -> pd.Series:
+def get_binary_diff_vectorized(
+    df: pd.DataFrame, df_shifted: pd.DataFrame, feature: str
+) -> pd.Series:
     """Vectorized version of get_binary_diff for entire DataFrame."""
     return (df[feature] != df_shifted[feature]).astype(int)
 
 
 def get_ternary_diff_vectorized(
-    df: pd.DataFrame, df_shifted: pd.DataFrame, feature: str, diff_threshold: float = 0.0
+    df: pd.DataFrame,
+    df_shifted: pd.DataFrame,
+    feature: str,
+    diff_threshold: float = 0.0,
 ) -> pd.Series:
     """Vectorized version of get_ternary_diff for entire DataFrame."""
     # Handle None/NaN values
@@ -414,58 +423,76 @@ def get_ternary_diff_vectorized(
     return result
 
 
-def prev_line_space_below_diff(row: pd.Series, prev_row: pd.Series, next_row: pd.Series) -> float:
+def prev_line_space_below_diff(
+    row: pd.Series, prev_row: pd.Series, next_row: pd.Series
+) -> float:
     """Get difference in space below between previous and current row."""
-    if row['space_above'] == row['space_below']:
+    if row["space_above"] == row["space_below"]:
         return 0
-    if row['space_above'] > row['space_below']:
+    if row["space_above"] > row["space_below"]:
         return 1
     return -1
 
 
-def prev_line_left_margin_diff(row: pd.Series, prev_row: pd.Series, next_row: pd.Series) -> float:
+def prev_line_left_margin_diff(
+    row: pd.Series, prev_row: pd.Series, next_row: pd.Series
+) -> float:
     """Get difference in left margin between previous and current row."""
-    return get_ternary_diff(row, prev_row, 'left_indent')
+    return get_ternary_diff(row, prev_row, "left_indent")
 
 
-def prev_line_right_space_diff(row: pd.Series, prev_row: pd.Series, next_row: pd.Series) -> float:
+def prev_line_right_space_diff(
+    row: pd.Series, prev_row: pd.Series, next_row: pd.Series
+) -> float:
     """Get difference in right space between previous and current row."""
-    return get_ternary_diff(row, prev_row, 'right_space')
+    return get_ternary_diff(row, prev_row, "right_space")
 
 
-def prev_line_font_size_diff(row: pd.Series, prev_row: pd.Series, next_row: pd.Series) -> float:
+def prev_line_font_size_diff(
+    row: pd.Series, prev_row: pd.Series, next_row: pd.Series
+) -> float:
     """Get difference in font size between previous and current row."""
-    return get_ternary_diff(row, prev_row, 'font_size')
+    return get_ternary_diff(row, prev_row, "font_size")
 
 
-def prev_line_font_family_diff(row: pd.Series, prev_row: pd.Series, next_row: pd.Series) -> float:
+def prev_line_font_family_diff(
+    row: pd.Series, prev_row: pd.Series, next_row: pd.Series
+) -> float:
     """Get difference in font family between previous and current row."""
-    return get_ternary_diff(row, prev_row, 'major_font_family')
+    return get_ternary_diff(row, prev_row, "major_font_family")
 
 
 def next_page_diff(row: pd.Series, prev_row: pd.Series, next_row: pd.Series) -> float:
     """Get difference in page number between current and next row."""
-    return int(row['PageNumber'] != next_row['PageNumber'])
+    return int(row["PageNumber"] != next_row["PageNumber"])
 
 
-def next_line_left_margin_diff(row: pd.Series, prev_row: pd.Series, next_row: pd.Series) -> float:
+def next_line_left_margin_diff(
+    row: pd.Series, prev_row: pd.Series, next_row: pd.Series
+) -> float:
     """Get difference in left margin between current and next row."""
-    return get_ternary_diff(row, next_row, 'left_indent')
+    return get_ternary_diff(row, next_row, "left_indent")
 
 
-def next_line_right_space_diff(row: pd.Series, prev_row: pd.Series, next_row: pd.Series) -> float:
+def next_line_right_space_diff(
+    row: pd.Series, prev_row: pd.Series, next_row: pd.Series
+) -> float:
     """Get difference in right space between current and next row."""
-    return get_ternary_diff(row, next_row, 'right_space')
+    return get_ternary_diff(row, next_row, "right_space")
 
 
-def next_line_font_size_diff(row: pd.Series, prev_row: pd.Series, next_row: pd.Series) -> float:
+def next_line_font_size_diff(
+    row: pd.Series, prev_row: pd.Series, next_row: pd.Series
+) -> float:
     """Get difference in font size between current and next row."""
-    return get_ternary_diff(row, next_row, 'font_size')
+    return get_ternary_diff(row, next_row, "font_size")
 
 
-def next_line_font_family_diff(row: pd.Series, prev_row: pd.Series, next_row: pd.Series) -> float:
+def next_line_font_family_diff(
+    row: pd.Series, prev_row: pd.Series, next_row: pd.Series
+) -> float:
     """Get difference in font family between current and next row."""
-    return get_ternary_diff(row, next_row, 'major_font_family')
+    return get_ternary_diff(row, next_row, "major_font_family")
 
 
 def compute_features(df: pd.DataFrame) -> pd.DataFrame:
@@ -517,23 +544,23 @@ def compute_features(df: pd.DataFrame) -> pd.DataFrame:
     df = order_blocks(df)
 
     # go page by page and compute which column each row is in
-    for page_number, page_df in df.groupby('PageNumber'):
-        ncols = max(page_df['ncols'])
+    for page_number, page_df in df.groupby("PageNumber"):
+        ncols = max(page_df["ncols"])
         if ncols == 1:
             # Update col_num for single-column pages
             # Use boolean indexing to ensure we update the correct rows
-            mask = df['PageNumber'] == page_number
-            df.loc[mask, 'col_num'] = 0
+            mask = df["PageNumber"] == page_number
+            df.loc[mask, "col_num"] = 0
             continue
-        x_range = (page_df['block_x0'].min(), page_df['block_x0'].max())
+        x_range = (page_df["block_x0"].min(), page_df["block_x0"].max())
         width = x_range[1] - x_range[0]
         col_width = width / ncols
         col_lines = [col_width * i + x_range[0] for i in range(ncols + 1)]
         for row_index, row in page_df.iterrows():
-            x0 = row['block_x0']
+            x0 = row["block_x0"]
             for i in range(len(col_lines)):
                 if x0 <= col_lines[i]:
-                    df.loc[row_index, 'col_num'] = i
+                    df.loc[row_index, "col_num"] = i
                     break
 
     # Define dictionary mapping column names to their corresponding functions
@@ -587,9 +614,9 @@ def compute_features(df: pd.DataFrame) -> pd.DataFrame:
         PREV = 1
         NEXT = 2
 
-    df['original_index'] = range(len(df))
-    extracted_class_df = df[df['ExtractedClass'].notna()]
-    df = df[df['ExtractedClass'].isna()]
+    df["original_index"] = range(len(df))
+    extracted_class_df = df[df["ExtractedClass"].notna()]
+    df = df[df["ExtractedClass"].isna()]
 
     # Apply each function to create the corresponding column
     for column_name, func in feature_functions.items():
@@ -599,29 +626,43 @@ def compute_features(df: pd.DataFrame) -> pd.DataFrame:
     # Compute relative features using vectorized operations
     log.info("Computing relative features")
 
-    df['space_above'] = get_diff_vectorized(df, df.shift(1), 'line_y0')
-    df['space_below'] = get_diff_vectorized(df.shift(-1), df, 'line_y0')
-    df.loc[df['space_above'] <= 0, 'space_above'] = np.nan
-    df.loc[df['space_below'] <= 0, 'space_below'] = np.nan
+    df["space_above"] = get_diff_vectorized(df, df.shift(1), "line_y0")
+    df["space_below"] = get_diff_vectorized(df.shift(-1), df, "line_y0")
+    df.loc[df["space_above"] <= 0, "space_above"] = np.nan
+    df.loc[df["space_below"] <= 0, "space_below"] = np.nan
 
     # Compute changed features
-    df['bold_changed'] = get_binary_diff_vectorized(df, df.shift(1), 'is_bold')
-    df['italic_changed'] = get_binary_diff_vectorized(df, df.shift(1), 'is_italic')
-    df['font_size_changed'] = get_ternary_diff_vectorized(df, df.shift(1), 'font_size')
-    df['font_color_changed'] = get_binary_diff_vectorized(df, df.shift(1), 'font_color')
-    df['font_family_changed'] = get_binary_diff_vectorized(df, df.shift(1), 'major_font_family')
+    df["bold_changed"] = get_binary_diff_vectorized(df, df.shift(1), "is_bold")
+    df["italic_changed"] = get_binary_diff_vectorized(df, df.shift(1), "is_italic")
+    df["font_size_changed"] = get_ternary_diff_vectorized(df, df.shift(1), "font_size")
+    df["font_color_changed"] = get_binary_diff_vectorized(df, df.shift(1), "font_color")
+    df["font_family_changed"] = get_binary_diff_vectorized(
+        df, df.shift(1), "major_font_family"
+    )
 
-    df['prev_page_diff'] = get_binary_diff_vectorized(df, df.shift(1), 'PageNumber')
-    df['prev_line_space_below_diff'] = get_ternary_diff_vectorized(df, df.shift(1), 'space_below')
-    df['prev_line_left_margin_diff'] = get_ternary_diff_vectorized(df, df.shift(1), 'left_indent')
-    df['prev_line_right_space_diff'] = get_ternary_diff_vectorized(df, df.shift(1), 'right_space')
-    df['prev_line_font_size_diff'] = get_ternary_diff_vectorized(df, df.shift(1), 'font_size')
-    df['prev_line_font_family_diff'] = get_binary_diff_vectorized(df, df.shift(1), 'major_font_family')
-    df['next_page_diff'] = get_binary_diff_vectorized(df, df.shift(-1), 'PageNumber')
-    df['next_line_font_family_diff'] = get_binary_diff_vectorized(df, df.shift(-1), 'major_font_family')
+    df["prev_page_diff"] = get_binary_diff_vectorized(df, df.shift(1), "PageNumber")
+    df["prev_line_space_below_diff"] = get_ternary_diff_vectorized(
+        df, df.shift(1), "space_below"
+    )
+    df["prev_line_left_margin_diff"] = get_ternary_diff_vectorized(
+        df, df.shift(1), "left_indent"
+    )
+    df["prev_line_right_space_diff"] = get_ternary_diff_vectorized(
+        df, df.shift(1), "right_space"
+    )
+    df["prev_line_font_size_diff"] = get_ternary_diff_vectorized(
+        df, df.shift(1), "font_size"
+    )
+    df["prev_line_font_family_diff"] = get_binary_diff_vectorized(
+        df, df.shift(1), "major_font_family"
+    )
+    df["next_page_diff"] = get_binary_diff_vectorized(df, df.shift(-1), "PageNumber")
+    df["next_line_font_family_diff"] = get_binary_diff_vectorized(
+        df, df.shift(-1), "major_font_family"
+    )
 
-    prev_page_diff = df[df['prev_page_diff'] == 1].index
-    next_page_diff = df[df['next_page_diff'] == 1].index
+    prev_page_diff = df[df["prev_page_diff"] == 1].index
+    next_page_diff = df[df["next_page_diff"] == 1].index
 
     prev_line_features: List[str] = [
         "prev_line_space_below_diff",
@@ -648,21 +689,27 @@ def compute_features(df: pd.DataFrame) -> pd.DataFrame:
     for feature in features_to_bin:
         bin_feature_name = f"{feature}_binned"
         df[bin_feature_name] = bin_feature(df, feature)
-    df['pdf_idx'] = df.index
+    df["pdf_idx"] = df.index
 
     # doing these after binning to avoid rounding errors
     # I just want to know if space below is in the same bin as the previous row
-    df['more_space_below'] = 0
-    df.loc[df['space_below'] > df['space_above'] + 1.5, 'more_space_below'] = 1
-    df.loc[df['space_below'] < df['space_above'] - 1.5, 'more_space_below'] = -1
-    df['next_line_left_margin_diff'] = get_ternary_diff_vectorized(df, df.shift(-1), 'left_indent_binned')
-    df['next_line_right_space_diff'] = get_ternary_diff_vectorized(df, df.shift(-1), 'right_space_binned')
-    df['next_line_font_size_diff'] = get_ternary_diff_vectorized(df, df.shift(-1), 'font_size_binned')
+    df["more_space_below"] = 0
+    df.loc[df["space_below"] > df["space_above"] + 1.5, "more_space_below"] = 1
+    df.loc[df["space_below"] < df["space_above"] - 1.5, "more_space_below"] = -1
+    df["next_line_left_margin_diff"] = get_ternary_diff_vectorized(
+        df, df.shift(-1), "left_indent_binned"
+    )
+    df["next_line_right_space_diff"] = get_ternary_diff_vectorized(
+        df, df.shift(-1), "right_space_binned"
+    )
+    df["next_line_font_size_diff"] = get_ternary_diff_vectorized(
+        df, df.shift(-1), "font_size_binned"
+    )
 
     # add back the extracted class df and sort by original_index
     df = pd.concat([df, extracted_class_df])
-    df = df.sort_values(by='original_index')
-    df = df.drop(columns=['original_index'])
+    df = df.sort_values(by="original_index")
+    df = df.drop(columns=["original_index"])
     return df
 
 
@@ -671,7 +718,9 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.DEBUG)
 
-    pdf_path = Path("C:/Users/r123m/Documents/enginius/source/ai-pdf-parser/data/documents/validation/B2LILNN15.pdf")
+    pdf_path = Path(
+        "C:/Users/r123m/Documents/enginius/source/ai-pdf-parser/data/documents/validation/B2LILNN15.pdf"
+    )
 
     df_path = pdf_path.parent / "pdf_extracted" / f"{pdf_path.stem}.csv"
     output_path = df_path.parent.parent / "computed_features"

@@ -59,7 +59,11 @@ def extract_ocr(pdf_path: Path, page_num: int) -> List[Dict[str, Any]]:
     # Force OCR for every page (useful for scanned or tricky PDFs)
     pipeline_options.ocr_options = EasyOcrOptions()
 
-    converter = DocumentConverter(format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)})
+    converter = DocumentConverter(
+        format_options={
+            InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
+        }
+    )
 
     # Convert the document
     result = converter.convert(str(pdf_path))
@@ -72,7 +76,9 @@ def extract_ocr(pdf_path: Path, page_num: int) -> List[Dict[str, Any]]:
     # Each item has a `.label`, `.text`, and `.prov` list with `page_no` and `bbox`.
     for item in ddoc.texts:
         # Examine provenance fragments that land on the target page
-        page_frags = [p for p in (item.prov or []) if getattr(p, "page_no", None) == page_num]
+        page_frags = [
+            p for p in (item.prov or []) if getattr(p, "page_no", None) == page_num
+        ]
         if not page_frags:
             continue
 

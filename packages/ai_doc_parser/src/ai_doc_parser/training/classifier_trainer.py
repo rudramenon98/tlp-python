@@ -32,7 +32,7 @@ FEATURE_COLUMNS = [
     "is_bold",
     "is_italic",
     "bold_changed",
-    'font_size_changed',
+    "font_size_changed",
     "italic_changed",
     "font_color_changed",
     "font_family_changed",
@@ -79,15 +79,23 @@ def load_model(model_path: str | Path) -> RandomForestClassifier:
 
 
 def random_forest_model(
-    x_train: pd.DataFrame, y_train: pd.Series, n_estimators: int = 100, max_depth: int = None
+    x_train: pd.DataFrame,
+    y_train: pd.Series,
+    n_estimators: int = 100,
+    max_depth: int = None,
 ) -> RandomForestClassifier:
     """Train a Random Forest classifier."""
     log.debug("Training Random Forest with %s estimators...", n_estimators)
     log.debug("Training data shape: %s", x_train.shape)
     log.debug("Target classes: %s", sorted([int(i) for i in np.unique(y_train)]))
-    log.debug("Target Class Names: %s", sorted([TextClass(CLASS_MAP_INV[i]).name for i in np.unique(y_train)]))
+    log.debug(
+        "Target Class Names: %s",
+        sorted([TextClass(CLASS_MAP_INV[i]).name for i in np.unique(y_train)]),
+    )
 
-    clf = RandomForestClassifier(n_estimators=n_estimators, random_state=42, oob_score=True, max_depth=max_depth)
+    clf = RandomForestClassifier(
+        n_estimators=n_estimators, random_state=42, oob_score=True, max_depth=max_depth
+    )
     clf.fit(x_train.astype(np.float32), y_train.astype(np.int32))
 
     log.debug("Random Forest training completed with %s estimators", n_estimators)
@@ -174,24 +182,43 @@ def prepare_df_for_model(
     feature_columns = FEATURE_COLUMNS
     # combine _continued classes to one class
     if "LabelledClass" in df.columns:
-        df.loc[df['LabelledClass'] == TextClass.BULLET_LIST_CONT, 'LabelledClass'] = TextClass.GEN_LIST_CONT
-        df.loc[df['LabelledClass'] == TextClass.ENUM_LIST_CONT, 'LabelledClass'] = TextClass.GEN_LIST_CONT
-        df['SourceClass'] = df['LabelledClass'].map(lambda x: TextClass(x).name)
-        df.loc[df['LabelledClass'] == TextClass.ENUM_LIST, 'LabelledClass'] = TextClass.PARAGRAPH
-        df.loc[df['LabelledClass'] == TextClass.BULLET_LIST, 'LabelledClass'] = TextClass.PARAGRAPH
-        df.loc[df['LabelledClass'] == TextClass.GEN_LIST_CONT, 'LabelledClass'] = TextClass.PARAGRAPH_CONT
+        df.loc[df["LabelledClass"] == TextClass.BULLET_LIST_CONT, "LabelledClass"] = (
+            TextClass.GEN_LIST_CONT
+        )
+        df.loc[df["LabelledClass"] == TextClass.ENUM_LIST_CONT, "LabelledClass"] = (
+            TextClass.GEN_LIST_CONT
+        )
+        df["SourceClass"] = df["LabelledClass"].map(lambda x: TextClass(x).name)
+        df.loc[df["LabelledClass"] == TextClass.ENUM_LIST, "LabelledClass"] = (
+            TextClass.PARAGRAPH
+        )
+        df.loc[df["LabelledClass"] == TextClass.BULLET_LIST, "LabelledClass"] = (
+            TextClass.PARAGRAPH
+        )
+        df.loc[df["LabelledClass"] == TextClass.GEN_LIST_CONT, "LabelledClass"] = (
+            TextClass.PARAGRAPH_CONT
+        )
     if "ExtractedClass" in df.columns:
-        df.loc[df['ExtractedClass'] == TextClass.BULLET_LIST_CONT, 'ExtractedClass'] = TextClass.GEN_LIST_CONT
-        df.loc[df['ExtractedClass'] == TextClass.ENUM_LIST_CONT, 'ExtractedClass'] = TextClass.GEN_LIST_CONT
+        df.loc[df["ExtractedClass"] == TextClass.BULLET_LIST_CONT, "ExtractedClass"] = (
+            TextClass.GEN_LIST_CONT
+        )
+        df.loc[df["ExtractedClass"] == TextClass.ENUM_LIST_CONT, "ExtractedClass"] = (
+            TextClass.GEN_LIST_CONT
+        )
         # df['ExtractedClassName'] = df['ExtractedClass'].map(lambda x: TextClass(x).name)
 
     if "LabelledClass" in df.columns:
         # filter out rows that are not in AI_PARSED_CLASSES
-        df = df[(df['LabelledClass'].isna()) | (df['LabelledClass'].isin(AI_PARSED_CLASSES))]
+        df = df[
+            (df["LabelledClass"].isna()) | (df["LabelledClass"].isin(AI_PARSED_CLASSES))
+        ]
 
     if "ExtractedClass" in df.columns:
         # filter out rows that are not in AI_PARSED_CLASSES
-        df = df[(df['ExtractedClass'].isna()) | (df['ExtractedClass'].isin(AI_PARSED_CLASSES))]
+        df = df[
+            (df["ExtractedClass"].isna())
+            | (df["ExtractedClass"].isin(AI_PARSED_CLASSES))
+        ]
 
     # Add text-based features if text column exists
     # if 'text' in df.columns:
@@ -212,12 +239,14 @@ def prepare_df_for_model(
         raise ValueError(f"Missing columns: {missing_columns}")
 
     if verbose:
-        log.debug("Using %s feature columns: %s", len(available_columns), available_columns)
+        log.debug(
+            "Using %s feature columns: %s", len(available_columns), available_columns
+        )
 
     if "LabelledClass" in df.columns:
-        df = df[['LabelledClass'] + available_columns]
+        df = df[["LabelledClass"] + available_columns]
     elif "ExtractedClass" in df.columns:
-        df = df[['ExtractedClass'] + available_columns]
+        df = df[["ExtractedClass"] + available_columns]
     else:
         raise ValueError("No labelled or extracted class column found")
     # Add features of previous and next text block if requested
@@ -226,7 +255,11 @@ def prepare_df_for_model(
         shift_values = [-1, 1]
     if add_shifted_features:
         df = add_shifted_columns(df, shift_values)
-        shifted_columns = [f"{col}_shift_{shift}" for col in available_columns for shift in shift_values]
+        shifted_columns = [
+            f"{col}_shift_{shift}"
+            for col in available_columns
+            for shift in shift_values
+        ]
         available_columns.extend(shifted_columns)
         if verbose:
             log.debug("Added %s shifted features", len(shifted_columns))
@@ -260,10 +293,10 @@ def compute_class_centroid(x_train: pd.DataFrame, y_train: pd.Series) -> pd.Data
     """
     # Combine features and labels
     data = x_train.copy()
-    data['class'] = y_train
+    data["class"] = y_train
 
     # Group by class and compute mean for each feature
-    class_centroids = data.groupby('class').mean().round(2)
+    class_centroids = data.groupby("class").mean().round(2)
 
     # Get class names for column headers
     class_names = class_centroids.index.map(lambda x: TextClass(CLASS_MAP_INV[x]).name)
@@ -275,7 +308,9 @@ def compute_class_centroid(x_train: pd.DataFrame, y_train: pd.Series) -> pd.Data
     class_centroids_transposed.columns = class_names
 
     # Add Feature Name column as the first column
-    class_centroids_transposed.insert(0, 'Feature Name', class_centroids_transposed.index)
+    class_centroids_transposed.insert(
+        0, "Feature Name", class_centroids_transposed.index
+    )
 
     return class_centroids_transposed
 
@@ -307,23 +342,27 @@ def train_multiclass(
     """
 
     # Remove rows with missing labels
-    df = df.dropna(subset=['LabelledClass'])
-    df = df[df['LabelledClass'].notna()]
+    df = df.dropna(subset=["LabelledClass"])
+    df = df[df["LabelledClass"].notna()]
 
-    df.loc[df['LabelledClass'] == TextClass.BULLET_LIST_CONT, 'LabelledClass'] = TextClass.GEN_LIST_CONT
-    df.loc[df['LabelledClass'] == TextClass.ENUM_LIST_CONT, 'LabelledClass'] = TextClass.GEN_LIST_CONT
+    df.loc[df["LabelledClass"] == TextClass.BULLET_LIST_CONT, "LabelledClass"] = (
+        TextClass.GEN_LIST_CONT
+    )
+    df.loc[df["LabelledClass"] == TextClass.ENUM_LIST_CONT, "LabelledClass"] = (
+        TextClass.GEN_LIST_CONT
+    )
 
-    df = df[df['LabelledClass'].isin(AI_PARSED_CLASSES)]
+    df = df[df["LabelledClass"].isin(AI_PARSED_CLASSES)]
 
     # Convert LabelledClass to numeric if it's not already
-    df['LabelledClass'] = pd.to_numeric(df['LabelledClass'], errors='coerce')
+    df["LabelledClass"] = pd.to_numeric(df["LabelledClass"], errors="coerce")
 
     # Ensure LabelledClass is integer
-    df['LabelledClass'] = df['LabelledClass'].astype(int)
-    df['LabelledClassName'] = df['LabelledClass'].map(lambda x: TextClass(x).name)
+    df["LabelledClass"] = df["LabelledClass"].astype(int)
+    df["LabelledClassName"] = df["LabelledClass"].map(lambda x: TextClass(x).name)
 
     log.debug("After cleaning: %s rows", len(df))
-    original_class_dist = df['LabelledClass'].value_counts().sort_index().to_dict()
+    original_class_dist = df["LabelledClass"].value_counts().sort_index().to_dict()
     log.debug("Original class distribution: %s", original_class_dist)
 
     # Balance the dataset: cap each class at max_samples_per_class
@@ -346,11 +385,13 @@ def train_multiclass(
     # df = df.iloc[indices_to_keep]
 
     # Prepare features usin the shared function
-    df, available_columns = prepare_df_for_model(df=df, add_shifted_features=True, verbose=True)
+    df, available_columns = prepare_df_for_model(
+        df=df, add_shifted_features=True, verbose=True
+    )
 
     # Prepare target variable
     x = df[available_columns]
-    y = df['LabelledClass']
+    y = df["LabelledClass"]
 
     # Split the data first
     x_train, x_test, y_train, y_test = train_test_split(
@@ -384,14 +425,17 @@ def train_multiclass(
         log.debug("Training XGBoost model...")
         log.debug("Training data shape: %s", x_train.shape)
         log.debug("Target classes: %s", sorted([int(i) for i in np.unique(y_train)]))
-        log.debug("Target Class Names: %s", sorted([TextClass(CLASS_MAP_INV[i]).name for i in np.unique(y_train)]))
+        log.debug(
+            "Target Class Names: %s",
+            sorted([TextClass(CLASS_MAP_INV[i]).name for i in np.unique(y_train)]),
+        )
 
         model = xgboost.XGBClassifier(
-            objective='multi:softmax',
+            objective="multi:softmax",
             num_class=len(np.unique(y_train)),
             random_state=42,
             verbose=False,
-            eval_metric='mlogloss',
+            eval_metric="mlogloss",
         )
         log.debug("XGBoost training started with %s classes", len(np.unique(y_train)))
 
@@ -408,14 +452,14 @@ def train_multiclass(
     # Evaluate on training set
     y_train_pred = model.predict(x_train)
     y_train_pred = [CLASS_MAP_INV[y] for y in y_train_pred]
-    train_f1 = f1_score(y_train, y_train_pred, average='weighted')
+    train_f1 = f1_score(y_train, y_train_pred, average="weighted")
     log.debug("Training F1 Score: %.4f", train_f1)
     print_confusion_matrix_grid(y_train, y_train_pred)
 
     # Evaluate on test set
     y_test_pred = model.predict(x_test)
     y_test_pred = [CLASS_MAP_INV[y] for y in y_test_pred]
-    test_f1 = f1_score(y_test, y_test_pred, average='weighted')
+    test_f1 = f1_score(y_test, y_test_pred, average="weighted")
     log.debug("Test F1 Score: %.4f", test_f1)
 
     # Print confusion matrix in clean grid format
@@ -439,21 +483,25 @@ def train_multiclass(
     return x_train, x_test, y_train, y_test, model, available_columns, class_centroid
 
 
-def save_model(model: Union[RandomForestClassifier, xgboost.XGBClassifier], filepath: str) -> None:
+def save_model(
+    model: Union[RandomForestClassifier, xgboost.XGBClassifier], filepath: str
+) -> None:
     """Save the trained model to disk."""
     joblib.dump(model, filepath)
     log.info("Model saved to %s", filepath)
 
 
 def predict_single(
-    model: Union[RandomForestClassifier, xgboost.XGBClassifier], features: Union[List[float], pd.Series]
+    model: Union[RandomForestClassifier, xgboost.XGBClassifier],
+    features: Union[List[float], pd.Series],
 ) -> int:
     """Make a prediction on a single sample."""
     return int(model.predict([features])[0])
 
 
 def predict_proba_single(
-    model: Union[RandomForestClassifier, xgboost.XGBClassifier], features: Union[List[float], pd.Series]
+    model: Union[RandomForestClassifier, xgboost.XGBClassifier],
+    features: Union[List[float], pd.Series],
 ) -> np.ndarray:
     """Get prediction probabilities for a single sample."""
     proba = model.predict_proba([features])[0]
@@ -515,7 +563,9 @@ def print_confusion_matrix_grid(y_true: pd.Series, y_pred: np.ndarray) -> None:
     # Print per-class metrics
     log.info("\nPer-Class Metrics:")
     log.info("-" * 75)
-    log.info(f"{'SourceClass':<{max_name_len}} {'Precision':<10} {'Recall':<10} {'F1-Score':<10} {'# Samples':<10}")
+    log.info(
+        f"{'SourceClass':<{max_name_len}} {'Precision':<10} {'Recall':<10} {'F1-Score':<10} {'# Samples':<10}"
+    )
     log.info("-" * 75)
 
     for i, class_name in enumerate(class_names):
@@ -529,11 +579,17 @@ def print_confusion_matrix_grid(y_true: pd.Series, y_pred: np.ndarray) -> None:
 
         precision = tp / (tp + fp) if (tp + fp) > 0 else 0
         recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-        f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+        f1 = (
+            2 * (precision * recall) / (precision + recall)
+            if (precision + recall) > 0
+            else 0
+        )
 
         num_samples = f"{tp}/{cm[i, :].sum()}"
 
-        log.info(f"{class_name:<{max_name_len}} {precision:<10.4f} {recall:<10.4f} {f1:<10.4f} {num_samples:<10}")
+        log.info(
+            f"{class_name:<{max_name_len}} {precision:<10.4f} {recall:<10.4f} {f1:<10.4f} {num_samples:<10}"
+        )
 
     log.info("=" * 80)
 
@@ -569,7 +625,9 @@ def plot_validation_loss_vs_n_estimators(
     validation_losses = []
     oob_errors = []
 
-    log.info("Training Random Forest models with different numbers of estimators for validation loss...")
+    log.info(
+        "Training Random Forest models with different numbers of estimators for validation loss..."
+    )
     log.info("=" * 70)
 
     for n_estimators in n_estimators_range:
@@ -592,7 +650,11 @@ def plot_validation_loss_vs_n_estimators(
         validation_loss = 1 - validation_accuracy
         validation_losses.append(validation_loss)
 
-        log.debug("  Validation Loss: %.4f (Accuracy: %.4f)", validation_loss, validation_accuracy)
+        log.debug(
+            "  Validation Loss: %.4f (Accuracy: %.4f)",
+            validation_loss,
+            validation_accuracy,
+        )
 
         # Calculate OOB error rate (1 - OOB score)
         oob_error = 1 - rf.oob_score_
@@ -602,16 +664,23 @@ def plot_validation_loss_vs_n_estimators(
 
         # Add diagnostic information if OOB score is suspicious
         if rf.oob_score >= 0.999:
-            log.warning("    WARNING: OOB score is very high (%.4f). This may indicate:", rf.oob_score)
+            log.warning(
+                "    WARNING: OOB score is very high (%.4f). This may indicate:",
+                rf.oob_score,
+            )
             log.warning("    - Overfitting to training data")
             log.warning("    - Dataset too small for reliable OOB estimation")
             log.warning("    - Features are too predictive of the target")
 
     # Create the plot
     fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(12, 8), sharex=True)
-    ax1.plot(n_estimators_range, oob_errors, 'bo-', linewidth=2, markersize=8)
-    ax1.set_ylabel('Out-of-Bag Error Rate', fontsize=12)
-    ax1.set_title('Random Forest: OOB Error Rate vs Number of Trees', fontsize=14, fontweight='bold')
+    ax1.plot(n_estimators_range, oob_errors, "bo-", linewidth=2, markersize=8)
+    ax1.set_ylabel("Out-of-Bag Error Rate", fontsize=12)
+    ax1.set_title(
+        "Random Forest: OOB Error Rate vs Number of Trees",
+        fontsize=14,
+        fontweight="bold",
+    )
     ax1.grid(True, alpha=0.3)
 
     # Add annotations for the best performing model
@@ -622,14 +691,22 @@ def plot_validation_loss_vs_n_estimators(
     # Add some styling
     plt.tight_layout()
 
-    log.info("\nBest number of trees: %s with OOB error rate: %.4f", best_n_estimators, best_oob_error)
+    log.info(
+        "\nBest number of trees: %s with OOB error rate: %.4f",
+        best_n_estimators,
+        best_oob_error,
+    )
     log.info("=" * 60)
 
     # Create the plot
-    ax2.plot(n_estimators_range, validation_losses, 'ro-', linewidth=2, markersize=8)
-    ax2.set_xlabel('Number of Trees (n_estimators)', fontsize=12)
-    ax2.set_ylabel('Validation Loss (1 - Accuracy)', fontsize=12)
-    ax2.set_title('Random Forest: Validation Loss vs Number of Trees', fontsize=14, fontweight='bold')
+    ax2.plot(n_estimators_range, validation_losses, "ro-", linewidth=2, markersize=8)
+    ax2.set_xlabel("Number of Trees (n_estimators)", fontsize=12)
+    ax2.set_ylabel("Validation Loss (1 - Accuracy)", fontsize=12)
+    ax2.set_title(
+        "Random Forest: Validation Loss vs Number of Trees",
+        fontsize=14,
+        fontweight="bold",
+    )
     ax2.grid(True, alpha=0.3)
 
     # Add annotations for the best performing model
@@ -640,7 +717,11 @@ def plot_validation_loss_vs_n_estimators(
     # Add some styling
     plt.tight_layout()
 
-    log.info("\nBest number of trees: %s with validation loss: %.4f", best_n_estimators, best_validation_loss)
+    log.info(
+        "\nBest number of trees: %s with validation loss: %.4f",
+        best_n_estimators,
+        best_validation_loss,
+    )
     log.info("=" * 70)
 
     return fig
@@ -671,20 +752,24 @@ def plot_xgboost_convergence(
 
     results = model.evals_result()
     # Extract training and validation losses
-    train_losses = results['validation_0']['mlogloss']
-    val_losses = results['validation_1']['mlogloss']
+    train_losses = results["validation_0"]["mlogloss"]
+    val_losses = results["validation_1"]["mlogloss"]
     epochs = list(range(1, len(train_losses) + 1))
 
     # Create the plot
     fig, ax = plt.subplots(figsize=(12, 8))
 
     # Plot both training and validation losses
-    ax.plot(epochs, train_losses, 'bo-', linewidth=2, label='Training Loss')
-    ax.plot(epochs, val_losses, 'ro-', linewidth=2, label='Validation Loss')
+    ax.plot(epochs, train_losses, "bo-", linewidth=2, label="Training Loss")
+    ax.plot(epochs, val_losses, "ro-", linewidth=2, label="Validation Loss")
 
-    ax.set_xlabel('Epochs', fontsize=12)
-    ax.set_ylabel('Multi-class Log Loss', fontsize=12)
-    ax.set_title('XGBoost: Training vs Validation Loss Convergence', fontsize=14, fontweight='bold')
+    ax.set_xlabel("Epochs", fontsize=12)
+    ax.set_ylabel("Multi-class Log Loss", fontsize=12)
+    ax.set_title(
+        "XGBoost: Training vs Validation Loss Convergence",
+        fontsize=14,
+        fontweight="bold",
+    )
     ax.grid(True, alpha=0.3)
     ax.legend(fontsize=11)
 
@@ -714,18 +799,18 @@ def main() -> None:
     easa_csv_paths = [
         EASA_DIR / "labelled_pdf" / f"{pdf_path}.csv"
         for pdf_path in [
-            'Easy Access Rules for ATM_ANS Equipment _Regulations _EU_ 2023_1769 _ _EU_ 2023_1768_ _PDF_',
-            'Easy Access Rules for small category VCA _PDF_',
-            'Easy Access Rules for Large Aeroplanes _CS 25_ _Amendment 27_ _PDF_',
-            'Easy Access Rules for Master Minimum Equipment List _CS_MMEL_ _Issue 3_ _PDF_',
-            'Easy Access Rules for Airborne Communications_ Navigation and Surveillance _CS_ACNS_ Issue 4 _pdf_',
-            'Easy Access Rules for Large Rotorcraft _CS_29_ _Amendment 11_ _PDF_',
-            'Easy Access Rules for Normal_Category Aeroplanes _CS_23_ _CS Amendment 6_ AMC_GM Issue 4_ _PDF_',
-            'Easy Access Rules for Small Rotorcraft _CS_27_ Amendment 10 _pdf_',
-            'Easy Access Rules for U_space _PDF_',
-            'Easy Access Rules for Aerodromes _PDF_',
-            'Easy Access Rules for Information Security _PDF_',
-            'Easy Access Rules for Aircrew _Regulation _EU_ No 1178_2011_ _PDF_',
+            "Easy Access Rules for ATM_ANS Equipment _Regulations _EU_ 2023_1769 _ _EU_ 2023_1768_ _PDF_",
+            "Easy Access Rules for small category VCA _PDF_",
+            "Easy Access Rules for Large Aeroplanes _CS 25_ _Amendment 27_ _PDF_",
+            "Easy Access Rules for Master Minimum Equipment List _CS_MMEL_ _Issue 3_ _PDF_",
+            "Easy Access Rules for Airborne Communications_ Navigation and Surveillance _CS_ACNS_ Issue 4 _pdf_",
+            "Easy Access Rules for Large Rotorcraft _CS_29_ _Amendment 11_ _PDF_",
+            "Easy Access Rules for Normal_Category Aeroplanes _CS_23_ _CS Amendment 6_ AMC_GM Issue 4_ _PDF_",
+            "Easy Access Rules for Small Rotorcraft _CS_27_ Amendment 10 _pdf_",
+            "Easy Access Rules for U_space _PDF_",
+            "Easy Access Rules for Aerodromes _PDF_",
+            "Easy Access Rules for Information Security _PDF_",
+            "Easy Access Rules for Aircrew _Regulation _EU_ No 1178_2011_ _PDF_",
         ]
     ]
     latex_dir = DATA_DIR / "documents" / "Latex" / "labelled_pdf"
@@ -743,9 +828,9 @@ def main() -> None:
             parent_dir = csv_path.parent
             log.debug(f"Reading {csv_path}")
             df = pd.read_csv(csv_path)
-            df['parent_dir'] = parent_dir
-            df['pdf_path'] = csv_path.stem
-            num_pages = len(np.unique(df['PageNumber']))
+            df["parent_dir"] = parent_dir
+            df["pdf_path"] = csv_path.stem
+            num_pages = len(np.unique(df["PageNumber"]))
             log.debug("Num Pages: %s - %s", num_pages, csv_path.stem)
             all_dfs.append(df)
             total_pages += num_pages
@@ -772,11 +857,13 @@ def main() -> None:
 
     if TRAIN_MODEL:
         # Train the model
-        x_train, x_test, y_train, y_test, model, feature_columns, class_centroid = train_multiclass(
-            df=df,
-            test_size=0.2,
-            random_state=42,
-            model_type=model_type,
+        x_train, x_test, y_train, y_test, model, feature_columns, class_centroid = (
+            train_multiclass(
+                df=df,
+                test_size=0.2,
+                random_state=42,
+                model_type=model_type,
+            )
         )
 
         log.info("\n" + "=" * 50)
@@ -831,13 +918,19 @@ def main() -> None:
             y_train,
             x_test,
             y_test,
-            n_estimators_range=[10, 25, 50, 100, 200],  # Smaller range for faster execution
+            n_estimators_range=[
+                10,
+                25,
+                50,
+                100,
+                200,
+            ],  # Smaller range for faster execution
             random_state=42,
         )
 
         # Save validation loss plot
         val_plot_path = plots_dir / "random_forest_validation_loss_vs_n_estimators.png"
-        val_fig.savefig(val_plot_path, dpi=300, bbox_inches='tight')
+        val_fig.savefig(val_plot_path, dpi=300, bbox_inches="tight")
         log.info("Validation loss plot saved to: %s", val_plot_path)
         plt.close(val_fig)
 
@@ -851,7 +944,7 @@ def main() -> None:
 
         # Save XGBoost convergence plot
         convergence_plot_path = plots_dir / "xgboost_convergence.png"
-        convergence_fig.savefig(convergence_plot_path, dpi=300, bbox_inches='tight')
+        convergence_fig.savefig(convergence_plot_path, dpi=300, bbox_inches="tight")
         log.info("XGBoost convergence plot saved to: %s", convergence_plot_path)
         plt.close(convergence_fig)
 

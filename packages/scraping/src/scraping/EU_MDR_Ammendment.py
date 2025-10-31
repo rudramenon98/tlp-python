@@ -9,11 +9,15 @@ from typing import List, Tuple
 
 import pandas as pd
 import requests
-from app.document_service import delete_document, get_document_by_title, insert_document
-from app.entity.Document import Document
-from app.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
-from app.utils.MySQLFactory import MySQLDriver
-from app.utils.WebDriverFactory import WebDriverFactory
+from database.document_service import (
+    delete_document,
+    get_document_by_title,
+    insert_document,
+)
+from database.entity.Document import Document
+from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
+from database.utils.MySQLFactory import MySQLDriver
+from database.utils.WebDriverFactory import WebDriverFactory
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
@@ -395,7 +399,7 @@ def run(config: ScriptsConfig):
 
 
 if __name__ == "__main__":
-    from app.configs import config_dir
+    from database.configs import config_dir
 
     configs = parseCredentialFile(config_dir / "dev_test_tlp_config.json")
     download_dir = Path(__file__).parent / "data" / "EU_MDR_Ammendement"

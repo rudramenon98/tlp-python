@@ -6,9 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "ai_doc_parser"
 version = "0.1.0"
 description = "An AI-powered PDF parser for extracting structured information from documents"
-authors = [
-    {name = "AI PDF Parser Team"}
-]
+authors = [{name = "Rudra Menon", email = "rmenon@enginius.ai"}]
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [

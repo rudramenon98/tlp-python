@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scraping"
+version = "0.1.0"
+description = "Web scraping scripts for regulatory documents"
+authors = [{name = "Rudra Menon", email = "rmenon@enginius.ai"}]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "beautifulsoup4",
+    "lxml",
+    "pandas",
+    "PyPDF2",
+    "python-dateutil",
+    "requests",
+    "selenium",
+    "tqdm",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*"]

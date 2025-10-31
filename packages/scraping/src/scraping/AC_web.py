@@ -9,7 +9,9 @@ from multiprocessing import current_process
 
 import pandas as pd
 import requests
-from app.document_service import (
+from bs4 import BeautifulSoup
+from common_tools.log_config import configure_logging_from_argv
+from database.document_service import (
     cancel_documents,
     find_document_by_url,
     find_documents_not_scraped_on_date,
@@ -17,17 +19,15 @@ from app.document_service import (
     insert_documents_bulk2,
     update_documents,
 )
-from app.entity.Document import Document
-from app.entity.ScrapScript import ScrapScript
-from app.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
-from app.scrape_url_service import (
+from database.entity.Document import Document
+from database.entity.ScrapScript import ScrapScript
+from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
+from database.scrape_url_service import (
     scrape_url_append_log,
     update_scrape_url_set_log_value,
 )
-from app.utils.MySQLFactory import MySQLDriver
-from app.utils.util import get_dir_safe
-from bs4 import BeautifulSoup
-from logconfig import configure_logging_from_argv
+from database.utils.MySQLFactory import MySQLDriver
+from database.utils.util import get_dir_safe
 
 log = logging.getLogger(__name__)
 """

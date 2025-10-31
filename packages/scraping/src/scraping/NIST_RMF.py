@@ -7,20 +7,20 @@ from datetime import datetime
 from multiprocessing import current_process
 
 import requests
-from app.document_service import (
+from database.document_service import (
     find_document_by_url,
     get_scrape_script_by_scraperUrlId,
     insert_documents_bulk2,
 )
-from app.entity.Document import Document
-from app.entity.ScrapScript import ScrapScript
-from app.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
-from app.scrape_url_service import (
+from database.entity.Document import Document
+from database.entity.ScrapScript import ScrapScript
+from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
+from database.scrape_url_service import (
     scrape_url_append_log,
 )
-from app.utils.MySQLFactory import MySQLDriver
-from app.utils.util import get_dir_safe
-from app.utils.WebDriverFactory import WebDriverFactory
+from database.utils.MySQLFactory import MySQLDriver
+from database.utils.util import get_dir_safe
+from database.utils.WebDriverFactory import WebDriverFactory
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC

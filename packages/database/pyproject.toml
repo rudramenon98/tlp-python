@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "database"
+version = "0.1.0"
+description = "Database service layer for TLP Python"
+authors = [{name = "Rudra Menon", email = "rmenon@enginius.ai"}]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "sqlalchemy",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*"]

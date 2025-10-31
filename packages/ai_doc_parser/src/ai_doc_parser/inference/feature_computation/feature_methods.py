@@ -25,9 +25,7 @@ def line_info(block):
     """the process is done only for the first detected font in the line"""
 
     for font in block:
-
         for char in font:
-
             font_family = font.attrib["name"]
 
             font_size = font.attrib["size"]
@@ -49,7 +47,6 @@ def line_info(block):
 
 ##accent handler
 def accent_and_badtext_handler(badtext):
-
     try:
         encoded = str(badtext).encode("cp1252")
         goodtext = encoded.decode("utf-8")
@@ -81,7 +78,6 @@ def return_line_of_text(line):
 
 
 def line_prev_and_next(line):
-
     list_char = []
     for font in line:
         for char in font:
@@ -134,7 +130,6 @@ def remove_white_space(text_line):
 
 
 def pre_processing_text_before_labeling(text_line):
-
     text_line = remove_punc_(text_line)
 
     text = remove_white_space(text_line)
@@ -173,7 +168,6 @@ def extract_raw_text(row):
 
 
 def longest_common_string(text, content):
-
     start_index = None
     end_index = None
     score = None
@@ -215,9 +209,7 @@ def letter_incommon(text1, text2):
 
 
 class Symbols:
-
     def __init__(self):
-
         self.terms_assigned_for_arxiv_headers_inManualPdf = [
             "section"
         ]  # manual pdfs are pdfs that are created by Berckan manulally from a fixed latex file. sometimes in pdf they have extra term at the begining like "section"
@@ -1110,7 +1102,6 @@ class Symbols:
 
 
 def drop_extra_columns(df, columns):
-
     for column in columns:
         try:
             df = df.drop(columns=[column], axis=1)
@@ -1235,7 +1226,6 @@ def is_compound_with_dot_(word):
     return_value = False
 
     if len(word.strip()) > 1:
-
         # if summ_digit==summ_char==summ_dot==0:
         #   return_value = False
 
@@ -1332,7 +1322,6 @@ def removeConsecutiveDuplicates(s):
 
 
 def check_symmetry_of_parenthesis(my_str):
-
     if "[" in my_str and "]" in my_str:
         return True
     if "{" in my_str and "}" in my_str:
@@ -1422,7 +1411,6 @@ def is_compound_with_dot_(word):
     return_value = False
 
     if len(word.strip()) > 1:
-
         # if summ_digit==summ_char==summ_dot==0:
         #   return_value = False
 
@@ -1458,9 +1446,7 @@ def mergeDict(dict1, dict2):
     dict3 = {**dict1, **dict2}
 
     for key, value in dict3.items():
-
         if key in dict1 and key in dict2:
-
             dict3[key] = value + dict1[key]
 
     return dict3
@@ -1472,7 +1458,6 @@ def mergeDict(dict1, dict2):
 
 
 def mergeIntervals(arr):
-
     # Sorting based on the increasing order
     # of the start intervals
     arr.sort(key=lambda x: x[0])
@@ -1484,7 +1469,6 @@ def mergeIntervals(arr):
     # Traverse all input Intervals starting from
     # second interval
     for i in range(1, len(arr)):
-
         # If this is not first Interval and overlaps
         # with the previous one, Merge previous and
         # current Intervals
@@ -1661,7 +1645,6 @@ def detect_one_lines(df):
     indexes_should_be_removed = []
 
     for _, row in df.iterrows():
-
         if (
             df.at[_, "next_line_space"] < 0.1
             and _ < len(df) - 1
@@ -1674,7 +1657,6 @@ def detect_one_lines(df):
                 == df.at[_, "ratio_of_major_font_size"]
             )
         ):
-
             indexes_should_be_removed.append(_)
 
             # features_need_to_be_based_on_first_part

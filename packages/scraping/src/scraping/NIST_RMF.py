@@ -15,9 +15,7 @@ from database.document_service import (
 from database.entity.Document import Document
 from database.entity.ScrapScript import ScrapScript
 from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
-from database.scrape_url_service import (
-    scrape_url_append_log,
-)
+from database.scrape_url_service import scrape_url_append_log
 from database.utils.MySQLFactory import MySQLDriver
 from database.utils.util import get_dir_safe
 from database.utils.WebDriverFactory import WebDriverFactory
@@ -375,7 +373,6 @@ def run(config: ScriptsConfig, scrapeURLId):
 
 if __name__ == "__main__":
     try:
-
         props = None
         docIdsList = []
         if len(sys.argv) > 1:

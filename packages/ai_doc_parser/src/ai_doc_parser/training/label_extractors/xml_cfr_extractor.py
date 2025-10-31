@@ -365,9 +365,7 @@ def getChildren(
 ) -> List[ET._Element]:
     children = []
     for s in curr_tag.iterchildren():
-
         if tags:
-
             if s.tag in tags:
                 children.append(s)
         else:
@@ -382,7 +380,6 @@ def getChildren_D(
     children = []
     # for s in curr_tag.iterchildren():
     for s in curr_tag.getiterator():
-
         if tags:
             children.append(s)
 
@@ -804,7 +801,6 @@ def cfr_extracting(path: Path) -> pd.DataFrame:
 
 
 def split_paragraphs_into_chunks(text: str, n_words: int) -> List[str]:
-
     # split the text
     pieces = text.split()
 

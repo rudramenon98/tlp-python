@@ -245,7 +245,6 @@ def get_documents_for_parsing_by_type(mysql_driver, document_type, doc_class=Doc
 
 @Error_Handler
 def get_paragraphs_to_be_embedded(mysql_driver, document: Document, size=100):
-
     repo_class = get_repository_class_for_document(document, Repository)
 
     session = mysql_driver.get_session()
@@ -288,7 +287,6 @@ def get_all_paragraphs_to_be_embedded(
 
 @Error_Handler
 def get_paragraphs_to_be_embedded_count(mysql_driver, document: Document):
-
     repo_class = get_repository_class_for_document(document, Repository)
 
     session = mysql_driver.get_session()
@@ -455,7 +453,6 @@ def get_scrap_script_by_file_name(mysql_driver, fileName):
 
 @Error_Handler
 def get_paragraph_vectors_to_be_indexed(mysql_driver, doc):
-
     repo_class = get_repository_class_for_document(doc, Repository)
 
     session = mysql_driver.get_session()

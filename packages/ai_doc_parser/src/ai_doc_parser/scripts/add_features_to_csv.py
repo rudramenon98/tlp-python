@@ -2,9 +2,7 @@ from pathlib import Path
 from typing import Callable
 
 import pandas as pd
-from ai_doc_parser.inference.feature_computation.feature_computer import (
-    is_title_case,
-)
+from ai_doc_parser.inference.feature_computation.feature_computer import is_title_case
 
 
 def add_feature_to_df(

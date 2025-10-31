@@ -1,12 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
-from magic_draw_methods import (
-    ClassPackage,
-    MagicDrawProject,
-    Package,
-    RelationshipType,
-)
+from magic_draw_methods import ClassPackage, MagicDrawProject, Package, RelationshipType
 
 
 def make_mdxml(df):

@@ -178,8 +178,8 @@ def get_annotation_text(row: pd.Series) -> str:
     __LabelledClassName__
     __ExtractedClassName__
     __header_footer_type__
-    
-    
+
+
     Computed Features:
     __left_indent__
     __right_space__
@@ -187,12 +187,12 @@ def get_annotation_text(row: pd.Series) -> str:
     __space_below__
     __font_size__
     {feature_str}
-    
+
     Predictions:
     __PredictionProbs__
     __MaxPredictionProb__
-    
-    Text: 
+
+    Text:
     __XML_text__
     -------------------------------------
     __text__

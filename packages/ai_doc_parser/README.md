@@ -8,10 +8,10 @@ This repository uses Git LFS (Large File Storage) to manage large data files. To
    ```bash
    # On Ubuntu/Debian
    sudo apt install git-lfs
-   
+
    # On Fedora/RHEL
    sudo dnf install git-lfs
-   
+
    # Or download from: https://git-lfs.github.io/
    ```
 

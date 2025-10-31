@@ -20,7 +20,6 @@ def hasTOC(line):
 def gather_header_targetlabels(text):
     tag_name = OrderedDict()
     try:
-
         hdr = []
         pref_list = [
             "\\subsection",
@@ -114,7 +113,6 @@ def remove_latex_commands_(text_line, especific_list):
 
 
 def accent_and_badtext_handler(badtext):
-
     try:
         encoded = str(badtext).encode("cp1252")
         goodtext = encoded.decode("utf-8")

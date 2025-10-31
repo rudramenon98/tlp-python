@@ -286,9 +286,12 @@ def parse_pdf_ai(
         pdf_df = compute_features(pdf_df)
     else:
         pdf_df = computed_features_df
-    prepared_features, pdf_df, ai_results_no_heuristics, ai_results_not_combined = (
-        classify_pdf_ai(pdf_df, model)
-    )
+    (
+        prepared_features,
+        pdf_df,
+        ai_results_no_heuristics,
+        ai_results_not_combined,
+    ) = classify_pdf_ai(pdf_df, model)
     return prepared_features, pdf_df, ai_results_no_heuristics, ai_results_not_combined
 
 
@@ -328,9 +331,12 @@ def main() -> None:
     else:
         pdf_df = pd.read_csv(computed_features_output_path)
 
-    prepared_features, pdf_df, ai_results_no_heuristics, ai_results_not_combined = (
-        classify_pdf_ai(pdf_df, model)
-    )
+    (
+        prepared_features,
+        pdf_df,
+        ai_results_no_heuristics,
+        ai_results_not_combined,
+    ) = classify_pdf_ai(pdf_df, model)
 
     prepared_features_path = (
         pdf_path.parent / "prepared_features" / f"{pdf_path.stem}.csv"

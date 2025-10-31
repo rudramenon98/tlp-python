@@ -204,11 +204,9 @@ def get_fda_cfrs():
             current_year = year
             idx = 0
             while current_year != 1996:
-
                 if check_availability(
                     current_year, j, volumes[i - 1], "pdf"
                 ):  # and check_availability(current_year, j, i, 'xml'):
-
                     idx += 1
 
                     TITLE = (
@@ -311,7 +309,6 @@ def download_cfr_document(
         docInDB = find_document_by_url(mysql_driver, PDF_URL)
 
         if not docInDB:
-
             file_name = XML_URL.split("/")[-1]
             pdf_file_name = PDF_URL.split("/")[-1]
 
@@ -518,7 +515,6 @@ def run(config: ScriptsConfig, scrapeURLId: int):
 
 
 if __name__ == "__main__":
-
     try:
         props = None
 

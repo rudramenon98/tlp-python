@@ -24,9 +24,7 @@ import pandas as pd
 sys.path.append(str(Path(__file__).parent.parent))
 
 from ai_doc_parser.text_class import CLASS_MAP_INV, TextClass
-from ai_doc_parser.tools.model_interpretability import (
-    ModelInterpretabilityAnalyzer,
-)
+from ai_doc_parser.tools.model_interpretability import ModelInterpretabilityAnalyzer
 from ai_doc_parser.training.classifier_trainer import load_model, prepare_df_for_model
 
 # Set up logging

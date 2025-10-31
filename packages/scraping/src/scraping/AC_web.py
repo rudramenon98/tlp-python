@@ -231,7 +231,6 @@ def check_for_new_documents(
         return update_list, download_list
 
     for idx, row in scrapeDF.iterrows():
-
         file_url = row["pdf_file_url"]
 
         try:
@@ -391,7 +390,6 @@ def page_extraction2(mysql_driver, scrapeURLId, url):
     }
 
     try:
-
         # response = requests.post(URL2, headers=hdr, json=data, timeout=10)
         response2 = requests.get(url, headers=hdr, timeout=10)
         response2.raise_for_status()
@@ -475,7 +473,6 @@ def page_extraction2(mysql_driver, scrapeURLId, url):
 
 
 def get_main_page2(mysql_driver, scrapeURLId, main_url):
-
     hdr = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -485,7 +482,6 @@ def get_main_page2(mysql_driver, scrapeURLId, main_url):
     }
 
     try:
-
         # response = requests.post(URL2, headers=hdr, json=data, timeout=10)
         response = requests.get(main_url, headers=hdr, timeout=10)
         response.raise_for_status()
@@ -535,7 +531,6 @@ def get_main_page2(mysql_driver, scrapeURLId, main_url):
 def scrape_faa_acs2(config: ScriptsConfig, driver, result, mysql_driver, scrapeURLId):
     # dfs = []
     try:
-
         batch_size = 10
         for i in range(0, len(result), batch_size):
             # print(l[i:i+batch_size])

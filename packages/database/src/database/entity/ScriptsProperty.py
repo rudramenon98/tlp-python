@@ -50,7 +50,6 @@ class DatabaseConfig:
 
 class ScriptsConfig:
     def __init__(self):
-
         self.baseDir = None
 
         self.dockerPrefix = None
@@ -75,7 +74,6 @@ class ScriptsConfig:
         self.ServerHost = None
 
     def parseDict(self, dictObj):
-
         try:
             #            print(dictObj)
             #            print(type(dictObj))

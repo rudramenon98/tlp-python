@@ -5,7 +5,6 @@ from ai_doc_parser.text_class import TextClass
 
 
 def main():
-
     data_dir = DATA_DIR / "documents"
     class_centroid_path = data_dir / "models" / "class_centroid.csv"
 

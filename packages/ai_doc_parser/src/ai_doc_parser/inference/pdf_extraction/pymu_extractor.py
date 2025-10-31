@@ -71,7 +71,6 @@ def merge_dict(dict1: Dict, dict2: Dict) -> Dict:
     dict3 = {**dict1, **dict2}
 
     for key, value in dict3.items():
-
         if key in dict1 and key in dict2:
             dict3[key] = value + dict1[key]
 
@@ -340,7 +339,6 @@ def extract_pdf_text(
     data_rows = []
 
     with fitz.open(pdf_path) as doc:
-
         for page_number, page in enumerate(doc):
             page_rows = []
             log.debug(f"Processing page {page_number}/{len(doc)}")
@@ -392,7 +390,6 @@ def extract_pdf_text(
             page_blocks_data = []
 
             for j, block in enumerate(root):
-
                 bx0, by0, bx1, by1 = block.attrib["bbox"].split(" ")
                 bx0, by0, bx1, by1 = float(bx0), float(by0), float(bx1), float(by1)
 
@@ -560,7 +557,6 @@ def extract_pdf_text(
                     # thershold to recognize if current_line, should be
                     # merged with next line
                     if next_line_space < 0.1:
-
                         # below features are affected in merging:
                         # coordinates of first char and last char in a text_line
                         char_coor.append(
@@ -610,7 +606,6 @@ def extract_pdf_text(
                         proper_text_correct = ""
                         proper_text_origin = ""
                         if len(char_coor) > 0:
-
                             char_coor.append(
                                 [current_x0, current_y0, current_x1, current_y1]
                             )

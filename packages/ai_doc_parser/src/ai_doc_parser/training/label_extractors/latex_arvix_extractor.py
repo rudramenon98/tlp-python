@@ -26,7 +26,6 @@ log = logging.getLogger(__name__)
 
 
 def make_row(text: str, text_class: TextClass) -> Dict[str, Any]:
-
     return {
         "text": latex_to_text(text).strip(),
         "PageNumber": -1,

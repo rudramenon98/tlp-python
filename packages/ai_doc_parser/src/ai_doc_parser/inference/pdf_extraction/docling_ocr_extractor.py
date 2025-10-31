@@ -3,10 +3,7 @@ from typing import Any, Dict, List
 
 # Docling imports
 from docling.datamodel.base_models import InputFormat
-from docling.datamodel.pipeline_options import (
-    EasyOcrOptions,
-    PdfPipelineOptions,
-)
+from docling.datamodel.pipeline_options import EasyOcrOptions, PdfPipelineOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
 
 

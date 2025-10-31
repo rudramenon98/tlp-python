@@ -8,10 +8,7 @@ from urllib.request import urlretrieve
 import lxml.html
 import requests
 from common_tools.log_config import configure_logging_from_argv
-from database.document_service import (
-    get_scrape_script_by_scraperUrlId,
-    insert_document,
-)
+from database.document_service import get_scrape_script_by_scraperUrlId, insert_document
 from database.entity.Document import Document
 from database.entity.ScrapScript import ScrapScript
 
@@ -28,9 +25,7 @@ console_handler.setFormatter(console_formatter)
 """
 
 from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
-from database.scrape_url_service import (
-    scrape_url_append_log,
-)
+from database.scrape_url_service import scrape_url_append_log
 from database.utils.MySQLFactory import MySQLDriver
 from database.utils.util import get_dir_safe
 
@@ -161,7 +156,6 @@ def download_file(config: ScriptsConfig, type="MDR_EN"):
 
 
 def run(config: ScriptsConfig, scrapeURLId):
-
     # scrapeURLId = 1  currently hard-coded
     mysql_driver = MySQLDriver(cred=config.databaseConfig.__dict__)
 

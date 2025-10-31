@@ -52,40 +52,40 @@ DefaultActiveDate = date(DateToday.year, 1, 1)
 
 
 def scrap_table(driver, url):
-    
+
     i = 2
     cn = 0
     dataset = {'Number':[],'title':[],'description':[],'pdf_file_name':[],'pdf_file_url':[],'filetype':[],'status':[],'active_date':[],'Download':[]}
     while True:
         try:
-            
+
             tr = url+f'[{i}]'
             #tr = '//*[@id="content"]/section[1]/div/div/div[1]/div/figure[1]/table/tbody/tr'+f'[{i}]'
             #print('//*[@id="content"]/section[1]/div/div/div[1]/div/figure[1]/table/tbody/tr'+f'[{i}]')
             table_trs = driver.find_element_by_xpath(tr)
             td = [driver.find_element_by_xpath(tr+'/'+'td'+f'[{i}]').text for i in range(1,4) ]
             dataset['title'].append(td[1])
-            
+
             link = driver.find_element_by_xpath(tr+'/'+'td[2]/a').get_attribute('href')
             dataset['pdf_file_url'].append(link)
-            
+
             file_name = link.split('/')[-1]
             log.debug("Processing file: %s", file_name)
             dataset['pdf_file_name'].append(file_name)
-            
-            
+
+
             dataset['description'].append(td[0])
-            
+
             dataset['filetype'].append(5)
-            
+
             dataset['Download'].append(True)
-            
-            dataset['status'].append('Active') 
-            
+
+            dataset['status'].append('Active')
+
             dataset['active_date'].append(DefaultActiveDate)
-            
+
             dataset['Number'].append(cn)
-            
+
             i+=1
             cn+=1
         except:
@@ -116,11 +116,11 @@ def download_file(config: ScriptsConfig, document: Document, sequence):
     try:
         #mysql_driver = MySQLDriver(cred=config.main_databaseConfig.__dict__)
         #file_name = document.title[:50].replace('/',' ') + ".pdf"
-        
+
         #Try to preserve the filename from the website
         file_name = document.url.split('/')[-1]
 
-        if file_name.lower() == 'native':  
+        if file_name.lower() == 'native':
             #Construct a filename as sometimes the Website URL has only 'native' at the end of the URL
             file_name = document.title[:50].replace('/',' ') + ".pdf"
 
@@ -143,7 +143,7 @@ def download_file(config: ScriptsConfig, document: Document, sequence):
         log.debug('File download failed: %s', document.title + ".pdf")
         log.debug("%s", ex)
         traceback.print_exc()
-        return None, str(traceback.format_exc())        
+        return None, str(traceback.format_exc())
 
 
 def scrape_main_page(main_URL, docker_url):
@@ -214,17 +214,17 @@ def check_for_new_documents(mysql_driver, scrapeDF, scrapeURLId, scrapeScript: S
                     logText = 'Skipped File ' + row['title'] + ' with AC at ' + row[
                         'Number'] + ' URL = <null>  on ' + str(datetime.today())
                     #logList.append(logText)
-                    scrape_url_append_log(mysql_driver, scrapeURLId, logText)                    
+                    scrape_url_append_log(mysql_driver, scrapeURLId, logText)
                     log.debug("%s", logText)
                     continue
-            
+
             docInDB = find_document_by_url(mysql_driver, file_url)
         except Exception as excep:
             logText = f'Failed for : {file_url} \n'
             logText += traceback.format_exc()
             #logList.append(logText)
             scrape_url_append_log(mysql_driver, scrapeURLId, logText)
-            log.debug("%s", logText)                
+            log.debug("%s", logText)
             continue
 
         #scrapeScript: ScrapScript = get_scrap_script_by_file_name(mysql_driver, os.path.basename(__file__))
@@ -265,7 +265,7 @@ def check_for_new_documents(mysql_driver, scrapeDF, scrapeURLId, scrapeScript: S
                 logText += traceback.format_exc()
                 logList.append(logText)
                 scrape_url_append_log(mysql_driver, scrapeURLId, logText)
-                log.debug("%s", logText)                
+                log.debug("%s", logText)
 
         else:
             log.debug('Document found in DB: %s', file_url)
@@ -274,7 +274,7 @@ def check_for_new_documents(mysql_driver, scrapeDF, scrapeURLId, scrapeScript: S
                 'pdf_file_url'] + ' scraped and not changed on ' + str(datetime.today())
             logList.append(logText)
             scrape_url_append_log(mysql_driver, scrapeURLId, logText)
-            log.debug("%s", logText)                
+            log.debug("%s", logText)
             update_list.append(docInDB)
 
     return update_list, download_list
@@ -346,7 +346,7 @@ def check_for_cancelled_documents(mysql_driver, current_date, scrapeURLId):
             logText = 'File ' + str(old_doc.pdfFileName )+ ' with ' + str(old_doc.documentType )+ ' changed to withdrawn/cancelled on ' + str(
                 datetime.today())
             logList.append(logText)
-            scrape_url_append_log(mysql_driver, scrapeURLId, logText)                
+            scrape_url_append_log(mysql_driver, scrapeURLId, logText)
             log.debug("%s", logText)
 
             # append to cancel list
@@ -359,7 +359,7 @@ def check_for_cancelled_documents(mysql_driver, current_date, scrapeURLId):
 
 def run(config: ScriptsConfig, scrapeURLId):
     #global logList
-    
+
     DateToday = datetime.today().date()
     mysql_driver = MySQLDriver(cred=config.databaseConfig.__dict__)
     scrapeScript: ScrapScript = get_scrape_script_by_scraperUrlId(mysql_driver, scrapeURLId)
@@ -375,9 +375,9 @@ def run(config: ScriptsConfig, scrapeURLId):
     # get all the documents and their details
     scrapeDF = scrape_main_page(main_URL, config.SeleniumDocker)
 
-    logText = f'Website data captured at {datetime.today()}' 
+    logText = f'Website data captured at {datetime.today()}'
     #logList.append(logText)
-    scrape_url_append_log(mysql_driver, scrapeURLId, logText) 
+    scrape_url_append_log(mysql_driver, scrapeURLId, logText)
                 log.debug("%s", logText)
 
     update_list, download_list = check_for_new_documents(mysql_driver, scrapeDF, scrapeURLId, scrapeScript)
@@ -385,11 +385,11 @@ def run(config: ScriptsConfig, scrapeURLId):
     #update the unchanged documents in DB (just set their lastScrapeDate = DateToday)
     if update_list and len(update_list) > 0:
         update_documents(mysql_driver, update_list)
-    
+
     print("final download  list size:")
     print(download_list)
     print(len(download_list))
-    
+
     bulk_document = []
     logText = f'File downloading started at {datetime.today()}'
     #logList.append(logText)
@@ -406,10 +406,10 @@ def run(config: ScriptsConfig, scrapeURLId):
             bulk_document.append(docs)
         else:
             logList.append(msgText)
-            scrape_url_append_log(mysql_driver, scrapeURLId, msgText)    
+            scrape_url_append_log(mysql_driver, scrapeURLId, msgText)
 
 
-    logText = f'File downloading completed at {datetime.today()} time taken: {str((time.time() - t1))}' 
+    logText = f'File downloading completed at {datetime.today()} time taken: {str((time.time() - t1))}'
     #logList.append(logText)
     scrape_url_append_log(mysql_driver, scrapeURLId, logText)
                 log.debug("%s", logText)
@@ -422,7 +422,7 @@ def run(config: ScriptsConfig, scrapeURLId):
         if docIDsList is not None and len(docIDsList) > 0:
             logText = f'Newly added docIDs: {docIDsList}'
             #logList.append(logText)
-            scrape_url_append_log(mysql_driver, scrapeURLId, logText)    
+            scrape_url_append_log(mysql_driver, scrapeURLId, logText)
             log.debug("%s", logText)
     except:
         logText = traceback.format_exc()
@@ -445,7 +445,7 @@ def run(config: ScriptsConfig, scrapeURLId):
 
     logText = f'Scraping URL: {main_URL} DONE'
     #logList.append(logText)
-    scrape_url_append_log(mysql_driver, scrapeURLId, logText)    
+    scrape_url_append_log(mysql_driver, scrapeURLId, logText)
                 log.debug("%s", logText)
 
     #save_log_data_to_db(logList, mysql_driver)
@@ -469,7 +469,7 @@ if __name__ == '__main__':
 
         if len(docIdsList) > 0:
             scrapeURLId = docIdsList[0]
-        else: 
+        else:
             scrapeURLId = 2
 
         configs = parseCredentialFile('/app/tlp_config.json')
@@ -481,4 +481,3 @@ if __name__ == '__main__':
         print(traceback.format_exc())
         traceback.print_exc()
         print(e)
-        

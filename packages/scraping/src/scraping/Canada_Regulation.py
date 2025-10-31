@@ -48,7 +48,7 @@ console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 console_handler.setFormatter(console_formatter)
 '''
 
-logList = [] 
+logList = []
 DateToday = datetime.today()
 from urllib import request
 
@@ -78,8 +78,8 @@ def download_file(URL, path):
         for data in response.iter_content(chunk_size=chunk_size):
             size = file.write(data)
             bar.update(size)
-            
-   
+
+
 def Canada_Guidance_Scraping(url, docker_url):
     driver = WebDriverFactory.getWebDriverInstance(browser='docker', docker_url=docker_url)
     #driver.get('https://laws-lois.justice.gc.ca/eng/regulations/SOR-98-282/')
@@ -102,13 +102,13 @@ def Canada_Guidance_Scraping(url, docker_url):
         dataset['pdf_file_name'].append(file_name)
         dataset['filetype'].append(9)
         dataset['Download'].append(True)
-        dataset['status'].append('Active') 
+        dataset['status'].append('Active')
         dataset['active_date'].append(date)
         dataset['Number'].append(cn)
         cn+=1
     df = pd.DataFrame.from_dict(dataset, orient='index')
     df = df.transpose()
-    return df 
+    return df
 
 
 def check_for_new_documents(config: ScriptsConfig, mysql_driver, scrapeDF, scrapeURLId, scrapeScript: ScrapScript):
@@ -135,17 +135,17 @@ def check_for_new_documents(config: ScriptsConfig, mysql_driver, scrapeDF, scrap
                     logText = 'Skipped File ' + row['title'] + ' with AC at ' + row[
                         'Number'] + ' URL = <null>  on ' + str(datetime.today())
                     #logList.append(logText)
-                    scrape_url_append_log(mysql_driver, scrapeURLId, logText)                    
+                    scrape_url_append_log(mysql_driver, scrapeURLId, logText)
                     log.debug("%s", logText)
                     continue
-            
+
             docInDB = find_document_by_url(mysql_driver, PDF_URL)
         except Exception as excep:
             logText = f'Failed for : {file_url} \n'
             logText += traceback.format_exc()
             #logList.append(logText)
             scrape_url_append_log(mysql_driver, scrapeURLId, logText)
-            log.debug("%s", logText)                
+            log.debug("%s", logText)
             continue
 
         #scrapeScript: ScrapScript = get_scrap_script_by_file_name(mysql_driver, os.path.basename(__file__))
@@ -165,7 +165,7 @@ def check_for_new_documents(config: ScriptsConfig, mysql_driver, scrapeDF, scrap
             except Exception as ex1:
                 logText = src_file_name + ' with filetype = ' + str(scrapeDF['filetype']) + ' at ' + HTML_URL + ' download failed on ' + str(datetime.today().date())
                 logList.append(logText)
-                scrape_url_append_log(mysql_driver, scrapeURLId, logText)                
+                scrape_url_append_log(mysql_driver, scrapeURLId, logText)
                 log.debug("%s", traceback.format_exc())
                 return False
 
@@ -174,7 +174,7 @@ def check_for_new_documents(config: ScriptsConfig, mysql_driver, scrapeDF, scrap
             except Exception as ex2:
                 logText = pdf_file_name + ' with filetype = ' + str(scrapeDF['filetype']) + ' at ' + PDF_URL  + ' download failed on ' + str(datetime.today().date())
                 logList.append(logText)
-                scrape_url_append_log(mysql_driver, scrapeURLId, logText)                
+                scrape_url_append_log(mysql_driver, scrapeURLId, logText)
                 log.debug("%s", traceback.format_exc())
                 return False
 
@@ -296,7 +296,7 @@ def check_for_cancelled_documents(mysql_driver, current_date, scrapeURLId, scrap
             logText = 'File ' + str(old_doc.pdfFileName )+ ' with ' + str(old_doc.documentType )+ ' changed to withdrawn/cancelled on ' + str(
                 datetime.today())
             logList.append(logText)
-            scrape_url_append_log(mysql_driver, scrapeURLId, logText)                
+            scrape_url_append_log(mysql_driver, scrapeURLId, logText)
             log.debug("%s", logText)
 
             # append to cancel list
@@ -306,7 +306,7 @@ def check_for_cancelled_documents(mysql_driver, current_date, scrapeURLId, scrap
 
 def run(config: ScriptsConfig, scrapeURLId):
     #global logList
-    
+
     DateToday = datetime.today().date()
     mysql_driver = MySQLDriver(cred=config.databaseConfig.__dict__)
     scrapeScript: ScrapScript = get_scrape_script_by_scraperUrlId(mysql_driver, scrapeURLId)
@@ -322,9 +322,9 @@ def run(config: ScriptsConfig, scrapeURLId):
     # get all the documents and their details
     scrapeDF = Canada_Guidance_Scraping(main_URL, config.SeleniumDocker)
 
-    logText = f'Website data captured at {datetime.today()}' 
+    logText = f'Website data captured at {datetime.today()}'
     #logList.append(logText)
-    scrape_url_append_log(mysql_driver, scrapeURLId, logText) 
+    scrape_url_append_log(mysql_driver, scrapeURLId, logText)
                 log.debug("%s", logText)
 
     retval = check_for_new_documents(config, mysql_driver, scrapeDF, scrapeURLId, scrapeScript=scrapeScript)
@@ -344,7 +344,7 @@ def run(config: ScriptsConfig, scrapeURLId):
 
     logText = f'Scraping URL: {main_URL} DONE'
     #logList.append(logText)
-    scrape_url_append_log(mysql_driver, scrapeURLId, logText)    
+    scrape_url_append_log(mysql_driver, scrapeURLId, logText)
                 log.debug("%s", logText)
 
     #save_log_data_to_db(logList, mysql_driver)
@@ -367,7 +367,7 @@ if __name__ == '__main__':
 
         if len(docIdsList) > 0:
             scrapeURLId = docIdsList[0]
-        else: 
+        else:
             scrapeURLId = 8
 
         configs = parseCredentialFile('/app/tlp_config.json')
@@ -379,4 +379,3 @@ if __name__ == '__main__':
         print(traceback.format_exc())
         traceback.print_exc()
         print(e)
-

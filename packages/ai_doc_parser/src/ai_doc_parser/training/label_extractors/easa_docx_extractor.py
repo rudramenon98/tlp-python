@@ -355,9 +355,7 @@ def getSiblings(curr_tag, tags):
 def getChildren(curr_tag, tags=None):
     children = []
     for s in curr_tag.iterchildren():
-
         if tags:
-
             if s.tag in tags:
                 children.append(s)
         else:
@@ -370,7 +368,6 @@ def getChildren_D(curr_tag, tags=None):
     children = []
     # for s in curr_tag.iterchildren():
     for s in curr_tag.getiterator():
-
         if tags:
             children.append(s)
 
@@ -761,7 +758,6 @@ def extract_easa_xml(path: Path) -> pd.DataFrame:
 
 
 def split_paragraphs_into_chunks(text: str, n_words: int) -> list[str]:
-
     # split the text
     pieces = text.split()
 

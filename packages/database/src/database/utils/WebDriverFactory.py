@@ -5,10 +5,8 @@ from selenium.webdriver.chrome.options import Options as chromeOption
 
 
 class WebDriverFactory:
-
     @staticmethod
     def getWebDriverInstance(browser, docker_url=None):
-
         file_path = os.path.abspath(os.path.join(__file__, "../../.."))
         chrome_driver_path = os.path.join(file_path, "chrome_driver/chromedriver")
         chrome_log = os.path.join(file_path, "chrome_driver/chrome_logs.log")

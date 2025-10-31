@@ -56,7 +56,6 @@ from itertools import product
 
 
 def mergeIntervals(arr):
-
     # Sorting based on the increasing order
     # of the start intervals
     arr.sort(key=lambda x: x[0])
@@ -68,7 +67,6 @@ def mergeIntervals(arr):
     # Traverse all input Intervals starting from
     # second interval
     for i in range(1, len(arr)):
-
         # If this is not first Interval and overlaps
         # with the previous one, Merge previous and
         # current Intervals
@@ -463,7 +461,6 @@ def get_table_locationNew(page: fitz.Page, debugTable=False):
 
             for i, l in enumerate(line):
                 if i % 2 == 0:
-
                     if line[i] < min_x:
                         min_x = line[i]
                     if line[i] > max_x:
@@ -753,7 +750,6 @@ def get_table_locationNew(page: fitz.Page, debugTable=False):
 
         i = 0
         while i < nHorzLines:
-
             x1 = hlines_unused[i][0]
             x2 = hlines_unused[i][2]
             y1 = hlines_unused[i][1]

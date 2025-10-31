@@ -18,9 +18,7 @@ from database.document_service import (
 from database.entity.Document import Document
 from database.entity.ScrapScript import ScrapScript
 from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
-from database.scrape_url_service import (
-    scrape_url_append_log,
-)
+from database.scrape_url_service import scrape_url_append_log
 from database.utils.MySQLFactory import MySQLDriver
 from database.utils.util import get_dir_safe
 from database.utils.WebDriverFactory import WebDriverFactory
@@ -92,7 +90,6 @@ def is_date(string, fuzzy=False):
 
 
 def initial_page_scrape(driver, url):
-
     driver.get(url)
     # wait = WebDriverWait(driver,10)
     time.sleep(10)
@@ -276,7 +273,6 @@ def check_for_new_documents(
         break
 
     for idx, row in scrapeDF.iterrows():
-
         defaultParsingScriptID = scrapeScript.defaultParsingScriptID
 
         file_url = row["pdf_file_url"]
@@ -595,7 +591,6 @@ def run(config: ScriptsConfig, scrapeURLId):
 
 if __name__ == "__main__":
     try:
-
         # configure the logging level
         remaining_args = configure_logging_from_argv(default_level="INFO")
 

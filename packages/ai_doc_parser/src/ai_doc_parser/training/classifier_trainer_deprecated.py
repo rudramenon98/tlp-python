@@ -48,7 +48,6 @@ def multiclass_singlelabel_target_generator(raw_target):
     multiclass_singlelabel_target = []
 
     for _, row in raw_target.iterrows():
-
         target_row = raw_target.iloc[_].values.tolist()
 
         target = [
@@ -63,7 +62,6 @@ def multiclass_singlelabel_target_generator(raw_target):
         ]
 
         if target[2] == 1:  # if is TOC
-
             if target[0] == 1:  # if TOC is header, take it as header or nan
                 if target[1] == 1:  # if is firstline
                     multiclass_singlelabel_target.append([1, 0, 0, 0, 0])
@@ -110,13 +108,11 @@ def make_version_split(df, df_version):
 def data_split_multiclass_singlelabel(
     df, run, train_df_version=[], val_df_version=[], removed_columns=[]
 ):
-
     Xtrain = Xtest = Ytrain = Ytest = text_test = text_train = version_train = (
         version_test
     ) = page_number_train = page_number_test = np.nan
 
     if len(train_df_version) > 0 or train_df_version == "ALL_DATA":
-
         if train_df_version != "ALL_DATA":
             # train_df_version  = df.version.unique()
             # print("df",df.version.unique())
@@ -278,7 +274,6 @@ def data_split_multiclass_singlelabel(
     val_df = df
     Xval_df = Yval_df = text_val_df = version_val_df = page_number_val_df = np.nan
     if len(val_df_version) > 0 or val_df_version == "ALL_DATA":
-
         if val_df_version != "ALL_DATA":
             val_df = make_version_split(df, val_df_version)
 
@@ -383,14 +378,12 @@ def call_main(
     mode="multiclass_singlelabel",
     run="train",
 ):
-
     df = df.reset_index(drop=True)
 
     raw_input = df
     raw_input_for_nan = pd.DataFrame()
 
     if run != "inference":
-
         if (
             mode == "multiclass_singlelabel"
         ):  # 5 labels: firstline_header, continuedline_header, firstline_paragraph, continuedline_paragraph, toc
@@ -619,7 +612,6 @@ def train_and_test(
 def validation(
     df, removed_cols, train_df_version, val_df_version, model, pdf_type, mode, run
 ):
-
     (
         Xtrain,
         Xtest,
@@ -662,7 +654,6 @@ def validation(
 
     Xval_df_for_nan = raw_input_for_nan
     if str(raw_input_for_nan) != "nan" and len(raw_input_for_nan) != 0:
-
         (
             Xtrain_for_nan,
             Xtest_for_nan,
@@ -737,7 +728,6 @@ def validation(
 def inference(
     df, removed_cols, train_df_version, val_df_version, model, pdf_type, mode, run
 ):
-
     (
         Xtrain,
         Xtest,

@@ -339,7 +339,6 @@ def aus_mdr(overwrite: bool = False) -> None:
     document_dir = DATA_DIR / "documents" / "AUSMDR"
     pdfs = list(document_dir.glob("*.pdf"))
     for pdf_path in pdfs:
-
         pdf_type = "AUS"
         docx_path = pdf_path.with_suffix(".docx")
         extract_and_label(

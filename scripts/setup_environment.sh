@@ -57,3 +57,9 @@ fi
 
 echo "Environment setup complete!"
 echo "To activate the virtual environment, run: source venv/bin/activate"
+
+
+
+# add aliases for format-py and setup-env
+alias format-py="scripts/format_py.sh"
+alias setup-env="scripts/setup_environment.sh"

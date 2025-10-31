@@ -194,7 +194,6 @@ def check_links(x, docker_url):
     ]
     for j in new_links:
         try:
-
             if "download" in j:
                 download_link = j
                 print(download_link)
@@ -255,7 +254,6 @@ def page_extraction(driver, mysql_driver, scrapeURLId, docker_url):
                 )
                 links = check_links(url_next_page, docker_url)
                 for k in links:
-
                     dataset["Number"].append(k.split("/")[-2])
 
                     dataset["title"].append(td[0][:100])
@@ -327,7 +325,6 @@ def page_extraction(driver, mysql_driver, scrapeURLId, docker_url):
 
 
 def process_page(config: ScriptsConfig, dfs, mysql_driver, scrapeURLId):
-
     global logList, DateToday
 
     print("Processing website page")
@@ -458,9 +455,7 @@ def scrape_fda_guidance_documentsOLD(
 ):
     # dfs = []
     try:
-
         for _ in range(number_of_pages):
-
             print("Scraping page: " + str(_))
             df = page_extraction(driver, mysql_driver, scrapeURLId, docker_url)
 
@@ -550,7 +545,6 @@ def check_for_new_documents(
     redownload_list = []
 
     for idx, row in scrapeDF.iterrows():
-
         file_url = row["pdf_file_url"]
 
         try:

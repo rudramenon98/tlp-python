@@ -35,7 +35,6 @@ logging.getLogger("selenium").setLevel(logging.WARNING)
 
 
 def scrap_table(driver, url):
-
     i = 2
     cn = 0
     dataset = {
@@ -51,7 +50,6 @@ def scrap_table(driver, url):
     }
     while True:
         try:
-
             tr = url + f"[{i}]"
             # tr = '//*[@id="content"]/section[1]/div/div/div[1]/div/figure[1]/table/tbody/tr'+f'[{i}]'
             # print('//*[@id="content"]/section[1]/div/div/div[1]/div/figure[1]/table/tbody/tr'+f'[{i}]')

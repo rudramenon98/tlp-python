@@ -37,7 +37,6 @@ def groupbycolumn(boxes):
 
 
 def order_blocks_impl(boxes):
-
     rows = groupbycolumn(boxes)
 
     idx = 0
@@ -72,7 +71,6 @@ def order_blocks_impl(boxes):
 
 
 def estimate_number_of_columns(boxes, width):
-
     if len(boxes) == 0:
         return 1
 
@@ -109,7 +107,6 @@ def estimate_number_of_columns(boxes, width):
 
 
 def order_blocks(df):
-
     groups = df.groupby("PageNumber")  # group page-wise
 
     list(df.columns)
@@ -117,7 +114,6 @@ def order_blocks(df):
     df2 = pd.DataFrame()
 
     for group in groups:  # page-wise iteration
-
         boxes = []
         block_ids_set = set()
         # get the block data for each page
@@ -126,7 +122,6 @@ def order_blocks(df):
         # sort from top to bottom in the page
         # each_file_json.sort_values(by = 'line_y0', inplace = True)
         for i in range(each_file_json.shape[0]):
-
             currRow = each_file_json.iloc[i]
 
             #

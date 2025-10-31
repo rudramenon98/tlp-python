@@ -203,11 +203,9 @@ def get_fda_cfrs():
             current_year = year
             idx = 0
             while current_year != 1996:
-
                 if check_availability(
                     current_year, j, volumes[i - 1], "pdf"
                 ):  # and check_availability(current_year, j, i, 'xml'):
-
                     idx += 1
 
                     TITLE = (
@@ -302,7 +300,6 @@ def download_file(URL, path):
 def download_cfr_document(
     config: ScriptsConfig, mysql_driver: MySQLDriver, df, scrapeURLId
 ):
-
     global logList
     try:
         XML_URL = df["xml_file_url"]
@@ -314,7 +311,6 @@ def download_cfr_document(
         )
 
         if not docInDB:
-
             file_name = XML_URL.split("/")[-1]
             pdf_file_name = PDF_URL.split("/")[-1]
 
@@ -554,7 +550,6 @@ def parse_remaining_args(cleaned_args):
 
 
 if __name__ == "__main__":
-
     try:
         props = None
         # configure the logging level

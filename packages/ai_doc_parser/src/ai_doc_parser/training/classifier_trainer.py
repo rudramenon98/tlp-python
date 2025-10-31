@@ -791,7 +791,6 @@ def plot_xgboost_convergence(
 
 
 def main() -> None:
-
     log.info("Starting multiclass training...")
     log.info("=" * 50)
 
@@ -857,13 +856,19 @@ def main() -> None:
 
     if TRAIN_MODEL:
         # Train the model
-        x_train, x_test, y_train, y_test, model, feature_columns, class_centroid = (
-            train_multiclass(
-                df=df,
-                test_size=0.2,
-                random_state=42,
-                model_type=model_type,
-            )
+        (
+            x_train,
+            x_test,
+            y_train,
+            y_test,
+            model,
+            feature_columns,
+            class_centroid,
+        ) = train_multiclass(
+            df=df,
+            test_size=0.2,
+            random_state=42,
+            model_type=model_type,
         )
 
         log.info("\n" + "=" * 50)
@@ -951,11 +956,7 @@ def main() -> None:
 
 # Example driver code
 if __name__ == "__main__":
-    from enginius_parser import (
-        CFR_DIR,
-        DATA_DIR,
-        EASA_DIR,
-    )
+    from enginius_parser import CFR_DIR, DATA_DIR, EASA_DIR
 
     logging.basicConfig(level=logging.DEBUG)
 

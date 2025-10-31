@@ -148,7 +148,6 @@ def easa_doc_parsing(path: Path | str) -> pd.DataFrame:
 
 
 def split_paragraphs_into_chunks(text, n_words):
-
     # split the text
     pieces = text.split()
 

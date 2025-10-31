@@ -20,9 +20,7 @@ from database.document_service import (
 from database.entity.Document import Document
 from database.entity.ScrapScript import ScrapScript
 from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
-from database.scrape_url_service import (
-    scrape_url_append_log,
-)
+from database.scrape_url_service import scrape_url_append_log
 from database.utils.MySQLFactory import MySQLDriver
 
 log = logging.getLogger(__name__)
@@ -84,10 +82,8 @@ def extract_xml_from_zip_file(zip_file, download_dir):
     try:
         os.lstat(zip_file)
         if zip_file.endswith("zip"):
-
             # with zipfile.ZipFile(os.path.join(dir_name,zip_file), 'r') as zip_ref:
             with zipfile.ZipFile(zip_file, "r") as zip_ref:
-
                 zip_ref.extractall(temp_extract_path)
 
                 xml_file_path = os.path.join(dir_name, zip_file.split(".")[0] + ".xml")
@@ -147,7 +143,6 @@ def download_file(URL, file_path):
 
 def download_files(config: ScriptsConfig, document: Document, pdf_url, xml_url):
     try:
-
         download_dir = get_dir_safe(config.downloadDir)
         pdf_file_name = document.pdfFileName
         xml_file_name = document.sourceFileName
@@ -199,7 +194,6 @@ def download_link(driver2, url):
     links = []
     filenames = []
     for i in driver2.find_elements_by_class_name("matomo_download"):
-
         name = i.text
         link = i.get_attribute("href")
         links.append(link)
@@ -243,12 +237,10 @@ def EASA_Scrapping(url, docker_url):
             link = t.get_attribute("href")
 
             if len(data) > 2:
-
                 dataset["title"].append(data[2])
 
                 dataset["active_date"].append(data[0])
             else:
-
                 dataset["title"].append(data[1])
 
                 dataset["active_date"].append(data[0])
@@ -312,7 +304,6 @@ def check_for_new_documents(
     pdf_urls = []
     xml_urls = []
     for idx, row in scrapeDF.iterrows():
-
         file_urls = row["pdf_file_url"]
 
         file_names = row["pdf_file_name"]

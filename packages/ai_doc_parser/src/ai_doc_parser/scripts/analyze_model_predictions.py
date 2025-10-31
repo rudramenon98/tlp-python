@@ -23,9 +23,11 @@ import pandas as pd
 # Add the src directory to the path so we can import our modules
 sys.path.append(str(Path(__file__).parent.parent))
 
-from ai_doc_parser.tools.model_interpretability import ModelInterpretabilityAnalyzer, load_model_and_analyze
+from ai_doc_parser.text_class import CLASS_MAP_INV, TextClass
+from ai_doc_parser.tools.model_interpretability import (
+    ModelInterpretabilityAnalyzer,
+)
 from ai_doc_parser.training.classifier_trainer import load_model, prepare_df_for_model
-from ai_doc_parser.text_class import TextClass, CLASS_MAP_INV
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

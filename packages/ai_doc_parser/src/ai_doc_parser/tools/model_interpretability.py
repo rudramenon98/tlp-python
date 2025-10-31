@@ -15,8 +15,7 @@ Date: 2024
 import logging
 import os
 import warnings
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import joblib
 import matplotlib.pyplot as plt
@@ -24,7 +23,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import confusion_matrix
 from sklearn.tree import export_text
 
 # Suppress warnings for cleaner output

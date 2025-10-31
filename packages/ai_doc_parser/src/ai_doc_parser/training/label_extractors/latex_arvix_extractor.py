@@ -11,7 +11,6 @@ Date: 2024
 
 import logging
 
-from ai_doc_parser.training.post_labelling_heuristics import latex_heuristics
 
 log = logging.getLogger(__name__)
 import re
@@ -20,11 +19,9 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-import numpy as np
 import pandas as pd
-from plasTeX.TeX import TeX
-
 from ai_doc_parser.text_class import TextClass
+from plasTeX.TeX import TeX
 
 log = logging.getLogger(__name__)
 

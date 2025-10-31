@@ -1,10 +1,11 @@
-from docx import Document
-from docx.table import Table
 import logging
 from pathlib import Path
-from typing import List, Dict
-from ai_doc_parser.text_class import TextClass
+from typing import Dict, List
+
 import pandas as pd
+from ai_doc_parser.text_class import TextClass
+from docx import Document
+from docx.table import Table
 
 # ----------------------------
 # Helpers

@@ -14,28 +14,31 @@ Usage:
 """
 
 import logging
-import os
 import sys
 import traceback
 from pathlib import Path
-from typing import Callable, Optional, Tuple
-import xml
+from typing import Callable, Tuple
 
 import pandas as pd
-
 from ai_doc_parser import DATA_DIR, EASA_DIR
 from ai_doc_parser.inference.ai_pdf_parser import parse_pdf_ai
-from ai_doc_parser.inference.feature_computation.feature_computer import compute_features
+from ai_doc_parser.inference.feature_computation.feature_computer import (
+    compute_features,
+)
 from ai_doc_parser.inference.pdf_extraction.docx_extactor import extract_docx
 from ai_doc_parser.inference.pdf_extraction.pymu_extractor import extract_pdf_text
-from ai_doc_parser.scripts.update_labelled_pdf_features import update_labelled_pdf_features
+from ai_doc_parser.scripts.update_labelled_pdf_features import (
+    update_labelled_pdf_features,
+)
+from ai_doc_parser.training.classifier_trainer import load_model
 from ai_doc_parser.training.label_extractors.easa_docx_extractor import extract_easa_xml
 from ai_doc_parser.training.label_extractors.latex_arvix_extractor import LatexParser
 from ai_doc_parser.training.label_extractors.xml_cfr_extractor import cfr_extracting
-from ai_doc_parser.training.classifier_trainer import load_model
 from ai_doc_parser.training.labeller import sliding_window_labeling
-from ai_doc_parser.training.post_labelling_heuristics import apply_heuristic_to_dir, latex_heuristics
-
+from ai_doc_parser.training.post_labelling_heuristics import (
+    apply_heuristic_to_dir,
+    latex_heuristics,
+)
 
 log = logging.getLogger(__name__)
 
@@ -212,7 +215,7 @@ def extract_and_label(
 
 
 def main_cfr_xml(overwrite: bool = False) -> None:
-    from ai_doc_parser import CFR_PDF
+    pass
 
     document_dir = Path(__file__).parents[3] / "data" / "documents" / "CFR"
     # document_dir = Path(r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents\validation")
@@ -226,7 +229,7 @@ def main_cfr_xml(overwrite: bool = False) -> None:
 
 
 def main_xml_easa(overwrite: bool = False) -> None:
-    from ai_doc_parser import EASA_PDF, EASA_PDF_2
+    pass
 
     document_dir = Path(__file__).parents[3] / "data" / "documents" / "EASA"
     pdfs = list(document_dir.glob("*.pdf"))
@@ -285,7 +288,7 @@ def latex_bullet_list(overwrite: bool = False) -> None:
         pdf_type = "Arvix"  # Options: "CFR",  "FAA_Advisory_Circulars_Data", "Arxiv"
         extract_and_label(pdf_path, latex_files[0], pdf_type, document_dir, parser.parse, overwrite)
 
-        data_dir = DATA_DIR / "documents"
+        DATA_DIR / "documents"
     apply_heuristic_to_dir(document_dir / "labelled_pdf", latex_heuristics)
 
 

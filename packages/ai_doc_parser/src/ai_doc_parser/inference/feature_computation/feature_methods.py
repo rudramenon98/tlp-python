@@ -1,15 +1,14 @@
-import pathlib,string
-import pandas as pd
-import unidecode
-import textdistance
-import string
-import re
-import fitz
 import itertools
+import re
+import statistics
+import string
 from collections import defaultdict
+
+import fitz
 import intervals as I
 import numpy as np
-import statistics
+import textdistance
+import unidecode
 
 
 ##Remmove Prefix 
@@ -65,7 +64,6 @@ def accent_and_badtext_handler(badtext):
 
 def remove_everything_except_(text):
   one_letter = list(string.ascii_uppercase)+list(string.ascii_lowercase)
-  digit_letter = ["0","1","2","3","4","5","6","7","8","9"]
   for letter in text:
     if letter not in one_letter:#+digit_letter:
       text = text.replace(letter,"")
@@ -187,7 +185,7 @@ def  longest_common_string(text, content):
         score = None
 
         try:
-            longest_common_subsequence = textdistance.lcsseq(text, content)
+            textdistance.lcsseq(text, content)
             longest_common_substring =  textdistance.lcsstr(text, content)
             if content.count(longest_common_substring)>1:
                 start_index = content.index(longest_common_substring)
@@ -473,7 +471,7 @@ def is_compound_with_dot_(word):
     word = removeConsecutiveDuplicates(new_word)
     summ_dot = word.count(".")
     summ_punc = summ_punc - (len(new_word)-len(word))
-    summ_char = len(word)- summ_punc - summ_digit
+    len(word)- summ_punc - summ_digit
 
     return_value = False
 
@@ -637,7 +635,7 @@ def is_compound_with_dot_(word):
     word = removeConsecutiveDuplicates(new_word)
     summ_dot = word.count(".")
     summ_punc = summ_punc - (len(new_word)-len(word))
-    summ_char = len(word)- summ_punc - summ_digit
+    len(word)- summ_punc - summ_digit
 
     return_value = False
 
@@ -805,7 +803,7 @@ def get_table_location(page: fitz.Page, debugTable = False):
             horTableExtents[k] = mergeIntervals(v)
 
         if tablesVerticalExtents != None:
-            numTables = len(tablesVerticalExtents)
+            len(tablesVerticalExtents)
             new_table_rects = []
             #OLD-way
             #for r in tablesVerticalExtents:
@@ -838,9 +836,6 @@ def detect_one_lines(df):
       '''detects if parts of a line are separated while reading by pymupdf and should be merged'''
 
       features_need_to_be_based_on_first_part = ["first_char_isdigit","starts_with_roman","first_word_isletter","first_word_iscompound","first_char_is_special_letter","starts_with_special_word","starts_with_figure_table","starts_with_asterisk","starts_with_open_parenthesis","starts_with_close_parenthesis","is_first_char_dot","first_word_is_stop","first_word_is_noun_or_verb"]
-      features_need_to_be_modified = ["text","figure_table_is_inside_text","text_len_difference","next_text_len_difference","previous_text_len_difference","number_dot","right_margin","left_margin","is_centered","last_char_is_colon","next_line_space","previous_line_space","next_line_page_number","previous_line_page_number","number_of_nouns","number_of_verbs","number_of_punctuations","number_of_is_stop","paragraph_break","break","number_of_is_alpha","number_of_entities","is_bold","is_italic","font_size","multiple_font_size","multiple_font_family","ratio_of_major_font_family","ratio_of_major_font_size","all_is_upper","number_of_upper","voc","text_total_number_of_extra_spaces","distance_from_top","distance_from_bottom","has_bullet_point","is_last_word_roman_or_digit"]
-      features_should_be_removed = ["left_distance","right_distance","right_distance_block","left_distance_block"]
-      features_has_bug = ["is_centered"]
 
       indexes_should_be_removed = []
 
@@ -880,9 +875,8 @@ def detect_one_lines(df):
                 df.at[_+1,"right_margin"] = df.iloc[_+1]["right_margin"]
                 df.at[_+1,"left_margin"] = df.iloc[_]["left_margin"]
 
-                is_centered = 0
                 if df.iloc[_+1]["left_margin"]>0.05 and abs(df.iloc[_+1]["left_margin"]-df.iloc[_+1]["right_margin"])<0.1:
-                    is_centered = 1
+                    pass
                 df.at[_+1,"is_centered"] = 1
 
                 df.at[_+1,"last_char_is_colon"] = df.iloc[_+1]["last_char_is_colon"]

@@ -1,21 +1,22 @@
 import logging
-import os
-import re
 from enum import Enum
 from pathlib import Path
-from pprint import pprint
-from typing import Any, List, Optional, Tuple, Union
+from typing import List, Tuple, Union
 
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xgboost
+from ai_doc_parser.text_class import (
+    AI_PARSED_CLASSES,
+    CLASS_MAP,
+    CLASS_MAP_INV,
+    TextClass,
+)
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
-
-from ai_doc_parser.text_class import AI_PARSED_CLASSES, CLASS_MAP, CLASS_MAP_INV, TextClass
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -857,7 +858,11 @@ def main() -> None:
 
 # Example driver code
 if __name__ == "__main__":
-    from enginius_parser import CFR_DIR, CFR_PDF, DATA_DIR, EASA_DIR, EASA_PDF, EASA_PDF_2
+    from enginius_parser import (
+        CFR_DIR,
+        DATA_DIR,
+        EASA_DIR,
+    )
 
     logging.basicConfig(level=logging.DEBUG)
 

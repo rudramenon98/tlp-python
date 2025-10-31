@@ -112,7 +112,7 @@ def order_blocks(df):
 
     groups = df.groupby('PageNumber')  # group page-wise
 
-    init_features = list(df.columns)
+    list(df.columns)
 
     df2 = pd.DataFrame()
 

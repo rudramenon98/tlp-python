@@ -1,31 +1,26 @@
-from typing import Tuple
-import csv
-import json
 import logging
-import os
-import re
-import sys
-import time
-import traceback
-from datetime import date, datetime
-from multiprocessing import current_process
-from multiprocessing.pool import ThreadPool as Pool
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Dict, List, Tuple
 
 import joblib
-
 import numpy as np
 import pandas as pd
+from ai_doc_parser.inference.feature_computation.feature_computer import (
+    compute_features,
+)
+from ai_doc_parser.inference.pdf_extraction.pymu_extractor import extract_pdf_text
+from ai_doc_parser.inference.post_classification_heuristics import (
+    post_classification_heuristics,
+)
+from ai_doc_parser.text_class import (
+    AI_PARSED_CLASSES,
+    CLASS_MAP_INV,
+    CONTINUE_PAIRS,
+    TextClass,
+)
+from ai_doc_parser.training.classifier_trainer import prepare_df_for_model
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
-
-from ai_doc_parser.inference.feature_computation.feature_computer import compute_features
-from ai_doc_parser.inference.pdf_extraction.pymu_extractor import extract_pdf_text
-from ai_doc_parser.inference.post_classification_heuristics import post_classification_heuristics
-from ai_doc_parser.text_class import AI_PARSED_CLASSES, CLASS_MAP_INV, CONTINUE_PAIRS, TextClass
-from ai_doc_parser.tools.model_interpretability import ModelInterpretabilityAnalyzer
-from ai_doc_parser.training.classifier_trainer import prepare_df_for_model
 
 log = logging.getLogger(__name__)
 loaded_model = None
@@ -287,7 +282,7 @@ def parse_pdf_ai(
 
 
 def main() -> None:
-    from ai_doc_parser import DATA_DIR, EASA_DIR, EASA_PDF, LATEX_PDF
+    from ai_doc_parser import DATA_DIR
 
     data_dir = DATA_DIR / "documents"
     overwrite = True

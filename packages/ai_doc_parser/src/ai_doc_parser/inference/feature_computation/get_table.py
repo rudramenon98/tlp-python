@@ -1,9 +1,11 @@
 """@author: dshah"""
-import math
-import fitz
-from collections import defaultdict
 import itertools
-import numpy as np
+import math
+from collections import defaultdict
+
+import fitz
+
+
 def truncate(x):
     return math.floor(x)
 
@@ -48,6 +50,8 @@ def debugPDFout2(rectList, page):
 
 #New Approach
 from itertools import product
+
+
 def mergeIntervals(arr):
  
     # Sorting based on the increasing order
@@ -367,14 +371,14 @@ def get_table_locationNew(page: fitz.Page, debugTable = False):
             if len(s) > 0:
                 horTableExtents[k] = s
 
-        yLevels = sorted(horTableExtents.keys())
+        sorted(horTableExtents.keys())
         verTableExtents = defaultdict()
         for k,v in ver_lines_dict.items():
             s = mergeIntervals(v)
             if len(s) > 0:
                 verTableExtents[k] = s
 
-        xLevels = sorted(verTableExtents.keys())
+        sorted(verTableExtents.keys())
 
         def getIndex(l:list, x:int, e = -1) -> int:
             try:
@@ -453,7 +457,7 @@ def get_table_locationNew(page: fitz.Page, debugTable = False):
             for v_idx, vline in enumerate(ver_lines):
                 ver_x0 = vline[0]
                 ver_y0 = vline[1]
-                ver_x1 = vline[2]
+                vline[2]
                 ver_y1 = vline[3]
 
                 if abs(ver_x0 - hor_x0) <= 2 or abs(ver_x0 - hor_x1) <= 2:
@@ -500,8 +504,8 @@ def get_table_locationNew(page: fitz.Page, debugTable = False):
             if vline == None:
                 i2 += 1
                 continue
-            vmin_x = vline[0]
-            vmax_x = vline[2]
+            vline[0]
+            vline[2]
             vmin_y = vline[1]
             vmax_y = vline[3]
 
@@ -554,10 +558,10 @@ def get_table_locationNew(page: fitz.Page, debugTable = False):
         def calc_dist(box1, box2):
             # text: ymin, xmin, ymax, xmax
             # obj: ymin, xmin, ymax, xmax
-            x1 = bbox[0]
-            y1 = bbox[1]
-            x2 = bbox[2]
-            y2 = bbox[3]
+            bbox[0]
+            bbox[1]
+            bbox[2]
+            bbox[3]
 
             box1_xmin = box1[0]
             box1_ymin = box1[1]
@@ -633,10 +637,10 @@ def get_table_locationNew(page: fitz.Page, debugTable = False):
             return False
 
         def ifInside(box1, box2):
-            x1 = box1[0]
-            y1 = box1[1]
-            x2 = box1[2]
-            y2 = box1[3]
+            box1[0]
+            box1[1]
+            box1[2]
+            box1[3]
             
             if (pointInRect(box2, box1[0], box1[1]) and pointInRect(box2, box1[2], box1[3])):
                 return True, [box2[0], box2[1], box2[2], box2[3]]

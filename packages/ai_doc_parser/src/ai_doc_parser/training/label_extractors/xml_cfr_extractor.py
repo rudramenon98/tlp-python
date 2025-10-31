@@ -1,8 +1,5 @@
-import json
 import logging
-import os
 import re
-import sys
 from collections import defaultdict
 
 log = logging.getLogger(__name__)
@@ -10,15 +7,12 @@ log = logging.getLogger(__name__)
 # import requests
 # import urllib.request
 import time
-import traceback
-from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import lxml.etree as ET
 import numpy as np
 import pandas as pd
-
 from ai_doc_parser.text_class import TextClass
 from ai_doc_parser.training.label_extractors.extractor_methods import check_for_columns
 

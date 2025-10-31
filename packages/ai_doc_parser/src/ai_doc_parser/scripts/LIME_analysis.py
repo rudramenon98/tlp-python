@@ -6,18 +6,18 @@ for understanding individual predictions in the AI PDF parser.
 """
 
 import logging
-import pandas as pd
-import numpy as np
-from sklearn.ensemble import RandomForestClassifier
-from typing import Optional
 import sys
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
 
 # Add the src directory to the path for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
 import joblib
-from ai_doc_parser.text_class import TextClass, CLASS_MAP_INV
+from ai_doc_parser.text_class import CLASS_MAP_INV, TextClass
 from ai_doc_parser.training.classifier_trainer import FEATURE_COLUMNS
 
 try:
@@ -175,7 +175,7 @@ def lime_analysis(
         # We need to determine how this affects the comparison between our two classes
 
         # Calculate the probability difference between the two classes
-        prob_diff = prob_class_1 - prob_class_2
+        prob_class_1 - prob_class_2
 
         # Determine the effect based on the LIME weight and the probability difference
         if lime_weight > 0:

@@ -14,9 +14,9 @@ import pandas as pd
 # Add the src directory to the path
 sys.path.append(str(Path(__file__).parent.parent))
 
+from ai_doc_parser.text_class import CLASS_MAP_INV, TextClass
 from ai_doc_parser.tools.model_interpretability import ModelInterpretabilityAnalyzer
-from ai_doc_parser.training.classifier_trainer import train_multiclass, load_model
-from ai_doc_parser.text_class import TextClass, CLASS_MAP_INV
+from ai_doc_parser.training.classifier_trainer import load_model, train_multiclass
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

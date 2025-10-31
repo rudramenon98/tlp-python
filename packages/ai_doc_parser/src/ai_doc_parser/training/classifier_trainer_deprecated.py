@@ -1,7 +1,5 @@
 import re
 
-# import fitz
-
 import joblib
 import numpy as np
 import pandas as pd
@@ -9,6 +7,9 @@ from pdf_inference import functions
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import f1_score, multilabel_confusion_matrix, roc_auc_score
 from sklearn.model_selection import train_test_split
+
+# import fitz
+
 
 '''Recalculate Featues'''
 

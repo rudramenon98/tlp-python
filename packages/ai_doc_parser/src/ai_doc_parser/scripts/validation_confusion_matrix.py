@@ -5,14 +5,14 @@ This script loads labelled and inference data from the validation directories an
 generates a confusion matrix to evaluate model performance.
 """
 
-import os
-import pandas as pd
-import numpy as np
+import logging
 from pathlib import Path
 from typing import List
+
+import numpy as np
+import pandas as pd
 from ai_doc_parser.text_class import TextClass
 from ai_doc_parser.training.classifier_trainer import print_confusion_matrix_grid
-import logging
 
 log = logging.getLogger(__name__)
 

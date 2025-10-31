@@ -7,23 +7,16 @@ corresponding XML annotations and assign classification labels based on content 
 
 import logging
 import re
-import time
-import traceback
-
 import unicodedata
 
 # operator module no longer needed after refactoring get_page function
 from collections import defaultdict
-from functools import lru_cache
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 import Levenshtein
 import numpy as np
 import pandas as pd
-import unidecode
-
-from ai_doc_parser.scripts.print_extracted_df_metrics import generate_metrics_report
 from ai_doc_parser.training.common_tools import clean_text
 
 try:
@@ -573,7 +566,7 @@ def match_lines_within_windows(
 
         pdf_line = pdf_row['text']
         pdf_cleaned = pdf_row['cleaned_text']
-        pdf_word_count = len(pdf_line.split())
+        len(pdf_line.split())
 
         if pdf_line == 'nan' or not pdf_line.strip() or len(pdf_line) <= 1:
             continue
@@ -932,7 +925,6 @@ def line_to_line_validating(pdf_df: pd.DataFrame, xml_df: pd.DataFrame) -> pd.Da
 
 def main() -> None:
     from ai_doc_parser import LATEX_PDF as pdf_path
-    from ai_doc_parser import LATEX_SOURCE as source_path
 
     pdf_path = Path("/home/rmenon/source/ai-pdf-parser/data/documents/CFR/CFR-2024-title21-vol8-chapI-subchapH.pdf")
 

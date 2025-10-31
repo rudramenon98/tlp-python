@@ -6,11 +6,9 @@ then generates a comprehensive comparison report with metrics by text class.
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Tuple
 
-import matplotlib.pyplot as plt
 import pandas as pd
-
 from ai_doc_parser.text_class import TextClass
 from ai_doc_parser.training.common_tools import clean_text
 
@@ -103,7 +101,7 @@ def calculate_class_metrics(
     # Calculate ratios and averages
     record_ratio = round(pdf_records / extracted_records, 2) if extracted_records > 0 else 'nan'
     classified_pdf_ratio = round(classified_pdf_records / extracted_records, 2) if extracted_records > 0 else 'nan'
-    avg_confidence = round(pdf_class_df['Match_Confidence'].mean(), 2) if len(pdf_class_df) > 0 else 'nan'
+    round(pdf_class_df['Match_Confidence'].mean(), 2) if len(pdf_class_df) > 0 else 'nan'
 
     if class_num == TextClass.PARAGRAPH:
         cont_class = TextClass.PARAGRAPH_CONT

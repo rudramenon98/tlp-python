@@ -1,11 +1,6 @@
-import json
 import logging
-import os
 import re
-import sys
 import time
-import traceback
-from datetime import date, datetime
 from pathlib import Path
 
 log = logging.getLogger(__name__)
@@ -13,7 +8,6 @@ log = logging.getLogger(__name__)
 import lxml.etree as ET
 import numpy as np
 import pandas as pd
-
 from ai_doc_parser.text_class import TextClass
 from ai_doc_parser.training.label_extractors.extractor_methods import check_for_columns
 

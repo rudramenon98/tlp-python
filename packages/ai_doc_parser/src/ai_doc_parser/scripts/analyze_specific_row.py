@@ -6,15 +6,15 @@ This script shows how to use LIME and SHAP to understand individual predictions.
 
 import sys
 from pathlib import Path
+
 import pandas as pd
-import numpy as np
 
 # Add the src directory to the path
 sys.path.append(str(Path(__file__).parent.parent))
 
+from ai_doc_parser.text_class import CLASS_MAP_INV, TextClass
 from ai_doc_parser.tools.model_interpretability import ModelInterpretabilityAnalyzer
 from ai_doc_parser.training.classifier_trainer import load_model, prepare_df_for_model
-from ai_doc_parser.text_class import TextClass, CLASS_MAP_INV
 
 
 def analyze_specific_row(model_path: str, data_path: str, row_index: int, output_dir: str = "row_analysis"):
@@ -70,7 +70,7 @@ def analyze_specific_row(model_path: str, data_path: str, row_index: int, output
         print(f"Correct: {'Yes' if prediction == true_label else 'No'}")
 
     # Initialize analyzer
-    analyzer = ModelInterpretabilityAnalyzer(model, feature_columns, class_names)
+    ModelInterpretabilityAnalyzer(model, feature_columns, class_names)
 
     # Method 1: Feature Importance Analysis for this specific row
     print(f"\n{'='*60}")
@@ -221,7 +221,6 @@ def analyze_specific_row(model_path: str, data_path: str, row_index: int, output
 
 def main():
     """Main function to analyze a specific row."""
-    import argparse
 
     model_path = (
         r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents\models\RandomForestClassifier.sav"

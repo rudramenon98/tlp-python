@@ -1,18 +1,15 @@
-import itertools
 import logging
 import re
 import xml.etree.ElementTree as ET
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import fitz
 import numpy as np
 import pandas as pd
 import unidecode
 from pymupdf.table import TableFinder
-
-from ai_doc_parser.inference.feature_computation.feature_methods import mergeIntervals
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -831,7 +828,7 @@ def calculate_cell_bbox(table_bbox, row_idx, col_idx, num_rows, num_cols):
 
 # Example usage
 if __name__ == "__main__":
-    from ai_doc_parser import CFR_PDF, EASA_DIR, LATEX_PDF
+    from ai_doc_parser import EASA_DIR
 
     logging.basicConfig(level=logging.DEBUG)
 

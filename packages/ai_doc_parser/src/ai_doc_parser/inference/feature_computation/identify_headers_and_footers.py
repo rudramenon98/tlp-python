@@ -1,9 +1,7 @@
 """@author: dshah"""
 
-import collections
-import itertools
 from statistics import mean
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd

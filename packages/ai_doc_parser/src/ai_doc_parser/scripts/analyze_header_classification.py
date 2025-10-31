@@ -6,14 +6,14 @@ This helps understand the specific patterns that lead to header continuation cla
 
 import sys
 from pathlib import Path
+
 import pandas as pd
-import numpy as np
 
 # Add the src directory to the path
 sys.path.append(str(Path(__file__).parent.parent))
 
+from ai_doc_parser.text_class import CLASS_MAP_INV, TextClass
 from ai_doc_parser.training.classifier_trainer import load_model, prepare_df_for_model
-from ai_doc_parser.text_class import TextClass, CLASS_MAP_INV
 
 
 def analyze_header_classification(model_path: str, features_path: str, row_index: int):
@@ -253,7 +253,6 @@ def analyze_header_classification(model_path: str, features_path: str, row_index
 
 def main():
     """Main function."""
-    import argparse
 
     model_path = (
         r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents\models\RandomForestClassifier.sav"

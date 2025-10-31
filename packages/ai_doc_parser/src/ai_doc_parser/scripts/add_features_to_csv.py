@@ -1,7 +1,10 @@
-from ai_doc_parser.inference.feature_computation.feature_computer import all_caps, first_word_compound, is_title_case
-from typing import Callable
-import pandas as pd
 from pathlib import Path
+from typing import Callable
+
+import pandas as pd
+from ai_doc_parser.inference.feature_computation.feature_computer import (
+    is_title_case,
+)
 
 
 def add_feature_to_df(df: pd.DataFrame, column_name: str, feature_function: Callable) -> pd.DataFrame:

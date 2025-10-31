@@ -1,12 +1,13 @@
 import os
-import re
 import sys
 from itertools import chain
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import fitz  # PyMuPDF
 import pandas as pd
-from PyQt5.QtCore import QEvent, QLineF, QRectF, QSettings, Qt, pyqtSignal, QTimer
+from ai_doc_parser.training.classifier_trainer import FEATURE_COLUMNS
+from ai_doc_parser.training.labeller import TextClass
+from PyQt5.QtCore import QEvent, QLineF, QRectF, QSettings, Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import (
     QBrush,
     QCloseEvent,
@@ -42,9 +43,6 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-from ai_doc_parser.training.classifier_trainer import FEATURE_COLUMNS
-from ai_doc_parser.training.labeller import TextClass
 
 
 class ClickableStatusLabel(QLabel):
@@ -386,8 +384,7 @@ class PDFViewer(QGraphicsView):
             page_width = row.get('page_width', 0) * scale
 
             top_margin = 180
-            left_margin = 120
-            font_size = row.get('major_font_size', 12)
+            row.get('major_font_size', 12)
             x0 = row.get('line_x0', 0) * scale + crop_x0
             x1 = row.get('line_x1', 0) * scale + crop_x0
             y0 = row.get('line_y0', 0) * scale + crop_y0

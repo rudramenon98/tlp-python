@@ -8,23 +8,19 @@ corresponding XML annotations and assign classification labels based on content 
 import logging
 import re
 import time
-import traceback
-
-from enginius_parser.inference.feature_computation.feature_computer import first_word_compound
-
 import unicodedata
 
 # operator module no longer needed after refactoring get_page function
 from collections import defaultdict
-from functools import lru_cache
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 import Levenshtein
 import numpy as np
 import pandas as pd
-import unidecode
-
+from enginius_parser.inference.feature_computation.feature_computer import (
+    first_word_compound,
+)
 from enginius_parser.scripts.print_extracted_df_metrics import generate_metrics_report
 from enginius_parser.training.common_tools import clean_text
 
@@ -34,6 +30,7 @@ except ImportError:
     from fuzzywuzzy import fuzz  # Fallback to fuzzywuzzy if rapidfuzz not available
 
 from enginius_parser.inference.text_class import TextClass
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -590,7 +587,7 @@ def match_lines_within_windows(
 
         pdf_line = pdf_row['text']
         pdf_cleaned = pdf_row['cleaned_text']
-        pdf_word_count = len(pdf_line.split())
+        len(pdf_line.split())
 
         if is_toc(pdf_line):
             # Store the match with the assigned class

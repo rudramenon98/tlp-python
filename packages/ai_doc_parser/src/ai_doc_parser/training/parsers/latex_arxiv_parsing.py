@@ -5,7 +5,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-
 from ai_doc_parser.pdf_extractor.feature_methods import Symbols
 
 # Check if the line contains the title of the document
@@ -34,8 +33,6 @@ def gather_header_targetlabels(text):
             "\\title",
         ]
 
-        new_paragraphs = []
-        done_flag = False
 
         flag = True
         start_line = ""

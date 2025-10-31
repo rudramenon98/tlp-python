@@ -1,16 +1,11 @@
-import json
 import logging
-import os
-import sys
 import time
 import traceback
-from datetime import date, datetime
 from pathlib import Path
 
 import pandas as pd
-from lxml import etree as ET
-
 from ai_doc_parser.training.parsers.base_parser import TextClass
+from lxml import etree as ET
 
 log = logging.getLogger(__name__)
 

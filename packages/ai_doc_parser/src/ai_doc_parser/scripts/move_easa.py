@@ -1,6 +1,5 @@
-import os
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 xml_fnames = [
     "03c2c2_2023-09-27_09.xml",

@@ -1,9 +1,10 @@
-from ai_doc_parser import DATA_DIR
-import pandas as pd
-from ai_doc_parser.text_class import TextClass
+import logging
 from pathlib import Path
 from typing import Callable
-import logging
+
+import pandas as pd
+from ai_doc_parser import DATA_DIR
+from ai_doc_parser.text_class import TextClass
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)

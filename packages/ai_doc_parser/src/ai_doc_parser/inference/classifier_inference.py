@@ -4,10 +4,9 @@ from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-
 from ai_doc_parser.common import load_model
 from ai_doc_parser.training.parsers.base_parser import TextClass
+from sklearn.ensemble import RandomForestClassifier
 
 
 def predict_single(model: RandomForestClassifier, features: Union[List[float], pd.Series]) -> int:

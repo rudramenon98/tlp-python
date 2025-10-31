@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import pandas as pd
 
 
@@ -33,7 +34,7 @@ def update_labelled_pdf_features(feature_df_path: Path, labelled_pdf_path: Path)
 
 
 def main():
-    from ai_doc_parser import EASA_PDF
+    pass
 
     document_dir = Path(r"C:\Users\r123m\Documents\enginius\source\ai-pdf-parser\data\documents")
     csv_paths = []

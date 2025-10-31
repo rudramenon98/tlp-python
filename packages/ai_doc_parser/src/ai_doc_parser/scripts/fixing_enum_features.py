@@ -1,10 +1,9 @@
 import logging
 
 import pandas as pd
-
-
-from ai_doc_parser.text_class import TextClass
 from ai_doc_parser.inference.feature_computation.feature_computer import *
+from ai_doc_parser.text_class import TextClass
+
 feature_functions = {
         "left_indent": left_indent,
         "right_space": right_space,
@@ -39,7 +38,6 @@ feature_functions = {
 
 
 if __name__ == "__main__":
-    from ai_doc_parser import DATA_DIR
     from ai_doc_parser import EASA_PDF as pdf_path
     
     

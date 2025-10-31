@@ -1,7 +1,6 @@
 from typing import Any, Dict, List
 
 import pandas as pd
-
 from ai_doc_parser.text_class import AI_PARSED_CLASSES, CONTINUE_PAIRS, TextClass
 
 

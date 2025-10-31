@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import pandas as pd
 
 
@@ -11,8 +12,8 @@ def main():
     extracted_df = pd.read_csv(extracted_labels_path)
     labelled_df = pd.read_csv(labelled_pdf_path)
 
-    line_numbers = extracted_df["LineNumbers"]
-    labelled_line_numbers = labelled_df["XML_line_Number"]
+    extracted_df["LineNumbers"]
+    labelled_df["XML_line_Number"]
 
     summary_output = ""
     output = ""

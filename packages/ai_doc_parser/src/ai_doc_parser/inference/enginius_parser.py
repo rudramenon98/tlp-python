@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import joblib
 import numpy as np
@@ -19,7 +19,6 @@ from ai_doc_parser.text_class import (
 from ai_doc_parser.training import prepare_df_for_model
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
-from typing import Tuple
 
 log = logging.getLogger(__name__)
 loaded_model = None

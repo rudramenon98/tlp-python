@@ -6,14 +6,14 @@ This provides a quick way to understand individual predictions without running t
 
 import sys
 from pathlib import Path
+
 import pandas as pd
-import numpy as np
 
 # Add the src directory to the path
 sys.path.append(str(Path(__file__).parent.parent))
 
+from ai_doc_parser.text_class import CLASS_MAP_INV, TextClass
 from ai_doc_parser.training.classifier_trainer import load_model, prepare_df_for_model
-from ai_doc_parser.text_class import TextClass, CLASS_MAP_INV
 
 
 def explain_prediction(model_path: str, data_path: str, row_index: int, num_features: int = 10):

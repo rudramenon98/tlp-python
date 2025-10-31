@@ -1,16 +1,15 @@
-from ast import Dict
-from enum import Enum
 import logging
 import re
-import traceback
+from ast import Dict
+from enum import Enum
 from pathlib import Path
-from typing import Callable, List, Tuple, Union
+from typing import Callable, List
 
 import numpy as np
 import pandas as pd
-
-from ai_doc_parser.inference.feature_computation.feature_methods import Symbols
-from ai_doc_parser.inference.feature_computation.identify_headers_and_footers import identify_headers_and_footnotes
+from ai_doc_parser.inference.feature_computation.identify_headers_and_footers import (
+    identify_headers_and_footnotes,
+)
 from ai_doc_parser.inference.feature_computation.order_blocks import order_blocks
 from ai_doc_parser.text_class import TextClass
 
@@ -669,7 +668,6 @@ def compute_features(df: pd.DataFrame) -> pd.DataFrame:
 
 if __name__ == "__main__":
     from ai_doc_parser import CFR_PDF as pdf_path
-    from ai_doc_parser import DATA_DIR
 
     logging.basicConfig(level=logging.DEBUG)
 

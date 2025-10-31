@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Boolean, Column, Integer, String
+from sqlalchemy import BigInteger, Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.dialects.mysql import INTEGER, TINYINT
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -29,10 +29,31 @@ class Repository(Base):
 class DynamicPrivateRepository(Repository):
     __tablename__ = "dynamicPrivateRepository"
 
+    paragraphID = Column(
+        "paragraphID",
+        UnsignedInteger,
+        ForeignKey("repository.paragraphID"),
+        primary_key=True,
+    )
+
 
 class StaticPrivateRepository(Repository):
     __tablename__ = "staticPrivateRepository"
 
+    paragraphID = Column(
+        "paragraphID",
+        UnsignedInteger,
+        ForeignKey("repository.paragraphID"),
+        primary_key=True,
+    )
+
 
 class StaticPublicRepository(Repository):
     __tablename__ = "staticPublicRepository"
+
+    paragraphID = Column(
+        "paragraphID",
+        UnsignedInteger,
+        ForeignKey("repository.paragraphID"),
+        primary_key=True,
+    )

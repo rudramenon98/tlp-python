@@ -4,8 +4,9 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, List
 
-from app import configs
-from app.document_service import (
+from ai_doc_parser.inference.ai_pdf_parser import parse_pdf_ai
+from database import CONFIG_DIR
+from database.document_service import (
     find_document_by_id,
     get_paragraph_vectors_to_be_indexed,
     insert_repository_bulk2,
@@ -14,23 +15,24 @@ from app.document_service import (
     set_document_parsed_details,
     set_document_summary,
 )
-from app.entity.Document import (
+from database.entity.Document import (
     DynamicPrivateDocument,
-    PrivateStaticDocument,
-    PublicStaticDocument,
+    StaticPrivateDocument,
+    StaticPublicDocument,
 )
-from app.entity.Repository import (
+from database.entity.Repository import (
     DynamicPrivateRepository,
-    PrivateStaticRepository,
-    PublicStaticRepository,
+    StaticPrivateRepository,
+    StaticPublicRepository,
 )
-from app.entity.ScriptsProperty import parseCredentialFile
-from app.utils.MySQLFactory import MySQLDriver
-from DocSummarizer import DocumentSummarizer
-from enginius_parser.inference.ai_pdf_parser import parse_pdf_ai
+from database.entity.ScriptsProperty import parseCredentialFile
+from database.utils.MySQLFactory import MySQLDriver
+from doc_summarizer.doc_summarizer import DocumentSummarizer
 from fastapi import FastAPI, Form, HTTPException, Request
 from joblib import load
 from pydantic import BaseModel
+from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
 
 # --- Logging ---
 logging.basicConfig(
@@ -42,8 +44,9 @@ logger = logging.getLogger(__name__)
 # --- Database Configuration ---
 # The line `config_path = Path(configs.__file__)` is creating a `Path` object using the `__file__`
 # attribute of the `configs` module.
-config_path = Path(configs.__file__)
-DB_CONFIG = parseCredentialFile(str(config_path.parent / "tlp_config.json"))
+
+print("CONFIG_DIR: ", CONFIG_DIR)
+DB_CONFIG = parseCredentialFile(str(CONFIG_DIR / "dev_test_tlp_config.json"))
 
 # --- Load model ---
 # MODEL_PATH = "/models/model.joblib"
@@ -89,9 +92,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="PDF Inference API using Lifespan", lifespan=lifespan)
 
 
-@app.post("/summarize", response_model=bool)
-async def summarize(request: Request, doc_ids: List[int] = Form(...)):
-    logger.info(f"Summarizing for doc_ids: {doc_ids}")
+def summarize_documents(doc_ids: List[int]):
     try:
         success = True
         failed_docs = []
@@ -143,19 +144,24 @@ async def summarize(request: Request, doc_ids: List[int] = Form(...)):
         return False
 
 
-@app.post("/predict", response_model=List[Dict[str, Any]])
-async def predict(
-    request: Request,
-    doc_ids: List[int] = Form(...),
-    pdf_type: str = Form(...),
-    repo_id: int = Form(...),
+@app.post("/summarize", response_model=bool)
+async def summarize(request: Request, doc_ids: List[int] = Form(...)):
+    logger.info(f"Summarizing for doc_ids: {doc_ids}")
+    return summarize_documents(doc_ids)
+
+
+def predict_documents(
+    doc_ids: List[int],
+    pdf_type: str,
+    repo_id: int,
+    model: RandomForestClassifier | XGBClassifier,
 ):
     if repo_id == 0:
-        doc_type = PrivateStaticDocument
-        repo_type = PrivateStaticRepository
+        doc_type = StaticPrivateDocument
+        repo_type = StaticPrivateRepository
     elif repo_id == 1:
-        doc_type = PublicStaticDocument
-        repo_type = PublicStaticRepository
+        doc_type = StaticPublicDocument
+        repo_type = StaticPublicRepository
     elif repo_id == 2:
         doc_type = DynamicPrivateDocument
         repo_type = DynamicPrivateRepository
@@ -183,9 +189,7 @@ async def predict(
 
                 pdf_path = str(Path(doc_directory) / document.pdfFileName)
                 logger.info(f"Parsing PDF file: {pdf_path}")
-                document_df = parse_pdf_ai(
-                    pdf_path, request.app.state.model, pdf_type=pdf_type
-                )
+                document_df = parse_pdf_ai(pdf_path, model, pdf_type=pdf_type)
 
                 repositories: List[repo_type] = []
                 for _, row in document_df.iterrows():
@@ -246,3 +250,14 @@ async def predict(
         logger.error(f"Prediction failed: {e}")
         logger.error(f"Prediction failed: {traceback.format_exc()}")
         return [{"status": "error", "message": str(e), "error_type": "system_error"}]
+
+
+@app.post("/predict", response_model=List[Dict[str, Any]])
+async def predict(
+    request: Request,
+    doc_ids: List[int] = Form(...),
+    pdf_type: str = Form(...),
+    repo_id: int = Form(...),
+):
+    model = request.app.state.model
+    return predict_documents(doc_ids, pdf_type, repo_id, model)

@@ -11,12 +11,16 @@ readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
     "fuzzywuzzy",
+    "fastapi",
+    "pydantic",
     "intervals",
     "joblib",
     "Levenshtein",
     "lxml",
     "matplotlib",
     "more_itertools",
+    "mysql-connector-python",
+    "python-multipart",
     "numpy",
     "opencv-python",
     "openpyxl",

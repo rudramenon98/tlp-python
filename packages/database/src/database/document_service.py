@@ -1,4 +1,5 @@
 import traceback
+from typing import List
 
 from database.entity.Document import Document
 from database.entity.Repository import Repository
@@ -6,6 +7,7 @@ from database.entity.ScrapeURL import ScrapeURL
 from database.entity.ScrapScript import ScrapScript
 from database.entity.Vector import Vector
 from database.entity.VocabularyPartV2 import VocabularyPartV2
+from database.utils.MySQLFactory import MySQLDriver
 from sqlalchemy import and_, func, text
 
 
@@ -92,6 +94,13 @@ def find_document_by_id(mysql_driver, doc_id, doc_class=Document):
     session.close()
     return result
 
+@Error_Handler
+def get_all_document_ids(mysql_driver) -> List[int]:
+    session = mysql_driver.get_session()
+    result = session.query(Document.documentId).all()
+    ids = [row[0] for row in result]
+    session.close()
+    return ids
 
 @Error_Handler
 def find_documents_not_scraped_on_date(mysql_driver, currentDate, doc_class=Document):

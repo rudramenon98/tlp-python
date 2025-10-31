@@ -2,30 +2,18 @@
 requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools.packages.find]
-where = ["packages"]
-
 [project]
 name = "tlp-python"
 version = "0.1.0"
 description = "Backend TLP algorithms."
-authors = [
-    {name = "Rudra Menon", email = "rmenon@enginius.ai"}
-]
+authors = [{ name = "Rudra Menon", email = "rmenon@enginius.ai" }]
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = [
-    # Core dependencies only
-]
+dependencies = []
 
 [project.optional-dependencies]
 # Install development dependencies with: pip install -e ".[dev]"
-dev = [
-    "black>=23.0.0",
-    "isort>=5.0.0",
-    "flake8>=6.0.0",
-    "autoflake>=2.0.0",
-]
+dev = ["black>=23.0.0", "isort>=5.0.0", "flake8>=6.0.0", "autoflake>=2.0.0"]
 
 [tool.black]
 line-length = 88

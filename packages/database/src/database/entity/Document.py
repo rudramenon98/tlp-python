@@ -1,4 +1,13 @@
-from sqlalchemy import BigInteger, Boolean, Column, Date, DateTime, Integer, String
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+)
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -34,11 +43,20 @@ class Document(Base):
 
 class DynamicPrivateDocument(Document):
     __tablename__ = "dynamicPrivateDocuments"
+    documentId = Column(
+        "documentID", BigInteger, ForeignKey("documents.documentID"), primary_key=True
+    )
 
 
 class StaticPrivateDocument(Document):
     __tablename__ = "staticPrivateDocuments"
+    documentId = Column(
+        "documentID", BigInteger, ForeignKey("documents.documentID"), primary_key=True
+    )
 
 
 class StaticPublicDocument(Document):
     __tablename__ = "staticPublicDocuments"
+    documentId = Column(
+        "documentID", BigInteger, ForeignKey("documents.documentID"), primary_key=True
+    )

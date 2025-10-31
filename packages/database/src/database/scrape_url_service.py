@@ -1,7 +1,7 @@
 import logging
 import traceback
 
-from app.entity.ScrapeURL import ScrapeURL
+from database.entity.ScrapeURL import ScrapeURL
 
 log = logging.getLogger(__name__)
 

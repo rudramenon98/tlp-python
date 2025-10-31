@@ -3,11 +3,17 @@
 # Exit on any error
 set -e
 
-# Check for --force flag
+# Check for flags
 FORCE=false
-if [[ "$1" == "--force" ]]; then
-    FORCE=true
-fi
+EDITABLE=false
+
+for arg in "$@"; do
+    if [[ "$arg" == "--force" ]]; then
+        FORCE=true
+    elif [[ "$arg" == "-e" ]]; then
+        EDITABLE=true
+    fi
+done
 
 echo "Setting up development environment..."
 
@@ -43,17 +49,16 @@ source venv/bin/activate
 echo "Upgrading pip..."
 pip install --upgrade pip
 
-# Install the package in development mode with dev dependencies
-echo "Installing package in development mode with dev dependencies..."
-pip install -e .[dev]
+# Loop through all directories in "packages" and install the package in development mode with dev dependencies
+for package in packages/*; do
+    echo "Installing $package in development mode with dev dependencies..."
+    if EDITABLE=true; then
+        pip install -e $package[dev]
+    else
+        pip install $package[dev]
+    fi
+done
 
-# Install local requirements if the file exists
-if [ -f "requirements.local.txt" ]; then
-    echo "Installing local requirements..."
-    pip install -r requirements.local.txt
-else
-    echo "Warning: requirements.local.txt not found, skipping local requirements"
-fi
 
 echo "Environment setup complete!"
 echo "To activate the virtual environment, run: source venv/bin/activate"

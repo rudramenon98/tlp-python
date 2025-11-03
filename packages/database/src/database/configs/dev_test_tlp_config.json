@@ -1,0 +1,31 @@
+{
+    "dockerSettings": {
+        "keywordServerAddress": "http://test-Elasticsearch-1:9200/repository_v2",
+        "staticIndexServerAddress": "http://localhost:21501/search",
+        "dynamicIndexServerAddress": "http://localhost:21502/search",
+        "dictionaryServerAddress": "http://test-Dictionary-1:8080/predictions/dictionary",
+        "encoderOllamaServerAddress": "http://localhost:11434/api/embed",
+        "genAIOllamaServerAddress": "http://localhost:11434",
+        "parserServerAddress": "http://test-ai-pdf-parser-1:8000/predict",
+        "seleniumChromeServerAddress": "http://selenium-docker-1:4444"
+    },
+    "loginEntity": {
+        "baseFolderPath": "/app/uploads",
+        "password": "Admin@123"
+    },
+    "dbConfigurations": {
+        "dbHost": "jdbc:mysql://192.168.4.48:3307/test?allowPublicKeyRetrieval\u003dtrue\u0026useSSL\u003dfalse",
+        "dbUser": "test",
+        "dbPassword": "test@123#",
+        "port": 0
+    },
+    "emailConfigurations": {
+        "emailClientHost": "smtp.gmail.com",
+        "emailClientPort": "587",
+        "emailClientUserName": "notification.tlp.ai@gmail.com",
+        "emailClientPassword": "ckajyejgqlnmitpz",
+        "fromEmailAddress": "notification.tlp.ai@gmail.com",
+        "isEnabled": true,
+        "serverUrl": "https://aviation.enginius.ai"
+    }
+}

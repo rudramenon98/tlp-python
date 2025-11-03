@@ -1,0 +1,30 @@
+{
+    "dockerSettings": {
+        "elasticSearchServerAddress": "http://host.docker.internal:9650/repository_v2/",
+        "logStashServerAddress": "http://testv7-Logstash-1/",
+        "scannServerAddress": "http://host.docker.internal:28190/predictions/scann",
+        "dictionaryServerAddress": "http://dictionary:5000/predictions/s2v",
+        "encoderOllamaServerAddress": "http://testv7-sbi1-docker-1:8080/predictions/sbi1",
+        "genAIOllamaServerAddress": "http://ollama:11434/api/chat",
+        "parserServerAddress": "http://enginius-parser-docker-1:5000/convert/paragraphs",
+        "seleniumChromeServerAddress": "http://selenium-docker-1:4444"
+    },
+    "loginEntity": {
+        "baseFolderPath": "/app/uploads",
+        "password": "Admin@123"
+    },
+    "dbConfigurations": {
+        "dbHost": "jdbc:mysql://192.168.4.48:3307/RmfdemoV7?allowPublicKeyRetrieval\u003dtrue\u0026useSSL\u003dfalse",
+        "dbUser": "RmfdemoV7",
+        "dbPassword": "RmfdemoV7@123#",
+        "port": 0
+    },
+    "emailConfigurations": {
+        "emailClientHost": "smtp.gmail.com",
+        "emailClientPort": "587",
+        "emailClientUserName": "notification.tlp.ai@gmail.com",
+        "emailClientPassword": "ckajyejgqlnmitpz",
+        "fromEmailAddress": "notification.tlp.ai@gmail.com",
+        "isEnabled": true,
+        "serverUrl": "https://rmfdemo.inspird.com"
+    }

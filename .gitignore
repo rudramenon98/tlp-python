@@ -5,7 +5,6 @@ __pycache__/
 *.py[codz]
 *$py.class
 
-
 # File Types
 *.pdf
 *.docx
@@ -13,6 +12,8 @@ __pycache__/
 *.txt
 *.csv
 *.json
+# do not ignore .jsons in database/config
+!packages/database/src/database/configs/*.json
 *.xml
 *.yml
 *.log

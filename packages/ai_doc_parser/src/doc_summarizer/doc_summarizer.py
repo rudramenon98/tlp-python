@@ -8,7 +8,6 @@ and then summarize them using BERT-based extractive and abstractive summarizatio
 import json
 import logging
 import os
-
 import re
 import sys
 import traceback

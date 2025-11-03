@@ -26,8 +26,8 @@ class Repository(Base):
     scannOrderNo = Column("scannOrderNo", UnsignedInteger)
 
 
-class DynamicPrivateRepository(Repository):
-    __tablename__ = "dynamicPrivateRepository"
+class DraftRepository(Repository):
+    __tablename__ = "DraftRepository"
 
     paragraphID = Column(
         "paragraphID",
@@ -37,8 +37,8 @@ class DynamicPrivateRepository(Repository):
     )
 
 
-class StaticPrivateRepository(Repository):
-    __tablename__ = "staticPrivateRepository"
+class PrivateRepository(Repository):
+    __tablename__ = "PrivateRepository"
 
     paragraphID = Column(
         "paragraphID",
@@ -48,8 +48,8 @@ class StaticPrivateRepository(Repository):
     )
 
 
-class StaticPublicRepository(Repository):
-    __tablename__ = "staticPublicRepository"
+class PublicRepository(Repository):
+    __tablename__ = "PublicRepository"
 
     paragraphID = Column(
         "paragraphID",
@@ -57,3 +57,16 @@ class StaticPublicRepository(Repository):
         ForeignKey("repository.paragraphID"),
         primary_key=True,
     )
+
+
+def getRepositoryClass(repo_id: int):
+    if repo_id == 0:
+        repo_class = PublicRepository
+    elif repo_id == 1:
+        repo_class = PrivateRepository
+    elif repo_id == 2:
+        repo_class = DraftRepository
+    elif repo_id == 3:
+        repo_class = Repository
+
+    return repo_class

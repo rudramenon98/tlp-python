@@ -41,22 +41,35 @@ class Document(Base):
     sourceProject = Column("sourceProject", BigInteger)
 
 
-class DynamicPrivateDocument(Document):
-    __tablename__ = "dynamicPrivateDocuments"
+class DraftDocument(Document):
+    __tablename__ = "draftDocuments"
     documentId = Column(
         "documentID", BigInteger, ForeignKey("documents.documentID"), primary_key=True
     )
 
 
-class StaticPrivateDocument(Document):
-    __tablename__ = "staticPrivateDocuments"
+class PrivateDocument(Document):
+    __tablename__ = "privateDocuments"
     documentId = Column(
         "documentID", BigInteger, ForeignKey("documents.documentID"), primary_key=True
     )
 
 
-class StaticPublicDocument(Document):
-    __tablename__ = "staticPublicDocuments"
+class PublicDocument(Document):
+    __tablename__ = "publicDocuments"
     documentId = Column(
         "documentID", BigInteger, ForeignKey("documents.documentID"), primary_key=True
     )
+
+
+def getDocumentClass(repo_id: int):
+    if repo_id == 0:
+        doc_class = PublicDocument
+    elif repo_id == 1:
+        doc_class = PrivateDocument
+    elif repo_id == 2:
+        doc_class = DraftDocument
+    elif repo_id == 3:
+        doc_class = Document
+
+    return doc_class

@@ -16,19 +16,13 @@ from database.document_service import (
     set_document_summary,
 )
 from database.entity.Document import (
-    DynamicPrivateDocument,
-    StaticPrivateDocument,
-    StaticPublicDocument,
+    getDocumentClass,
 )
-from database.entity.Repository import (
-    DynamicPrivateRepository,
-    StaticPrivateRepository,
-    StaticPublicRepository,
-)
+from database.entity.Repository import getRepositoryClass
 from database.entity.ScriptsProperty import parseCredentialFile
 from database.utils.MySQLFactory import MySQLDriver
 from doc_summarizer.doc_summarizer import DocumentSummarizer
-from fastapi import FastAPI, Form, HTTPException, Request
+from fastapi import FastAPI, Form, Request
 from joblib import load
 from pydantic import BaseModel
 from sklearn.ensemble import RandomForestClassifier
@@ -156,17 +150,8 @@ def predict_documents(
     repo_id: int,
     model: RandomForestClassifier | XGBClassifier,
 ):
-    if repo_id == 0:
-        doc_type = StaticPrivateDocument
-        repo_type = StaticPrivateRepository
-    elif repo_id == 1:
-        doc_type = StaticPublicDocument
-        repo_type = StaticPublicRepository
-    elif repo_id == 2:
-        doc_type = DynamicPrivateDocument
-        repo_type = DynamicPrivateRepository
-    else:
-        raise HTTPException(status_code=400, detail=f"Invalid repo_id: {repo_id}")
+    repo_type = getRepositoryClass(repo_id)
+    doc_type = getDocumentClass(repo_id)
 
     logger.info(f"Base Directory: {DB_CONFIG.baseDir}")
     logger.info(f"Download Directory: {DB_CONFIG.downloadDir}")

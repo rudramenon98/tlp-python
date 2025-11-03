@@ -94,6 +94,7 @@ def find_document_by_id(mysql_driver, doc_id, doc_class=Document):
     session.close()
     return result
 
+
 @Error_Handler
 def get_all_document_ids(mysql_driver) -> List[int]:
     session = mysql_driver.get_session()
@@ -101,6 +102,7 @@ def get_all_document_ids(mysql_driver) -> List[int]:
     ids = [row[0] for row in result]
     session.close()
     return ids
+
 
 @Error_Handler
 def find_documents_not_scraped_on_date(mysql_driver, currentDate, doc_class=Document):

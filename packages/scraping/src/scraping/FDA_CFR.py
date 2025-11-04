@@ -16,7 +16,7 @@ from database.document_service import (
     insert_document,
     update_documents,
 )
-from database.entity.Document import StaticPublicDocument
+from database.entity.Document import PublicDocument
 from database.entity.ScrapScript import ScrapScript
 from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
 from database.scrape_url_service import (
@@ -307,7 +307,7 @@ def download_cfr_document(
 
         # check if document exists in documents table
         docInDB = find_document_by_url(
-            mysql_driver, PDF_URL, doc_class=StaticPublicDocument
+            mysql_driver, PDF_URL, doc_class=PublicDocument
         )
 
         if not docInDB:
@@ -357,7 +357,7 @@ def download_cfr_document(
             scrapeScript: ScrapScript = get_scrape_script_by_scraperUrlId(
                 mysql_driver, scrapeURLId
             )
-            document = StaticPublicDocument(
+            document = PublicDocument(
                 number=df["Number"],
                 title=df["title"],
                 description=df["description"],
@@ -385,7 +385,7 @@ def download_cfr_document(
             )
 
             # insert document in DB
-            insert_document(mysql_driver, document, doc_class=StaticPublicDocument)
+            insert_document(mysql_driver, document, doc_class=PublicDocument)
             logText = (
                 df["pdf_filename"]
                 + " with filetype = "
@@ -452,7 +452,7 @@ def cancel_previous_editions(
 
             # check if document exists in documents table
             docInDB = find_document_by_url(
-                mysql_driver, pdf_url_to_check, doc_class=StaticPublicDocument
+                mysql_driver, pdf_url_to_check, doc_class=PublicDocument
             )
 
             if docInDB:

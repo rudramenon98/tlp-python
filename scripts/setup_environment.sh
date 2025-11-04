@@ -4,12 +4,12 @@
 set -e
 
 # Check for flags
-FORCE=false
+FRESH=false
 EDITABLE=false
 
 for arg in "$@"; do
-    if [[ "$arg" == "--force" ]]; then
-        FORCE=true
+    if [[ "$arg" == "--fresh" ]]; then
+        FRESH=true
     elif [[ "$arg" == "-e" ]]; then
         EDITABLE=true
     fi
@@ -24,15 +24,15 @@ if ! command -v python3.12 &> /dev/null; then
     exit 1
 fi
 
-# Handle existing venv based on --force flag
+# Handle existing venv based on --fresh flag
 if [ -d "venv" ]; then
-    if [ "$FORCE" = true ]; then
-        echo "Removing existing virtual environment (--force flag provided)..."
+    if [ "$FRESH" = true ]; then
+        echo "Removing existing virtual environment (--fresh flag provided)..."
         rm -rf venv
         echo "Creating new virtual environment with Python 3.12..."
         python3.12 -m venv venv
     else
-        echo "Virtual environment already exists. Use --force to recreate it."
+        echo "Virtual environment already exists. Use --fresh to recreate it."
         echo "Activating existing virtual environment..."
     fi
 else
@@ -63,8 +63,5 @@ done
 echo "Environment setup complete!"
 echo "To activate the virtual environment, run: source venv/bin/activate"
 
-
-
-# add aliases for format-py and setup-env
-alias format-py="scripts/format_py.sh"
-alias setup-env="scripts/setup_environment.sh"
+echo "Adding aliases..."
+source scripts/aliases.sh

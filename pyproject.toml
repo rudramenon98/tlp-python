@@ -15,6 +15,13 @@ dependencies = []
 # Install development dependencies with: pip install -e ".[dev]"
 dev = ["black>=23.0.0", "isort>=5.0.0", "flake8>=6.0.0", "autoflake>=2.0.0"]
 
+[tool.setuptools]
+# Exclude data and output directories from package discovery
+packages = []
+
+[tool.setuptools.package-data]
+"*" = []
+
 [tool.black]
 line-length = 88
 target-version = ['py38']

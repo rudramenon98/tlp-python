@@ -21,7 +21,7 @@ from database.document_service import (
     update_documents,
     update_documents2,
 )
-from database.entity.Document import StaticPublicDocument
+from database.entity.Document import PublicDocument
 from database.entity.ScrapScript import ScrapScript
 from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
 from database.scrape_url_service import (
@@ -69,7 +69,7 @@ def download_file_low(URL, path):
             file.write(data)
 
 
-def download_file(config: ScriptsConfig, document: StaticPublicDocument, sequence):
+def download_file(config: ScriptsConfig, document: PublicDocument, sequence):
     try:
         # mysql_driver = MySQLDriver(cred=config.main_databaseConfig.__dict__)
         file_name = document.title[:50].replace("/", " ") + ".pdf"
@@ -101,7 +101,7 @@ def download_file(config: ScriptsConfig, document: StaticPublicDocument, sequenc
         return None, str(traceback.format_exc())
 
 
-def redownload_file(config: ScriptsConfig, document: StaticPublicDocument):
+def redownload_file(config: ScriptsConfig, document: PublicDocument):
     try:
         # mysql_driver = MySQLDriver(cred=config.main_databaseConfig.__dict__)
         file_name = document.title[:50].replace("/", " ") + ".pdf"
@@ -354,7 +354,7 @@ def process_page(config: ScriptsConfig, dfs, mysql_driver, scrapeURLId):
 
     # update the unchanged documents in DB (just set their lastScrapeDate = DateToday)
     if update_list and len(update_list) > 0:
-        update_documents(mysql_driver2, update_list, doc_class=StaticPublicDocument)
+        update_documents(mysql_driver2, update_list, doc_class=PublicDocument)
 
     redownloaded_documents = []
     recnt = 0
@@ -372,7 +372,7 @@ def process_page(config: ScriptsConfig, dfs, mysql_driver, scrapeURLId):
 
     if len(redownloaded_documents) > 0:
         update_documents2(
-            mysql_driver2, redownloaded_documents, doc_class=StaticPublicDocument
+            mysql_driver2, redownloaded_documents, doc_class=PublicDocument
         )
 
     print("final download  list size:")
@@ -439,7 +439,7 @@ def process_page(config: ScriptsConfig, dfs, mysql_driver, scrapeURLId):
 
     # Mark the newly cancelled documents in the documents table
     if cancel_list and len(cancel_list) > 0:
-        cancel_documents(mysql_driver2, cancel_list, doc_class=StaticPublicDocument)
+        cancel_documents(mysql_driver2, cancel_list, doc_class=PublicDocument)
 
     mysql_driver2.close()
     print("Processed website page")
@@ -570,7 +570,7 @@ def check_for_new_documents(
                     continue
 
             docInDB = find_document_by_url(
-                mysql_driver, file_url, doc_class=StaticPublicDocument
+                mysql_driver, file_url, doc_class=PublicDocument
             )
         except Exception:
             logText = f"Failed for : {file_url} \n"
@@ -584,7 +584,7 @@ def check_for_new_documents(
 
         if not docInDB:
             try:
-                document = StaticPublicDocument(
+                document = PublicDocument(
                     number=row["Number"],
                     title=row["title"],
                     description=row["description"][:1024],
@@ -614,7 +614,7 @@ def check_for_new_documents(
                 download_list.append(document)
             except Exception:
                 logText = (
-                    f"New StaticPublicDocument row creation failure for : {file_url} \n"
+                    f"New PublicDocument row creation failure for : {file_url} \n"
                 )
                 logText += traceback.format_exc()
                 logList.append(logText)
@@ -734,7 +734,7 @@ def check_for_cancelled_documents(
 
     # get the documents in documents table which were not scraped today
     old_documents_list = find_documents_not_scraped_on_date(
-        mysql_driver, current_date, doc_class=StaticPublicDocument
+        mysql_driver, current_date, doc_class=PublicDocument
     )
 
     if not old_documents_list or len(old_documents_list) == 0:

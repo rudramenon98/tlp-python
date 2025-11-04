@@ -7,6 +7,7 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import List, Tuple
 
+from common_tools.log_config import configure_logging_from_argv
 import pandas as pd
 import requests
 from database.document_service import (
@@ -18,6 +19,7 @@ from database.entity.Document import Document
 from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
 from database.utils.MySQLFactory import MySQLDriver
 from database.utils.WebDriverFactory import WebDriverFactory
+from packages.scraping.src.scraping.FDA_CFR import parse_remaining_args
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
@@ -28,11 +30,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-# Reduce verbosity for selenium logs only
-
-LOGGER.setLevel(logging.WARNING)  # or logging.ERROR to show less
-logging.getLogger("selenium").setLevel(logging.WARNING)
-
 
 def scrap_table(driver, url):
     i = 2
@@ -51,8 +48,6 @@ def scrap_table(driver, url):
     while True:
         try:
             tr = url + f"[{i}]"
-            # tr = '//*[@id="content"]/section[1]/div/div/div[1]/div/figure[1]/table/tbody/tr'+f'[{i}]'
-            # print('//*[@id="content"]/section[1]/div/div/div[1]/div/figure[1]/table/tbody/tr'+f'[{i}]')
             driver.find_element_by_xpath(tr)
             td = [
                 driver.find_element_by_xpath(tr + "/" + "td" + f"[{i}]").text
@@ -155,10 +150,10 @@ def make_driver(headless=True, log_path="chromedriver.log"):
 def get_document_list(
     docker_url: str = "http://localhost:4444/wd/hub",
 ) -> List[DocumentLink]:
+    log.info(f"Getting document list from docker_url: {docker_url}")
     main_url = "http://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:02017R0745-20250110"
     try:
-        print("Making driver")
-        log.info(
+        log.info(   
             "Starting get_document_list docker_url=%s main_url=%s", docker_url, main_url
         )
         driver = None
@@ -166,7 +161,6 @@ def get_document_list(
             browser="docker", docker_url=docker_url
         )
         log.info("Initialized WebDriver via Docker at %s", docker_url)
-        print("Driver made")
         # navigate to the main_URL
         driver.get(main_url)
         wait_for_page_load(driver)
@@ -347,13 +341,11 @@ def download_file(url: str, path_to_save: Path | str) -> bool:
     return False
 
 
-def run(config: ScriptsConfig):
+def run(config: ScriptsConfig, scrapeURLId: int):
     mysql_driver = MySQLDriver(cred=config.databaseConfig.__dict__)
 
     # Get all the documents currently in the database
-    doc_list: List[DocumentLink] = get_document_list()
-    for doc in doc_list:
-        print("(", doc.name, ",", doc.date, ",", doc.link, ")")
+    doc_list: List[DocumentLink] = get_document_list(docker_url=config.SeleniumDocker)
     if len(doc_list) == 0:
         log.error("No documents found")
         return
@@ -361,7 +353,7 @@ def run(config: ScriptsConfig):
     path_to_save = Path(config.downloadDir)
     for doc in doc_list:
         log.debug(
-            f"Processing document: {doc.name} with date: {doc.date} and link: {doc.link}"
+            f"Document: {doc.name} date: {doc.date} link: {doc.link}"
         )
         existing_doc = get_document_by_title(mysql_driver, doc.name)
 
@@ -369,28 +361,28 @@ def run(config: ScriptsConfig):
             existing_doc_date = existing_doc.activeDate
             if not (path_to_save / doc.get_file_name()).exists():
                 log.debug(
-                    f"Document file does not exist: {doc.name} with date: {doc.date} and link: {doc.link}"
+                    f"Document {doc.name} does not exist"
                 )
                 success = download_file(doc.link, path_to_save / doc.get_file_name())
                 if not success:
                     log.error(
-                        f"Failed to download file: {doc.name} with date: {doc.date} and link: {doc.link}"
+                        f"Failed to download file: {doc.name}"
                     )
                     continue
             if doc.date <= existing_doc_date:
                 log.debug(
-                    f"Document already exists: {doc.name} with date: {doc.date} and link: {doc.link} and is newer than the existing document"
+                    f"Document {doc.name} already exists and is newer than the existing document"
                 )
                 continue
             else:
                 log.debug(
-                    f"Document already exists: {doc.name} with date: {doc.date} and link: {doc.link} and is older than the existing document"
+                    f"Document {doc.name} already exists and is older than the existing document"
                 )
                 delete_document(mysql_driver, existing_doc.documentId)
                 upload_document(doc, mysql_driver, path_to_save)
         else:
             log.debug(
-                f"Document does not exist: {doc.name} with date: {doc.date} and link: {doc.link}"
+                f"Document {doc.name} does not exist"
             )
             upload_document(doc, mysql_driver, path_to_save)
         continue
@@ -398,6 +390,8 @@ def run(config: ScriptsConfig):
 
 if __name__ == "__main__":
     from database.configs import config_dir
+    remaining_args = configure_logging_from_argv(default_level='INFO')
+    repo_id, docIdsList = parse_remaining_args(remaining_args)
 
     configs = parseCredentialFile(config_dir / "dev_test_tlp_config.json")
     download_dir = Path(__file__).parent / "data" / "EU_MDR_Ammendement"

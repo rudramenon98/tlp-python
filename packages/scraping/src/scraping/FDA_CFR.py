@@ -306,9 +306,7 @@ def download_cfr_document(
         PDF_URL = df["pdf_file_url"]
 
         # check if document exists in documents table
-        docInDB = find_document_by_url(
-            mysql_driver, PDF_URL, doc_class=PublicDocument
-        )
+        docInDB = find_document_by_url(mysql_driver, PDF_URL, doc_class=PublicDocument)
 
         if not docInDB:
             file_name = XML_URL.split("/")[-1]

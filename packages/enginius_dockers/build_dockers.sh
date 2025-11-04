@@ -33,11 +33,16 @@ for docker_dir in "${DOCKERS_DIR}"/*; do
                 -t "${docker_name}:latest" \
                 "${BUILD_CONTEXT}"
 
+            # Remove existing container if it exists to avoid conflicts
+            if docker ps -a --format '{{.Names}}' | grep -q "^${docker_name}$"; then
+                echo "Removing existing container: ${docker_name}"
+                docker rm -f "${docker_name}" 2>/dev/null || true
+            fi
 
             # Run the docker image
             docker run -d --name "${docker_name}" "${docker_name}:latest"
             
-            echo "Successfully built: ${docker_name}"
+            echo "Successfully built and started: ${docker_name}"
             echo ""
         else
             echo "Skipping ${docker_name}: No Dockerfile found"

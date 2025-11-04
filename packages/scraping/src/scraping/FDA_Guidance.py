@@ -613,9 +613,7 @@ def check_for_new_documents(
                 )
                 download_list.append(document)
             except Exception:
-                logText = (
-                    f"New PublicDocument row creation failure for : {file_url} \n"
-                )
+                logText = f"New PublicDocument row creation failure for : {file_url} \n"
                 logText += traceback.format_exc()
                 logList.append(logText)
                 scrape_url_append_log(mysql_driver, scrapeURLId, logText)

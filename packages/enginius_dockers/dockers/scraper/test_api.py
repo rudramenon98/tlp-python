@@ -1,7 +1,5 @@
 import requests
-
-# Config
-url = "http://localhost:11002"  # Update if hosted remotely
+from common import url
 
 
 def test_api():
@@ -9,9 +7,11 @@ def test_api():
     response = requests.get(f"{url}/scrapers")
     print(f"Scrapers: {response.json()}")
     scraper_str = "EU_MDR_Ammendment"
-    
+
     # run the scraper
-    response = requests.post(f"{url}/run", json={"scraper": scraper_str, "scrapeURLId": 1})
+    response = requests.post(
+        f"{url}/run", json={"scraper": scraper_str, "scrapeURLId": 1}
+    )
     print(f"Response: {response.json()}")
 
 

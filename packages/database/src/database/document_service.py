@@ -161,7 +161,8 @@ def insert_document(mysql_driver, document):
     session.add(document)
     session.commit()
     session.close()
-    
+
+
 @Error_Handler
 def delete_document(mysql_driver, document_id):
     session = mysql_driver.get_session()

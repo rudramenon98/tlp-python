@@ -7,9 +7,9 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import List, Tuple
 
-from common_tools.log_config import configure_logging_from_argv
 import pandas as pd
 import requests
+from common_tools.log_config import configure_logging_from_argv
 from database.document_service import (
     delete_document,
     get_document_by_title,
@@ -19,17 +19,18 @@ from database.entity.Document import Document
 from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
 from database.utils.MySQLFactory import MySQLDriver
 from database.utils.WebDriverFactory import WebDriverFactory
-from packages.scraping.src.scraping.FDA_CFR import parse_remaining_args
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.ie.webdriver import WebDriver
-from selenium.webdriver.remote.remote_connection import LOGGER
 from selenium.webdriver.support.ui import WebDriverWait
+
+from packages.scraping.src.scraping.FDA_CFR import parse_remaining_args
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
 
 def scrap_table(driver, url):
     i = 2
@@ -153,7 +154,7 @@ def get_document_list(
     log.info(f"Getting document list from docker_url: {docker_url}")
     main_url = "http://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:02017R0745-20250110"
     try:
-        log.info(   
+        log.info(
             "Starting get_document_list docker_url=%s main_url=%s", docker_url, main_url
         )
         driver = None
@@ -352,22 +353,16 @@ def run(config: ScriptsConfig, scrapeURLId: int):
 
     path_to_save = Path(config.downloadDir)
     for doc in doc_list:
-        log.debug(
-            f"Document: {doc.name} date: {doc.date} link: {doc.link}"
-        )
+        log.debug(f"Document: {doc.name} date: {doc.date} link: {doc.link}")
         existing_doc = get_document_by_title(mysql_driver, doc.name)
 
         if existing_doc is not None:
             existing_doc_date = existing_doc.activeDate
             if not (path_to_save / doc.get_file_name()).exists():
-                log.debug(
-                    f"Document {doc.name} does not exist"
-                )
+                log.debug(f"Document {doc.name} does not exist")
                 success = download_file(doc.link, path_to_save / doc.get_file_name())
                 if not success:
-                    log.error(
-                        f"Failed to download file: {doc.name}"
-                    )
+                    log.error(f"Failed to download file: {doc.name}")
                     continue
             if doc.date <= existing_doc_date:
                 log.debug(
@@ -381,16 +376,15 @@ def run(config: ScriptsConfig, scrapeURLId: int):
                 delete_document(mysql_driver, existing_doc.documentId)
                 upload_document(doc, mysql_driver, path_to_save)
         else:
-            log.debug(
-                f"Document {doc.name} does not exist"
-            )
+            log.debug(f"Document {doc.name} does not exist")
             upload_document(doc, mysql_driver, path_to_save)
         continue
 
 
 if __name__ == "__main__":
     from database.configs import config_dir
-    remaining_args = configure_logging_from_argv(default_level='INFO')
+
+    remaining_args = configure_logging_from_argv(default_level="INFO")
     repo_id, docIdsList = parse_remaining_args(remaining_args)
 
     configs = parseCredentialFile(config_dir / "dev_test_tlp_config.json")

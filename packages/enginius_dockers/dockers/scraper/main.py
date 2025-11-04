@@ -787,7 +787,7 @@ async def update2(request: UpdateRequest):
             if DB_CONFIG is None:
                 raise HTTPException(status_code=500, detail="Cannot obtain DB credentials")
             """
-            
+
             if DB_CONFIG is None:
                 if cached_db_config is None:
                     raise HTTPException(

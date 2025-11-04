@@ -27,5 +27,3 @@ def call_api(document_ids=None, document_types=None):
 
 if __name__ == "__main__":
     call_api(DEFAULT_DOCUMENT_IDS, DEFAULT_DOCUMENT_TYPES)
-
-

@@ -35,7 +35,7 @@ def make_row(text: str, text_class: TextClass) -> Dict[str, Any]:
 
 
 def latex_to_text(s: str) -> str:
-    """
+    r"""
     Convert LaTeX to plain text by removing commands/environments and keeping readable content.
     - Keeps the *contents* of {...} after commands (e.g., \textbf{hi} -> "hi").
     - Removes \begin{...}/\end{...} wrappers but keeps their inner text.

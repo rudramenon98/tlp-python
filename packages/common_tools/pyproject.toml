@@ -9,7 +9,9 @@ description = "Common utilities and tools for TLP Python"
 authors = [{name = "Rudra Menon", email = "rmenon@enginius.ai"}]
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "nostril",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -1,296 +1,179 @@
+import requests
+import regex as re
+from typing import Optional, Tuple, Union
+
+from bs4 import BeautifulSoup
+import csv
+import time
 import json
 import logging
 import os
-import sys
-import time
-import traceback
-import urllib
-from datetime import date, datetime
-from multiprocessing import Pool, cpu_count, current_process
-from urllib.request import urlretrieve
+import re
+from urllib.parse import urljoin
+from pathlib import Path
 
-import lxml.html
-import pandas as pd
-import requests
-from database.document_service import (
-    cancel_documents,
-    find_document_by_url,
-    find_documents_not_scraped_on_date,
-    get_scrap_script_by_file_name,
-    get_scrape_script_by_scraperUrlId,
-    insert_document,
-    update_documents,
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(levelname)s] %(asctime)s - %(message)s',
+    handlers=[
+        logging.FileHandler("mdcg_scraper.log", mode='w'),
+        logging.StreamHandler()
+    ]
 )
-from database.entity.Document import Document
-from database.entity.ScrapScript import ScrapScript
-from bs4 import BeautifulSoup
-from common_tools.log_config  import configure_logging_from_argv
-log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
-'''
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
-# Console (stdout) handler
-console_handler = logging.StreamHandler(sys.stdout)
-console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
-console_handler.setFormatter(console_formatter)
-'''
+# Folder to store downloaded files
+DOWNLOAD_DIR = Path("scrapedDocs")
+DOWNLOAD_DIR.mkdir(exist_ok=True)
 
-from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
-from database.scrape_url_service import (
-    scrape_url_append_log,
-    update_scrape_url_set_log_value,
-)
-from database.utils.MySQLFactory import MySQLDriver
-from database.utils.util import get_dir_safe
+def sanitize_filename(name):
+    """Sanitize filename by removing problematic characters"""
+    return re.sub(r'[^\w\-_\. ]', '_', name)
 
-# chrome_options = Options()
-# chrome_options.add_argument("user-agent=whatever you want")
-# chrome_options.add_argument("--disable-extensions")
-# chrome_options.add_argument("--disable-gpu")
-# chrome_options.add_argument("--no-sandbox") # linux only
-# chrome_options.add_argument('--no-sandbox')
-# chrome_options.add_argument('--disable-dev-shm-usage')
-# chrome_options.add_argument("--headless")
-DefaultActiveDate = date(date.today().year, 1, 1)
-
-"""This Script is used for Scrapping MDR Documents"""
+def validate_item(item):
+    """Check that required fields are present"""
+    return bool(item['reference_number'] and item['title'] and item['publication_date'])
 
 
-def get_pdf_html(path_to_save, type="MDR_EN"):
-    """Link for Europian Regulations"""
-    # response  = urllib.request.urlopen('https://www.medical-device-regulation.eu/download-mdr/')
-    # html_string = response.read()
-    hdr = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9",
-        #'Accept-Encoding': 'gzip, deflate, br',
-        "Referer": "https://www.medical-device-regulation.eu/",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Connection": "keep-alive",
-    }
-
-    response = requests.get(
-        "https://www.medical-device-regulation.eu/download-mdr/",
-        headers=hdr,
-        verify="/app/scripts/venv/lib/python3.9/site-packages/certifi/cacert.pem",
-    )
-    # response = requests.get('https://www.medical-device-regulation.eu/download-mdr/', headers=hdr, verify = '/etc/ssl/cert.pem')
-    html_string = response.text
-
-    # Parse the HTML content using lxml
-    tree = lxml.html.fromstring(html_string)
-
-    ### Getting link for HTML and PDF
-    for i in tree.iter():
-        if i.tag == "td":
-            for j in i:
-                if j.text == type:
-                    link = j.attrib["href"]
-                    if link.endswith(".pdf"):
-                        pdf = j.attrib["href"]
-                    else:
-                        html = j.attrib["href"]
-
-    URL_pdf = pdf
-    html_url, pdf_url = download_pdf_file(URL_pdf, html, type, path_to_save)
-
-    log.debug("Download is Done")
-    return html_url, pdf_url
-
-
-def download_pdf_file(url: str, html_page_url, type, path_to_save) -> bool:
-    """Download PDF from given URL to local directory.
-
-    :param url: The url of the PDF file to be downloaded
-    :return: True if PDF file was successfully downloaded, otherwise False.
+def extract_revision_info(text: str) -> Optional[Tuple[str, Union[int, list]]]:
     """
-    ##downaloading html page url
+    Extracts revision info (e.g., 'rev.1', 'rev.1.2') from the input string.
 
-    html_filename, headers = urlretrieve(
-        html_page_url, filename=path_to_save + type + ".html"
-    )
-    pdf_url = url
-
-    hdr = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9",
-        #'Accept-Encoding': 'gzip, deflate, br',
-        "Referer": "https://www.medical-device-regulation.eu/",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Connection": "keep-alive",
-    }
-
-    # Request URL and get response object
-    response = requests.get(
-        url,
-        headers=hdr,
-        verify="/app/scripts/venv/lib/python3.9/site-packages/certifi/cacert.pem",
-        stream=True,
-    )
-    # response = requests.get(url,  headers=hdr, verify = '/etc/ssl/cert.pem', stream=True)
-    # isolate PDF filename from URL
-    pdf_file_name = os.path.basename(url)
-    if response.status_code == 200:
-        # Save in current working directory
-        # filepath = os.path.join(os.getcwd(), pdf_file_name)
-        filepath = path_to_save + pdf_file_name
-        with open(filepath, "wb") as pdf_object:
-            pdf_object.write(response.content)
-            log.debug("%s was successfully saved!", pdf_file_name)
-            return html_page_url, pdf_url
-    else:
-        log.debug("Uh oh! Could not download %s,", pdf_file_name)
-        log.debug("HTTP response status code: %s", response.status_code)
-        return None, None
+    Returns:
+        A tuple like ('rev', 1) or ('rev', [1, 2]) or None if not found.
+    """
+    match = re.search(r'\brev\.([0-9]+(?:\.[0-9]+)*)', text, re.IGNORECASE)
+    if match:
+        version_str = match.group(1)
+        parts = version_str.split('.')
+        numbers = [int(p) for p in parts]
+        if len(numbers) == 1:
+            return ('rev', numbers[0])
+        else:
+            return ('rev', numbers)
+    return None
 
 
-def download_file(config: ScriptsConfig, type="MDR_EN"):
+def fetch_guidance_list(url):
+    logging.info(f"Fetching guidance list from: {url}")
+    resp = requests.get(url)
+    resp.raise_for_status()
+    soup = BeautifulSoup(resp.text, "html.parser")
+
+    base_url = resp.url
+    guidance_items = []
+
+    for table in soup.find_all("table"):
+        headers = [th.get_text(strip=True) for th in table.find_all("th")]
+        if not {"Reference", "Title", "Publication"}.issubset(set(headers)):
+            continue
+
+        for row in table.find_all("tr")[1:]:
+            cols = row.find_all("td")
+            if len(cols) < 3:
+                continue
+
+            ref = cols[0].get_text(" ", strip=True)
+            title = cols[1].get_text(" ", strip=True)
+            pub = cols[2].get_text(" ", strip=True)
+
+            links = {"pdf": None, "docx": None}
+            for cell in cols:
+                for a in cell.find_all("a", href=True):
+                    href = a["href"].strip()
+                    full_url = urljoin(base_url, href)
+                    if href.lower().endswith(".pdf"):
+                        links["pdf"] = links["pdf"] or full_url
+                    elif href.lower().endswith((".docx", ".doc")):
+                        links["docx"] = links["docx"] or full_url
+
+            item = {
+                "reference_number": ref,
+                "title": title,
+                "publication_date": pub,
+                "links": links
+            }
+
+            if validate_item(item):
+                guidance_items.append(item)
+            else:
+                logging.warning(f"Skipping invalid item: {item}")
+
+    logging.info(f"Found {len(guidance_items)} valid guidance entries")
+    return guidance_items
+
+def download_file(url, reference_number, filetype):
+    """Download the file to scrapedDocs/ folder if not already downloaded"""
     try:
-        mysql_driver = MySQLDriver(cred=config.databaseConfig.__dict__)
-        # file_name = document.additionalInfo + ".pdf"
-        # dir = config.rootDataDir + config.downloadDirInRootDir
-        dir = config.downloadDir
-        path_to_save = get_dir_safe(dir) + "/"
-        log.debug(
-            "%s -> Downloading file  on location:%s", current_process(), path_to_save
-        )
-        html_url, pdf_url = get_pdf_html(path_to_save, type)
-        # response = urllib.request.urlopen(document.url)
-        # get_pdf_html()
-        # document.pdfFileName = os.path.relpath(path, config.rootDataDir)
-        # document.fileSize = os.path.getsize(path)
-        # document.parsed = False
-        # insert_document(mysql_driver, document)
-        mysql_driver.close()
-        return html_url, pdf_url
-    except Exception as ex:
-        log.debug("%s", ex)
-        traceback.print_exc()
-        return None, None
+        filename = sanitize_filename(f"{reference_number}_{filetype}.{url.split('.')[-1]}")
+        filepath = DOWNLOAD_DIR / filename
 
+        if filepath.exists():
+            logging.info(f"File already exists: {filepath}")
+            return str(filepath)
 
-def run(config: ScriptsConfig, scrapeURLId):
+        logging.info(f"Downloading {filetype.upper()} from {url}")
+        response = requests.get(url, stream=True, timeout=20)
+        response.raise_for_status()
 
-    # scrapeURLId = 1  currently hard-coded
-    mysql_driver = MySQLDriver(cred=config.databaseConfig.__dict__)
+        with open(filepath, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
 
-    logText = "MDR Document Scraping : started"
-    scrape_url_append_log(mysql_driver, scrapeURLId, logText)
-    log.debug("%s", logText)
+        logging.info(f"Saved: {filepath}")
+        return str(filepath)
 
-    html_url, pdf_url = download_file(config)
+    except Exception as e:
+        logging.error(f"Failed to download {filetype.upper()} from {url}: {e}")
+        return None
 
-    logText = "MDR Document Scraping : files downloaded"
-    scrape_url_append_log(mysql_driver, scrapeURLId, logText)
-    log.debug("%s", logText)
+def download_all_documents(data):
+    count = 0
+    for item in data:
+        
+        ref = item["reference_number"]
+        for filetype in ["pdf", "docx"]:
 
-    scrapeScript: ScrapScript = get_scrape_script_by_scraperUrlId(
-        mysql_driver, scrapeURLId
-    )
+            url = item["links"].get(filetype)
+            if url:
+                count += 1
+                if count % 5:
+                    time.sleep(5)
+                local_path = download_file(url, ref, filetype)
+                item["links"][filetype] = local_path  # update with local path if downloaded
 
-    # dir = config.rootDataDir + config.downloadDirInRootDir
-    dir = config.downloadDir
-    path_to_save = get_dir_safe(dir) + "/"
-
-    src_filename = path_to_save + "MDR_EN" + ".html"
-    src_filename = os.path.relpath(src_filename, config.downloadDir)
-    url_path = pdf_url
-    pdf_filename = path_to_save + os.path.basename(pdf_url)
-    fileSize = os.path.getsize(pdf_filename)
-    pdf_filename = os.path.relpath(pdf_filename, config.downloadDir)
-
+def save_files(data):
     try:
-        document = Document(
-            number="",
-            title="EU MDR Regulation",
-            description="EU MDR Regulation",
-            url=url_path,
-            documentType=scrapeScript.documentTypeID,
-            documentStatus=1,  # Active
-            # activeDate=None,
-            activeDate=DefaultActiveDate,
-            inactiveDate=None,
-            sourceFileName=src_filename,
-            pdfFileName=pdf_filename,
-            parsed=False,
-            embedded=False,
-            parsingScriptID=scrapeScript.defaultParsingScriptID,
-            createdDate=datetime.today().date(),
-            modifiedDate=datetime.today().date(),
-            # additionalInfo=None,
-            fileSize=fileSize,
-            parsingLog="notParsed",
-            embeddingLog="notEmbedded",
-            noOfParagraphs=0,
-            lastScrapeDate=datetime.today().date(),
-            sourceProject=0,
-        )
-        insert_document(mysql_driver, document)
-        logText = (
-            pdf_filename
-            + " with filetype = MDR "
-            + " at "
-            + url_path
-            + " downloaded on "
-            + str(datetime.today().date())
-        )
-        scrape_url_append_log(mysql_driver, scrapeURLId, logText)
-        log.debug("%s", logText)
-    except Exception as exc:
-        logText = (
-            pdf_filename
-            + " with filetype = MDR "
-            + " at "
-            + url_path
-            + " downloaded failed on "
-            + str(datetime.today().date())
-        )
-        logText += traceback.format_exc()
-        scrape_url_append_log(mysql_driver, scrapeURLId, logText)
-        log.debug("%s", logText)
+        with open("mdcg_guidance.json", "w", encoding="utf-8") as f_json:
+            json.dump(data, f_json, ensure_ascii=False, indent=2)
+        logging.info("Saved JSON file: mdcg_guidance.json")
 
-        # else:
-        #     docInDB.lastScrapeDate = datetime.today().date()
-        #     # docInDB.scrapingLog = 'File ' + row['title']  + ' with AC at ' + row['pdf_file_url'] + ' scraped and not changed on ' + str(datetime.today())
-        #     logText = 'File ' + row['title'] + ' with AC at ' + row[
-        #         'pdf_file_url'] + ' scraped and not changed on ' + str(datetime.today())
-        #     logList.insert(0, logText)
-        #     update_list.append(docInDB)
+        with open("mdcg_guidance.csv", "w", newline="", encoding="utf-8") as f_csv:
+            writer = csv.DictWriter(f_csv, fieldnames=["reference_number", "title", "publication_date", "pdf_link", "docx_link"])
+            writer.writeheader()
+            for item in data:
+                writer.writerow({
+                    "reference_number": item["reference_number"],
+                    "title": item["title"],
+                    "publication_date": item["publication_date"],
+                    "pdf_link": item["links"].get("pdf"),
+                    "docx_link": item["links"].get("docx")
+                })
+        logging.info("Saved CSV file: mdcg_guidance.csv")
 
-    logText = f"MDR Document Downloaded: {pdf_filename} completed"
-    scrape_url_append_log(mysql_driver, scrapeURLId, logText)
-    log.debug("%s", logText)
+    except Exception as e:
+        logging.error(f"Error saving output files: {e}")
 
-    print("Download  MDR  documents")
-
+def main():
+    logging.info("🔍 Starting MDCG scraper...")
+    url = "https://health.ec.europa.eu/medical-devices-sector/new-regulations/guidance-mdcg-endorsed-documents-and-other-guidance_en#sec3"
+    try:
+        data = fetch_guidance_list(url)
+        download_all_documents(data)
+        save_files(data)
+    except Exception as e:
+        logging.error(f"Unhandled error: {e}")
+    logging.info("✅ Scraping complete.")
 
 if __name__ == "__main__":
-    try:
-        props = None
-        #configure the logging level
-        remaining_args = configure_logging_from_argv(default_level='INFO')
-
-        docIdsList = []
-        if len(remaining_args) >= 1:
-            n = len(remaining_args[0])
-            docs = remaining_args[0][1 : n - 1]
-            docs = docs.split(" ")
-            docIdsList = [int(i) for i in docs]
-
-        if len(docIdsList) > 0:
-            scrapeURLId = docIdsList[0]
-        else:
-            scrapeURLId = 2
-
-        configs = parseCredentialFile("/app/tlp_config.json")
-        # configs = parseCredentialFile('//dockers/Enginius/test/scripts/testmed-tlp_config.json')
-
-        if configs:
-            run(configs, scrapeURLId)
-    except Exception as e:
-        print("The EXCEPTION >>>>>>>>>>>>>> ")
-        print(traceback.format_exc())
-        traceback.print_exc()
-        print(e)
+    main()

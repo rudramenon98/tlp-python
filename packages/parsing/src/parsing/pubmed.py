@@ -1,27 +1,24 @@
-import os
-import requests
-import regex as re
 import gzip
-from lxml import etree
-from dataclasses import dataclass, field
-from typing import List, Optional, Iterator, Dict, Any
-
-from datetime import datetime, date
-
 import logging
+import os
+from dataclasses import dataclass, field
+from datetime import date, datetime
+from typing import Any, Dict, Iterator, List, Optional
+
+from lxml import etree
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.StreamHandler()  # You can add FileHandler here if needed
-    ]
+    handlers=[logging.StreamHandler()],  # You can add FileHandler here if needed
 )
 
 logger = logging.getLogger(__name__)
 
-TODAY  = datetime.today().date()
+TODAY = datetime.today().date()
+
+
 @dataclass
 class Author:
     last_name: Optional[str]
@@ -73,7 +70,9 @@ class Article:
     doi: Optional[str]
     title: Optional[str]
     abstract: Optional[str]
-    other_abstracts: List[Dict[str, Any]]  # e.g. OtherAbstract elements (with language etc.)
+    other_abstracts: List[
+        Dict[str, Any]
+    ]  # e.g. OtherAbstract elements (with language etc.)
 
     journal_title: Optional[str]
     journal_iso_abbrev: Optional[str]
@@ -86,7 +85,9 @@ class Article:
 
     # optional meta
     authors: List[Author] = field(default_factory=list)
-    mesh_terms: List[Dict[str, Any]] = field(default_factory=list)  # with qualifiers / AutoHM etc.
+    mesh_terms: List[Dict[str, Any]] = field(
+        default_factory=list
+    )  # with qualifiers / AutoHM etc.
     keywords: List[str] = field(default_factory=list)
     chemicals: List[Chemical] = field(default_factory=list)
     grants: List[Grant] = field(default_factory=list)
@@ -95,7 +96,6 @@ class Article:
     references: List[Reference] = field(default_factory=list)
     citation_subset: List[str] = field(default_factory=list)
     publication_types: List[str] = field(default_factory=list)
-
 
 
 class PubmedFullParser:
@@ -113,25 +113,27 @@ class PubmedFullParser:
                 if elem.tag == "DeleteCitation":
                     # These elements are expected to contain one or more PMID tags.
                     for child in elem.iterchildren():
-                        assert child.tag == "PMID", f"PMID tag expected. Got: {child.tag}"
-                        #yield {"pmid": child.text, "delete": True}
+                        assert (
+                            child.tag == "PMID"
+                        ), f"PMID tag expected. Got: {child.tag}"
+                        # yield {"pmid": child.text, "delete": True}
                         art = Article(
                             pmid=child.text,
                             deleted=True,
-                            pmid_version='',
-                            title='',
-                            abstract='',
-                            other_abstracts='',
-                            journal_title='',
-                            journal_iso_abbrev='',
-                            journal_pub_date='',
-                            volume='',
-                            issue='',
-                            pagination='',
+                            pmid_version="",
+                            title="",
+                            abstract="",
+                            other_abstracts="",
+                            journal_title="",
+                            journal_iso_abbrev="",
+                            journal_pub_date="",
+                            volume="",
+                            issue="",
+                            pagination="",
                             created_date=TODAY,
                             modified_date=TODAY,
-                            doi='',
-                            )
+                            doi="",
+                        )
                         yield art
                     elem.clear()
                 else:
@@ -143,7 +145,7 @@ class PubmedFullParser:
                 # handle or log errors
                 print("Error parsing article:", e)
             # free memory as we go
-            #elem.clear()
+            # elem.clear()
             while elem.getprevious() is not None:
                 del elem.getparent()[0]
         del context
@@ -173,13 +175,26 @@ class PubmedFullParser:
             """Parse a **valid** date that (at least) has to have a Year element."""
 
             # translate three-letter month strings to integers:
-            MONTHS_SHORT = (None, 'jan', 'feb', 'mar', 'apr', 'may', 'jun',
-                            'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
+            MONTHS_SHORT = (
+                None,
+                "jan",
+                "feb",
+                "mar",
+                "apr",
+                "may",
+                "jun",
+                "jul",
+                "aug",
+                "sep",
+                "oct",
+                "nov",
+                "dec",
+            )
 
-            year = int(date_element.find('Year').text)
+            year = int(date_element.find("Year").text)
             month, day = 1, 1
-            month_element = date_element.find('Month')
-            day_element = date_element.find('Day')
+            month_element = date_element.find("Month")
+            day_element = date_element.find("Day")
 
             if month_element is not None:
                 month_text = month_element.text.strip()
@@ -202,14 +217,16 @@ class PubmedFullParser:
             return date(year, month, day)
 
         dates = {}
-        for name, key in (('DateCompleted', 'completed'),
-                          ('DateCreated', 'created'),
-                          ('DateRevised', 'revised')):
+        for name, key in (
+            ("DateCompleted", "completed"),
+            ("DateCreated", "created"),
+            ("DateRevised", "revised"),
+        ):
             e = med.find(name)
 
             if e is not None:
                 dates[key] = ParseDate(e)
-        
+
         # Article (for PubmedArticle) or BookArticle (for PubmedBookArticle)
         article_node = med.find("Article")
         # Note: for BookArticle, you may have <BookDocument> or other structure — you can extend this.
@@ -245,7 +262,11 @@ class PubmedFullParser:
 
             if len(elocation_ids) > 0:
                 for e in elocation_ids:
-                    doi = e.text.strip() or "" if e.attrib.get("EIdType", "") == "doi" else ""
+                    doi = (
+                        e.text.strip() or ""
+                        if e.attrib.get("EIdType", "") == "doi"
+                        else ""
+                    )
             else:
                 article_ids = med.find("PubmedData/ArticleIdList")
                 if article_ids is not None:
@@ -260,8 +281,12 @@ class PubmedFullParser:
 
         # Journal data
         journal = article_node.find("Journal") if article_node is not None else None
-        journal_title = self._get_text(journal, "Title") if journal is not None else None
-        journal_iso = self._get_text(journal, "ISOAbbreviation") if journal is not None else None
+        journal_title = (
+            self._get_text(journal, "Title") if journal is not None else None
+        )
+        journal_iso = (
+            self._get_text(journal, "ISOAbbreviation") if journal is not None else None
+        )
         journal_pub_date = None
         volume = None
         issue = None
@@ -308,8 +333,15 @@ class PubmedFullParser:
                     aid = a.find("AuthorIdentifier")
                     if aid is not None:
                         ident = aid.text.strip() if aid.text else None
-                    authors.append(Author(last_name=last, fore_name=fore, initials=initials,
-                                          affiliation=affiliation, identifier=ident))
+                    authors.append(
+                        Author(
+                            last_name=last,
+                            fore_name=fore,
+                            initials=initials,
+                            affiliation=affiliation,
+                            identifier=ident,
+                        )
+                    )
 
         # Mesh headings & qualifiers
         mesh_terms = []
@@ -327,7 +359,9 @@ class PubmedFullParser:
                     q_text = qn.text.strip() if qn.text else None
                     q_attrs = dict(qn.attrib)
                     qualifiers.append({"qualifier_name": q_text, "attrs": q_attrs})
-                mesh_terms.append({"descriptor": dname, "d_attrs": d_attrs, "qualifiers": qualifiers})
+                mesh_terms.append(
+                    {"descriptor": dname, "d_attrs": d_attrs, "qualifiers": qualifiers}
+                )
 
         # Keywords
         keywords: List[str] = []
@@ -345,14 +379,27 @@ class PubmedFullParser:
                 name = self._get_text(chem, "NameOfSubstance")
                 registry = chem.find("RegistryNumber")
                 cas = chem.find("RN")
-                registry_number = registry.text.strip() if (registry is not None and registry.text) else None
-                cas_number = cas.text.strip() if (cas is not None and cas.text) else None
-                chemicals.append(Chemical(name=name, registry_number=registry_number,
-                                          cas_registry_number=cas_number))
+                registry_number = (
+                    registry.text.strip()
+                    if (registry is not None and registry.text)
+                    else None
+                )
+                cas_number = (
+                    cas.text.strip() if (cas is not None and cas.text) else None
+                )
+                chemicals.append(
+                    Chemical(
+                        name=name,
+                        registry_number=registry_number,
+                        cas_registry_number=cas_number,
+                    )
+                )
 
         # Grants
         grants: List[Grant] = []
-        grant_list = med.find("ChemicalList")  # mistake — grants are under Article => GrantList under Article or under MedlineCitation?
+        grant_list = med.find(
+            "ChemicalList"
+        )  # mistake — grants are under Article => GrantList under Article or under MedlineCitation?
         # Actually, in the DTD, GrantList is under MedlineCitation / Article (or under Article in some versions)
         # Better to search:
         for gl in med.findall(".//GrantList"):
@@ -361,7 +408,9 @@ class PubmedFullParser:
                 acronym = grant.get("Acronym")
                 agency = self._get_text(grant, "Agency")
                 country = self._get_text(grant, "Country")
-                grants.append(Grant(grant_id=gid, acronym=acronym, agency=agency, country=country))
+                grants.append(
+                    Grant(grant_id=gid, acronym=acronym, agency=agency, country=country)
+                )
 
         # DataBanks
         databanks: List[DataBank] = []
@@ -389,7 +438,9 @@ class PubmedFullParser:
                 citation = self._get_text(ref, "Citation")
                 rtype = ref.get("Type")
                 pid = self._get_text(ref, "ArticleIdList/ArticleId[@IdType='pubmed']")
-                references.append(Reference(citation=citation, ref_type=rtype, pubmed_id=pid))
+                references.append(
+                    Reference(citation=citation, ref_type=rtype, pubmed_id=pid)
+                )
 
         # CitationSubset — (e.g. “IM”, “OldMedline”, etc.)
         citation_subset = []
@@ -420,9 +471,8 @@ class PubmedFullParser:
             volume=volume,
             issue=issue,
             pagination=pagination,
-            created_date=dates.get('created', TODAY),
-            modified_date=dates.get('revised', TODAY),
-
+            created_date=dates.get("created", TODAY),
+            modified_date=dates.get("revised", TODAY),
             authors=authors,
             mesh_terms=mesh_terms,
             keywords=keywords,
@@ -438,10 +488,11 @@ class PubmedFullParser:
 
         return art
 
+
 def process_pubmed_update_file(update_file_path):
     """
     Process a PubMed XML update file, logging information about each article.
-    
+
     Parameters:
         update_file_path (str): Full path to the .xml.gz update file.
     """
@@ -450,7 +501,7 @@ def process_pubmed_update_file(update_file_path):
         logger.error(f"File not found: {update_file_path}")
         return
 
-    if not update_file_path.endswith('.xml.gz'):
+    if not update_file_path.endswith(".xml.gz"):
         logger.error("Invalid file format. Expected a .xml.gz compressed file.")
         return
 
@@ -461,12 +512,16 @@ def process_pubmed_update_file(update_file_path):
                 try:
                     if art.deleted:
                         logger.info(f"[DELETED] PMID {art.pmid}, Title: {art.title}")
-                    
+
                     elif art.abstract and art.doi:
                         if int(art.pmid_version) > 1:
-                            logger.info(f"[UPDATED VERSION] PMID {art.pmid}, Version: {art.pmid_version}")
+                            logger.info(
+                                f"[UPDATED VERSION] PMID {art.pmid}, Version: {art.pmid_version}"
+                            )
                         else:
-                            logger.info(f"[NEW ENTRY] PMID {art.pmid}, Title: {art.title}")
+                            logger.info(
+                                f"[NEW ENTRY] PMID {art.pmid}, Title: {art.title}"
+                            )
                             logger.info(f"Created Date: {art.created_date}")
                             logger.info(f"Revised Date: {art.modified_date}")
                             logger.info("-----")
@@ -478,11 +533,16 @@ def process_pubmed_update_file(update_file_path):
     except Exception as e:
         logger.exception(f"Failed to process file '{update_file_path}': {e}")
 
+
 # Example usage:
 if __name__ == "__main__":
-    
-    file_path = '/uploads/Enginius/test/scrapedDocs/pubmed/baseline_files/pubmed25n0001.xml.gz'
-    update_file_path = '/uploads/Enginius/test/scrapedDocs/pubmed/update_files/pubmed25n1278.xml.gz'
+
+    file_path = (
+        "/uploads/Enginius/test/scrapedDocs/pubmed/baseline_files/pubmed25n0001.xml.gz"
+    )
+    update_file_path = (
+        "/uploads/Enginius/test/scrapedDocs/pubmed/update_files/pubmed25n1278.xml.gz"
+    )
     with gzip.open(update_file_path, "rb") as f:
         parser = PubmedFullParser(f)
         for art in parser.parse():
@@ -490,22 +550,23 @@ if __name__ == "__main__":
                 print(f"PMID {art.pmid}, Title: {art.title}")
                 print(f"Deleted: {art.deleted}")
 
-            elif art.abstract and len(art.abstract) > 0 and art.doi and len(art.doi) > 0:
+            elif (
+                art.abstract and len(art.abstract) > 0 and art.doi and len(art.doi) > 0
+            ):
                 if int(art.pmid_version) > 1:
                     print(f"PMID {art.pmid}, PMID Version: {art.pmid_version}")
                 else:
-                    pass
                     print(f"PMID {art.pmid}, Title: {art.title}")
-                    #print(f"Abstract: {art.abstract}")
-                    #print(f"DOI: https://doi.org/{art.doi}")
+                    # print(f"Abstract: {art.abstract}")
+                    # print(f"DOI: https://doi.org/{art.doi}")
                     print(f"Created Date: {art.created_date}")
                     print(f"Revised Date: {art.modified_date}")
-                    '''
+                    """
                     print("Authors:", [(a.last_name, a.fore_name) for a in art.authors])
                     print("Mesh:", [m["descriptor"] for m in art.mesh_terms])
                     print("Chemicals:", [(c.name, c.cas_registry_number) for c in art.chemicals])
                     print("Grants:", [(g.grant_id, g.agency) for g in art.grants])
                     print("DataBanks:", [(d.db_name, d.accession_number) for d in art.databanks])
                     print("References:", [(r.pubmed_id, r.citation) for r in art.references])
-                    '''
+                    """
                     print("-----")

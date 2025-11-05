@@ -7,28 +7,39 @@ import time
 import traceback
 import urllib.request
 from datetime import datetime
-from multiprocessing import current_process, Pool, cpu_count
+from multiprocessing import Pool, cpu_count, current_process
 
 import pandas as pd
 import requests
+from common_tools.log_config import configure_logging_from_argv
+from database.document_service import (
+    cancel_documents,
+    find_document_by_url,
+    find_documents_not_scraped_on_date,
+    find_documents_not_scraped_on_date_by_type,
+    get_scrap_script_by_file_name,
+    get_scrape_script_by_scraperUrlId,
+    insert_document,
+    insert_documents_bulk2,
+    update_documents,
+)
+from database.entity.Document import Document
+from database.entity.ScrapScript import ScrapScript
+from database import CONFIG_DIR
+from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
+from database.scrape_url_service import (
+    scrape_url_append_log,
+    update_scrape_url_set_log_value,
+)
+from database.utils.MySQLFactory import MySQLDriver
+from database.utils.util import get_dir_safe
+from database.utils.WebDriverFactory import WebDriverFactory
 from dateutil.parser import parse
 from PyPDF2 import PdfReader
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from database.document_service import insert_document, insert_documents_bulk2, find_document_by_url, update_documents, \
-    find_documents_not_scraped_on_date, cancel_documents, get_scrap_script_by_file_name, get_scrape_script_by_scraperUrlId, \
-    find_documents_not_scraped_on_date_by_type
-from database.entity.Document import Document
-from database.entity.ScrapScript import ScrapScript
-from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
-from database.scrape_url_service import update_scrape_url_set_log_value, scrape_url_append_log
-from database.utils.MySQLFactory import MySQLDriver
-from database.utils.WebDriverFactory import WebDriverFactory
-from database.utils.util import get_dir_safe
-
-from common_tools.log_config  import configure_logging_from_argv
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 '''
@@ -41,6 +52,8 @@ console_handler.setFormatter(console_formatter)
 logList = [] 
 DateToday = datetime.today()
 from urllib import request
+
+
 def download_file(URL, path):
     hdr = {
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36',
@@ -305,7 +318,7 @@ def run(config: ScriptsConfig, scrapeURLId):
 
     #logList.append(logText)
     scrape_url_append_log(mysql_driver, scrapeURLId, logText)
-                log.debug("%s", logText)
+    log.debug("%s", logText)
 
     # get all the documents and their details
     scrapeDF = Canada_Guidance_Scraping(main_URL, config.SeleniumDocker)
@@ -313,7 +326,7 @@ def run(config: ScriptsConfig, scrapeURLId):
     logText = f'Website data captured at {datetime.today()}' 
     #logList.append(logText)
     scrape_url_append_log(mysql_driver, scrapeURLId, logText) 
-                log.debug("%s", logText)
+    log.debug("%s", logText)
 
     retval = check_for_new_documents(config, mysql_driver, scrapeDF, scrapeURLId, scrapeScript=scrapeScript)
 
@@ -326,14 +339,14 @@ def run(config: ScriptsConfig, scrapeURLId):
         logText = f'Number of cancelled documents since last scrape: {len(cancel_list)}'
         logList.append(logText)
         scrape_url_append_log(mysql_driver, scrapeURLId, logText)
-                log.debug("%s", logText)
+    log.debug("%s", logText)
 
-        cancel_documents(mysql_driver, cancel_list)
+    cancel_documents(mysql_driver, cancel_list)
 
     logText = f'Scraping URL: {main_URL} DONE'
     #logList.append(logText)
     scrape_url_append_log(mysql_driver, scrapeURLId, logText)    
-                log.debug("%s", logText)
+    log.debug("%s", logText)
 
     #save_log_data_to_db(logList, mysql_driver)
     print('Scaped URL:' + main_URL)
@@ -358,7 +371,7 @@ if __name__ == '__main__':
         else: 
             scrapeURLId = 8
 
-        configs = parseCredentialFile('/app/tlp_config.json')
+        configs = parseCredentialFile(str(CONFIG_DIR / "dev_test_tlp_config.json"))
 
         if configs:
             run(configs, scrapeURLId)

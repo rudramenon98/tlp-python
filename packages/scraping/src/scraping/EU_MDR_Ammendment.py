@@ -9,8 +9,11 @@ from typing import List, Tuple
 
 import pandas as pd
 import requests
-from database.document_service import (delete_document, get_document_by_title,
-                                  insert_document)
+from database.document_service import (
+    delete_document,
+    get_document_by_title,
+    insert_document,
+)
 from database.entity.Document import Document
 from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
 from database.utils.MySQLFactory import MySQLDriver
@@ -28,7 +31,7 @@ log.setLevel(logging.DEBUG)
 # Reduce verbosity for selenium logs only
 
 LOGGER.setLevel(logging.WARNING)  # or logging.ERROR to show less
-logging.getLogger('selenium').setLevel(logging.WARNING)
+logging.getLogger("selenium").setLevel(logging.WARNING)
 
 
 def scrap_table(driver, url):
@@ -36,43 +39,44 @@ def scrap_table(driver, url):
     i = 2
     cn = 0
     dataset = {
-        'Number': [],
-        'title': [],
-        'description': [],
-        'pdf_file_name': [],
-        'pdf_file_url': [],
-        'filetype': [],
-        'status': [],
-        'active_date': [],
-        'Download': []
+        "Number": [],
+        "title": [],
+        "description": [],
+        "pdf_file_name": [],
+        "pdf_file_url": [],
+        "filetype": [],
+        "status": [],
+        "active_date": [],
+        "Download": [],
     }
     while True:
         try:
 
-            tr = url + f'[{i}]'
-            #tr = '//*[@id="content"]/section[1]/div/div/div[1]/div/figure[1]/table/tbody/tr'+f'[{i}]'
-            #print('//*[@id="content"]/section[1]/div/div/div[1]/div/figure[1]/table/tbody/tr'+f'[{i}]')
-            table_trs = driver.find_element_by_xpath(tr)
+            tr = url + f"[{i}]"
+            # tr = '//*[@id="content"]/section[1]/div/div/div[1]/div/figure[1]/table/tbody/tr'+f'[{i}]'
+            # print('//*[@id="content"]/section[1]/div/div/div[1]/div/figure[1]/table/tbody/tr'+f'[{i}]')
+            driver.find_element_by_xpath(tr)
             td = [
-                driver.find_element_by_xpath(tr + '/' + 'td' + f'[{i}]').text
+                driver.find_element_by_xpath(tr + "/" + "td" + f"[{i}]").text
                 for i in range(1, 4)
             ]
-            dataset['title'].append(td[1])
+            dataset["title"].append(td[1])
 
-            link = driver.find_element_by_xpath(
-                tr + '/' + 'td[2]/a').get_attribute('href')
-            dataset['pdf_file_url'].append(link)
+            link = driver.find_element_by_xpath(tr + "/" + "td[2]/a").get_attribute(
+                "href"
+            )
+            dataset["pdf_file_url"].append(link)
 
-            file_name = link.split('/')[-1]
+            file_name = link.split("/")[-1]
             log.debug("Processing file: %s", file_name)
-            dataset['pdf_file_name'].append(file_name)
+            dataset["pdf_file_name"].append(file_name)
 
-            dataset['description'].append(td[0])
-            dataset['filetype'].append(5)
-            dataset['Download'].append(True)
-            dataset['status'].append('Active')
-            dataset['active_date'].append(date(datetime.today().year, 1, 1))
-            dataset['Number'].append(cn)
+            dataset["description"].append(td[0])
+            dataset["filetype"].append(5)
+            dataset["Download"].append(True)
+            dataset["status"].append("Active")
+            dataset["active_date"].append(date(datetime.today().year, 1, 1))
+            dataset["Number"].append(cn)
 
             i += 1
             cn += 1
@@ -86,7 +90,8 @@ def scrap_table(driver, url):
 
 def wait_for_page_load(driver):
     WebDriverWait(driver, 30).until(
-        lambda d: d.execute_script("return document.readyState") == "complete")
+        lambda d: d.execute_script("return document.readyState") == "complete"
+    )
 
 
 class DocumentLink:
@@ -100,21 +105,19 @@ class DocumentLink:
         self.date = date
         self.link = link
         self.doc_type = doc_type
-        
+
     def get_file_name(self) -> str:
         return clean_filename(f"{self.name}.{self.doc_type}")
 
 
-def get_document_link_from_page(driver: WebDriver,
-                                url: str) -> Tuple[str, str]:
+def get_document_link_from_page(driver: WebDriver, url: str) -> Tuple[str, str]:
     driver.get(url)
     wait_for_page_load(driver)
-    html_download_link = driver.find_element(By.ID,
-                                             "format_language_table_HTML_EL")
-    pdf_download_link = driver.find_element(By.ID,
-                                            "format_language_table_PDF_EL")
-    return html_download_link.get_attribute(
-        "href"), pdf_download_link.get_attribute("href")
+    html_download_link = driver.find_element(By.ID, "format_language_table_HTML_EL")
+    pdf_download_link = driver.find_element(By.ID, "format_language_table_PDF_EL")
+    return html_download_link.get_attribute("href"), pdf_download_link.get_attribute(
+        "href"
+    )
 
 
 def make_driver(headless=True, log_path="chromedriver.log"):
@@ -129,8 +132,12 @@ def make_driver(headless=True, log_path="chromedriver.log"):
     opts.add_argument("--disable-gpu")
 
     # If Chromium is used, set binary explicitly (optional if Google Chrome)
-    for cand in ("/usr/bin/google-chrome", "/usr/bin/google-chrome-stable",
-                 "/usr/bin/chromium", "/usr/bin/chromium-browser"):
+    for cand in (
+        "/usr/bin/google-chrome",
+        "/usr/bin/google-chrome-stable",
+        "/usr/bin/chromium",
+        "/usr/bin/chromium-browser",
+    ):
         if os.path.exists(cand):
             opts.binary_location = cand
             break
@@ -148,16 +155,18 @@ def make_driver(headless=True, log_path="chromedriver.log"):
 
 
 def get_document_list(
-        docker_url: str = "http://localhost:4444/wd/hub"
+    docker_url: str = "http://localhost:4444/wd/hub",
 ) -> List[DocumentLink]:
-    main_url = 'http://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:02017R0745-20250110'
+    main_url = "http://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:02017R0745-20250110"
     try:
         print("Making driver")
-        log.info("Starting get_document_list docker_url=%s main_url=%s",
-                 docker_url, main_url)
+        log.info(
+            "Starting get_document_list docker_url=%s main_url=%s", docker_url, main_url
+        )
         driver = None
         driver = WebDriverFactory.getWebDriverInstance(
-            browser='docker', docker_url=docker_url)
+            browser="docker", docker_url=docker_url
+        )
         log.info("Initialized WebDriver via Docker at %s", docker_url)
         print("Driver made")
         # navigate to the main_URL
@@ -167,60 +176,62 @@ def get_document_list(
 
         # look for table with all the amendments. The tables have no ids, so look for
         # a specific link and then get the table from the parent element
-        amendment_link = "https://eur-lex.europa.eu/legal-content/EN/AUTO/?uri=celex:32020R0561"
-        links_elements = driver.find_elements(By.XPATH, '//a')
+        amendment_link = (
+            "https://eur-lex.europa.eu/legal-content/EN/AUTO/?uri=celex:32020R0561"
+        )
+        links_elements = driver.find_elements(By.XPATH, "//a")
         log.debug("Total <a> elements found: %d", len(links_elements))
         amendment_element = None
         for link_element in links_elements:
-            link_url = link_element.get_attribute('href')
+            link_url = link_element.get_attribute("href")
 
             if link_url == amendment_link:
                 amendment_element = link_element
                 break
 
         if amendment_element is None:
-            log.error("Amendment element not found for link: %s",
-                      amendment_link)
+            log.error("Amendment element not found for link: %s", amendment_link)
             return []
         else:
             log.info("Amendment element found for link: %s", amendment_link)
 
         # get parent table element
         page_links: List[DocumentLink] = []
-        table_element = amendment_element.find_element(By.XPATH,
-                                                       "./ancestor::table")
+        table_element = amendment_element.find_element(By.XPATH, "./ancestor::table")
         rows = table_element.find_elements(By.TAG_NAME, "tr")
         log.debug("Amendment table rows found: %d", len(rows))
         for row in rows:
             # Get all cells (both <td> and <th>) in the current row
             cells = row.find_elements(By.XPATH, ".//th | .//td")
-            cell_texts = [cell.text.strip() for cell in cells]
+            [cell.text.strip() for cell in cells]
             if len(cells) != 5:
                 continue
             _, link_cell, _, _, date = cells
 
             # get document name, link and date and append to list
             doc_name = link_cell.text.strip()
-            doc_link = link_cell.find_element(By.TAG_NAME,
-                                              "a").get_attribute("href")
+            doc_link = link_cell.find_element(By.TAG_NAME, "a").get_attribute("href")
             doc_date = datetime.strptime(date.text, "%d.%m.%Y").date()
-            page_links.append(
-                DocumentLink(doc_name, doc_date, doc_link, "html"))
+            page_links.append(DocumentLink(doc_name, doc_date, doc_link, "html"))
 
         log.info("Collected amendment page links: %d", len(page_links))
         doc_links: List[DocumentLink] = []
         for page_link in page_links:
-            log.debug("Fetching downloadable links for: %s (%s)",
-                      page_link.name, page_link.link)
-            html_link, pdf_link = get_document_link_from_page(
-                driver, page_link.link)
+            log.debug(
+                "Fetching downloadable links for: %s (%s)",
+                page_link.name,
+                page_link.link,
+            )
+            html_link, pdf_link = get_document_link_from_page(driver, page_link.link)
 
             doc_links.append(
-                DocumentLink(f"{page_link.name}.html", page_link.date,
-                             html_link, "html"))
+                DocumentLink(
+                    f"{page_link.name}.html", page_link.date, html_link, "html"
+                )
+            )
             doc_links.append(
-                DocumentLink(f"{page_link.name}.pdf", page_link.date, pdf_link,
-                             "pdf"))
+                DocumentLink(f"{page_link.name}.pdf", page_link.date, pdf_link, "pdf")
+            )
 
         log.info("Total downloadable links prepared: %d", len(doc_links))
         return doc_links
@@ -253,11 +264,11 @@ def clean_filename(file_name: Path | str) -> str:
     # Define invalid characters for Windows and other OSes
     # Windows forbids: < > : " / \ | ? *
     # Also remove control chars and trim spaces/dots
-    cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1F]', '', stem)
-    cleaned = cleaned.strip(' .')
+    cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1F]', "", stem)
+    cleaned = cleaned.strip(" .")
 
     # Replace multiple spaces with a single space
-    cleaned = re.sub(r'\s+', ' ', cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned)
     cleaned = cleaned.strip()
 
     # Fallback for empty filenames
@@ -267,9 +278,12 @@ def clean_filename(file_name: Path | str) -> str:
     return cleaned + suffix
 
 
-def upload_document(doc: DocumentLink, mysql_driver: MySQLDriver,
-                    path_to_save: Path | str):
-    document_type = 3  # EU MDR as defined https://meddev.enginius.ai/#/admin/document-type
+def upload_document(
+    doc: DocumentLink, mysql_driver: MySQLDriver, path_to_save: Path | str
+):
+    document_type = (
+        3  # EU MDR as defined https://meddev.enginius.ai/#/admin/document-type
+    )
     now_date = datetime.today().date()
     file_name = doc.get_file_name()
     doc_path = path_to_save / file_name
@@ -309,8 +323,7 @@ def download_file(url: str, path_to_save: Path | str) -> bool:
     if not path_to_save.exists():
         path_to_save.parent.mkdir(parents=True, exist_ok=True)
     hdr = {
-        "User-Agent":
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9",
         #'Accept-Encoding': 'gzip, deflate, br',
         "Referer": "https://www.medical-device-regulation.eu/",
@@ -347,7 +360,6 @@ def run(config: ScriptsConfig):
         log.error("No documents found")
         return
 
-
     path_to_save = Path(config.downloadDir)
     for doc in doc_list:
         log.debug(
@@ -357,7 +369,7 @@ def run(config: ScriptsConfig):
 
         if existing_doc is not None:
             existing_doc_date = existing_doc.activeDate
-            if  not (path_to_save / doc.get_file_name()).exists():
+            if not (path_to_save / doc.get_file_name()).exists():
                 log.debug(
                     f"Document file does not exist: {doc.name} with date: {doc.date} and link: {doc.link}"
                 )
@@ -388,6 +400,7 @@ def run(config: ScriptsConfig):
 
 if __name__ == "__main__":
     from database.configs import config_dir
+
     configs = parseCredentialFile(config_dir / "dev_test_tlp_config.json")
     download_dir = Path(__file__).parent / "data" / "EU_MDR_Ammendement"
     download_dir.mkdir(parents=True, exist_ok=True)

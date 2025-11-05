@@ -7,25 +7,33 @@ import sys
 import time
 import traceback
 import urllib.request
-from datetime import datetime, date
-from multiprocessing import current_process, Pool, cpu_count
+from datetime import date, datetime
+from multiprocessing import Pool, cpu_count, current_process
 
 import pandas as pd
 import requests
-from PyPDF2 import PdfReader
-from selenium.webdriver.support.ui import WebDriverWait
-
-from database.document_service import insert_documents_bulk2, find_document_by_url, update_documents, \
-    find_documents_not_scraped_on_date, cancel_documents, get_scrape_script_by_scraperUrlId
+from common_tools.log_config import configure_logging_from_argv
+from database.document_service import (
+    cancel_documents,
+    find_document_by_url,
+    find_documents_not_scraped_on_date,
+    get_scrape_script_by_scraperUrlId,
+    insert_documents_bulk2,
+    update_documents,
+)
 from database.entity.Document import Document
 from database.entity.ScrapScript import ScrapScript
+from database import CONFIG_DIR
 from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
-from database.scrape_url_service import update_scrape_url_set_log_value, scrape_url_append_log
+from database.scrape_url_service import (
+    scrape_url_append_log,
+    update_scrape_url_set_log_value,
+)
 from database.utils.MySQLFactory import MySQLDriver
-from database.utils.WebDriverFactory import WebDriverFactory
 from database.utils.util import get_dir_safe
-
-from common_tools.log_config  import configure_logging_from_argv
+from database.utils.WebDriverFactory import WebDriverFactory
+from PyPDF2 import PdfReader
+from selenium.webdriver.support.ui import WebDriverWait
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -465,7 +473,7 @@ if __name__ == '__main__':
         else: 
             scrapeURLId = 2
 
-        configs = parseCredentialFile('/app/tlp_config.json')
+        configs = parseCredentialFile(str(CONFIG_DIR / "dev_test_tlp_config.json"))
         #configs = parseCredentialFile('//dockers/Enginius/test/scripts/testmed-tlp_config.json')
         if configs:
             run(configs, scrapeURLId)

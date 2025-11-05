@@ -1,14 +1,13 @@
-import json
 import logging
 import os
-import sys
 import time
 import traceback
-from datetime import date, datetime
+from datetime import datetime
 
 import lxml.etree as ET
 import numpy as np
 import pandas as pd
+from common_tools.log_config import configure_logging_from_argv
 from database.document_service import (
     find_document_by_id,
     get_documents_for_parsing_by_type,
@@ -16,22 +15,22 @@ from database.document_service import (
     set_document_as_parsed,
     set_document_parsed_details,
 )
-from database.entity.Document import PublicDocument, getDocumentClass
-from database.entity.Repository import PublicRepository, getRepositoryClass
+from database.entity.Document import PublicDocument
+from database.entity.Repository import PublicRepository
+from database import CONFIG_DIR
 from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
 from database.utils.MySQLFactory import MySQLDriver
 
-from common_tools.log_config import configure_logging_from_argv
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
-'''
+"""
 log.setLevel(logging.DEBUG)
 
 # Console (stdout) handler
 console_handler = logging.StreamHandler(sys.stdout)
 console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 console_handler.setFormatter(console_formatter)
-'''
+"""
 
 # New XML Parser by Darpan
 
@@ -461,7 +460,6 @@ def XML_Parsing(path, path_to_save):
     # HeadingTags = [i for i in list(df2['Heading Tags']) if 'nan' not in str(i)]
     # print(HeadingTags)
     HeadingTags = ["PART", "HD", "TITLENUM", "HEADING", "SECTNO", "SUBJECT"]
-    UnLikelyHeadingTags = ["APPRO", "CITA", "AUTH"]
     Tags2Skip = list(df2["Non Text tags"])  # .remove('RESERVED')
 
     # Tags2Skip = ["AC", "ALPHLIST", "APPENDIX", "BMTR", "BTITLE", "CFRDOC", "CFRTITLE", "CHAPTI", "CITE", "CODE",
@@ -474,7 +472,6 @@ def XML_Parsing(path, path_to_save):
     # print(Tags2Skip)
     # exit()
 
-    combine_tags = ["PT", "SUBJECT", "PG"]
     # preamble_tags = []
 
     for elem in tree.iter():
@@ -487,7 +484,7 @@ def XML_Parsing(path, path_to_save):
 
         # exit()
         if elem.tag in Tags2Skip:
-            pageTags = elem.find(".//PRTPAGE")
+            elem.find(".//PRTPAGE")
             for sub_tag in elem:
                 if sub_tag == "PRTPAGE":
                     if sub_tag.attrib:
@@ -932,7 +929,9 @@ def parse(config: ScriptsConfig, mysql_driver: MySQLDriver, doc):
         + str(datetime.today().strftime("%d/%m/%Y %H:%M:%S"))
     )
     print(parseLogText)
-    set_document_parsed_details(mysql_driver, doc, parseLogText, 0, doc_class=PublicDocument)
+    set_document_parsed_details(
+        mysql_driver, doc, parseLogText, 0, doc_class=PublicDocument
+    )
 
     file_path = os.path.join(config.downloadDir, doc_result.sourceFileName)
     # parser = ET.XMLParser(ns_clean=True)
@@ -947,7 +946,9 @@ def parse(config: ScriptsConfig, mysql_driver: MySQLDriver, doc):
         )
         parseLogText += traceback.format_exc()
         print(parseLogText)
-        set_document_parsed_details(mysql_driver, doc_result, parseLogText, 0, doc_class=PublicDocument)
+        set_document_parsed_details(
+            mysql_driver, doc_result, parseLogText, 0, doc_class=PublicDocument
+        )
         return
 
     # print(outputList)
@@ -967,7 +968,7 @@ def parse(config: ScriptsConfig, mysql_driver: MySQLDriver, doc):
                 # paraNo=idx + 1,
                 Type=row["Class"],
                 wordCount=len(chunk.split()),
-                embedding = 0,
+                embedding=0,
             )
             repository_list.append(repository)
 
@@ -985,11 +986,11 @@ def parse(config: ScriptsConfig, mysql_driver: MySQLDriver, doc):
         )
         print(parseLogText)
         set_document_parsed_details(
-            mysql_driver, 
-            doc_result, 
-            parseLogText, 
-            len(repository_list), 
-            doc_class=PublicDocument
+            mysql_driver,
+            doc_result,
+            parseLogText,
+            len(repository_list),
+            doc_class=PublicDocument,
         )
     else:
         parseLogText += "Error in parsing document: " + doc_result.sourceFileName
@@ -997,14 +998,14 @@ def parse(config: ScriptsConfig, mysql_driver: MySQLDriver, doc):
         set_document_parsed_details(mysql_driver, doc_result, parseLogText, 0)
 
 
-def run(config: ScriptsConfig, docIdsList: int, repo_id:int):
+def run(config: ScriptsConfig, docIdsList: int, repo_id: int):
     mysql_driver = MySQLDriver(cred=config.databaseConfig.__dict__)
 
     doc2parse = find_document_by_id(mysql_driver, docIdsList, doc_class=PublicDocument)
 
-    document_list = get_documents_for_parsing_by_type(mysql_driver, 
-                                                      doc2parse.documentType, 
-                                                      doc_class=PublicDocument)
+    document_list = get_documents_for_parsing_by_type(
+        mysql_driver, doc2parse.documentType, doc_class=PublicDocument
+    )
 
     #    document_list = get_documents_for_parsing_by_type(mysql_driver, 1)
 
@@ -1024,13 +1025,14 @@ def run(config: ScriptsConfig, docIdsList: int, repo_id:int):
 
     print("XML Parser done its job")
 
+
 def parse_remaining_args(cleaned_args):
     repo_id = None
     values = []
 
     i = 0
     while i < len(cleaned_args):
-        if cleaned_args[i] == '--repo_id':
+        if cleaned_args[i] == "--repo_id":
             i += 1
             if i >= len(cleaned_args):
                 print("Missing value for --repo_id")
@@ -1053,10 +1055,11 @@ def parse_remaining_args(cleaned_args):
 
     return repo_id, values
 
+
 if __name__ == "__main__":
     try:
-        #configure the logging level
-        remaining_args = configure_logging_from_argv(default_level='INFO')
+        # configure the logging level
+        remaining_args = configure_logging_from_argv(default_level="INFO")
         repo_id, docIdsList = parse_remaining_args(remaining_args)
 
         if len(docIdsList) > 0:
@@ -1064,7 +1067,7 @@ if __name__ == "__main__":
         else:
             scrapeURLId = 1
 
-        configs = parseCredentialFile("/app/tlp_config.json")
+        configs = parseCredentialFile(str(CONFIG_DIR / "dev_test_tlp_config.json"))
 
         if configs:
             run(configs, scrapeURLId, repo_id)

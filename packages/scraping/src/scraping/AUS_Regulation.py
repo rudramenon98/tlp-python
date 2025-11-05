@@ -1,55 +1,43 @@
 import io
-import json
 import logging
 import os
-import sys
 import time
 import traceback
-import urllib.request
 from datetime import datetime
-from multiprocessing import current_process, Pool, cpu_count
 
 import pandas as pd
 import requests
-from dateutil.parser import parse
-from PyPDF2 import PdfReader
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-from tqdm import tqdm
-
+from common_tools.log_config import configure_logging_from_argv
 from database.document_service import (
-    insert_document,
-    insert_documents_bulk2,
     find_document_by_url,
-    update_documents,
     find_documents_not_scraped_on_date,
-    cancel_documents,
-    get_scrap_script_by_file_name,
     get_scrape_script_by_scraperUrlId,
+    insert_document,
 )
 from database.entity.Document import Document
 from database.entity.ScrapScript import ScrapScript
+from database import CONFIG_DIR
 from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
 from database.scrape_url_service import (
-    update_scrape_url_set_log_value,
     scrape_url_append_log,
 )
 from database.utils.MySQLFactory import MySQLDriver
-from database.utils.WebDriverFactory import WebDriverFactory
 from database.utils.util import get_dir_safe
-
-from common_tools.log_config  import configure_logging_from_argv
+from database.utils.WebDriverFactory import WebDriverFactory
+from dateutil.parser import parse
+from PyPDF2 import PdfReader
+from selenium.webdriver.common.by import By
+from tqdm import tqdm
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-'''
+"""
 # Console (stdout) handler
 console_handler = logging.StreamHandler(sys.stdout)
 console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 console_handler.setFormatter(console_formatter)
-'''
+"""
 
 logList = []
 DateToday = datetime.today()
@@ -262,7 +250,7 @@ def check_for_new_documents(
 
             docInDB = find_document_by_url(mysql_driver, file_url)
 
-        except Exception as excep:
+        except Exception:
             logText = f"Failed for : {file_url} \n"
             logText += traceback.format_exc()
             # logList.append(logText)
@@ -300,7 +288,7 @@ def check_for_new_documents(
                     noOfParagraphs=0,
                     lastScrapeDate=datetime.today().date(),
                     # scrapingLog = 'scraped successfully',
-                    sourceProject = 0,
+                    sourceProject=0,
                 )
 
                 download_list.append(document)
@@ -318,7 +306,7 @@ def check_for_new_documents(
                 )
                 logList.append(logText)
                 scrape_url_append_log(mysql_driver, scrapeURLId, logText)
-            except Exception as exc:
+            except Exception:
                 logText = f"New Document row creation failed for : {file_url} \n"
                 logText += traceback.format_exc()
                 logList.append(logText)
@@ -387,7 +375,7 @@ def check_if_file_exists3(link, mysql_driver, scrapeURLId):
             )
             scrape_url_append_log(mysql_driver, scrapeURLId, logText)
         try:
-            pdf = PdfReader(stream)
+            PdfReader(stream)
             # print(pdf)
             return True
         except:
@@ -409,7 +397,7 @@ def check_for_cancelled_documents(mysql_driver, current_date, scrapeURLId):
         return None
 
     for old_doc in old_documents_list:
-        old_number = old_doc.number
+        old_doc.number
         old_url = old_doc.url
 
         # check if url exists, i.e. guidance document is downloadable from FDA website
@@ -443,7 +431,7 @@ def check_for_cancelled_documents(mysql_driver, current_date, scrapeURLId):
 def run(config: ScriptsConfig, scrapeURLId):
     # global logList
 
-    DateToday = datetime.today().date()
+    datetime.today().date()
     mysql_driver = MySQLDriver(cred=config.databaseConfig.__dict__)
     scrapeScript: ScrapScript = get_scrape_script_by_scraperUrlId(
         mysql_driver, scrapeURLId
@@ -454,7 +442,7 @@ def run(config: ScriptsConfig, scrapeURLId):
         "https://www.tga.gov.au/sites/default/files/devices-argmd-01.docx",
     ]
 
-    main_URL = " https://www.tga.gov.au/resources/publication/publications/australian-regulatory-guidelines-medical-devices-argmd-v11-archived-version "
+    main_URL = "https://www.tga.gov.au/resources/publication/publications/australian-regulatory-guidelines-medical-devices-argmd-v11-archived-version"
 
     logText = f"ScrapeID: {scrapeURLId}: Scrape for Australia MDR Documents started at {datetime.today()} URL: {main_URL}"
 
@@ -482,7 +470,6 @@ def run(config: ScriptsConfig, scrapeURLId):
     print(download_list)
     print(len(download_list))
 
-    bulk_document = []
     logText = f"File downloading started at {datetime.today()}"
     # logList.append(logText)
     scrape_url_append_log(mysql_driver, scrapeURLId, logText)
@@ -495,7 +482,7 @@ def run(config: ScriptsConfig, scrapeURLId):
     for doc in links:
         # print("DOC:", str(doc.number))
         cnt += 1
-        docs = download_file(doc, path)
+        download_file(doc, path)
         # bulk_document.append(docs)
 
     pdfFilePath = path + "/" + download_list[0].pdfFileName
@@ -586,8 +573,8 @@ if __name__ == "__main__":
     try:
         props = None
 
-        #configure the logging level
-        remaining_args = configure_logging_from_argv(default_level='INFO')
+        # configure the logging level
+        remaining_args = configure_logging_from_argv(default_level="INFO")
 
         docIdsList = []
         if len(remaining_args) >= 1:
@@ -601,7 +588,7 @@ if __name__ == "__main__":
         else:
             scrapeURLId = 8
 
-        configs = parseCredentialFile("/app/tlp_config.json")
+        configs = parseCredentialFile(str(CONFIG_DIR / "dev_test_tlp_config.json"))
 
         if configs:
             run(configs, scrapeURLId)

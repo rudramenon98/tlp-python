@@ -2,15 +2,15 @@
 import json
 import logging
 import os
-import sys
 import time
 import traceback
-import urllib.request
 from datetime import datetime
 from multiprocessing import current_process
 
 import pandas as pd
 import requests
+from bs4 import BeautifulSoup
+from common_tools.log_config import configure_logging_from_argv
 from database.document_service import (
     cancel_documents,
     find_document_by_url,
@@ -21,6 +21,7 @@ from database.document_service import (
 )
 from database.entity.Document import Document
 from database.entity.ScrapScript import ScrapScript
+from database import CONFIG_DIR
 from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
 from database.scrape_url_service import (
     scrape_url_append_log,
@@ -28,19 +29,16 @@ from database.scrape_url_service import (
 )
 from database.utils.MySQLFactory import MySQLDriver
 from database.utils.util import get_dir_safe
-from bs4 import BeautifulSoup
-from tqdm import tqdm
 
-from common_tools.log_config  import configure_logging_from_argv
 log = logging.getLogger(__name__)
-'''
+"""
 log.setLevel(logging.DEBUG)
 
 # Console (stdout) handler
 console_handler = logging.StreamHandler(sys.stdout)
 console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 console_handler.setFormatter(console_formatter)
-'''
+"""
 
 # for logging
 logList = []
@@ -58,11 +56,11 @@ def download_file_low(URL, path):
     chunk_size = (1024 * 1024) * 1  # 1MB
 
     response = requests.get(URL, headers=hdr, stream=True)
-    total = int(response.headers.get("content-length", 0))
+    int(response.headers.get("content-length", 0))
 
     with open(path, "wb") as file:
         for data in response.iter_content(chunk_size=chunk_size):
-            size = file.write(data)
+            file.write(data)
 
 
 def download_file(config: ScriptsConfig, document: Document, sequence):
@@ -225,7 +223,7 @@ def check_for_new_documents(
     try:
         # scrapeScript: ScrapScript = get_scrap_script_by_file_name(mysql_driver, os.path.basename(__file__))
         log.debug("Processing document type ID: %s", scrapeScript.documentTypeID)
-    except Exception as exc:
+    except Exception:
         logText = f"Get ScrapeSCript Failed for : {os.path.basename(__file__)} \n"
         logText += traceback.format_exc()
         logList.append(logText)
@@ -260,7 +258,7 @@ def check_for_new_documents(
                     continue
 
             docInDB = find_document_by_url(mysql_driver, file_url)
-        except Exception as excep:
+        except Exception:
             logText = f"Failed for : {file_url} \n"
             logText += traceback.format_exc()
             logList.append(logText)
@@ -294,10 +292,10 @@ def check_for_new_documents(
                     embeddingLog="notEmbedded",
                     noOfParagraphs=0,
                     lastScrapeDate=datetime.today().date(),
-                    sourceProject = 0,
+                    sourceProject=0,
                 )
                 download_list.append(document)
-            except Exception as exc:
+            except Exception:
                 logText = f"New Document row creation failed for : {file_url} \n"
                 logText += traceback.format_exc()
                 logList.append(logText)
@@ -552,7 +550,7 @@ def scrape_faa_acs2(config: ScriptsConfig, driver, result, mysql_driver, scrapeU
             process_page(config, df, mysql_driver, scrapeURLId)
 
             time.sleep(10)
-    except Exception as exc:
+    except Exception:
         logText = traceback.format_exc()
         logList.append(logText)
         scrape_url_append_log(mysql_driver, scrapeURLId, logText)
@@ -563,7 +561,7 @@ def scrape_faa_acs2(config: ScriptsConfig, driver, result, mysql_driver, scrapeU
 
 def run(config: ScriptsConfig, scrapeURLId):
     global logList
-    DateToday = datetime.today()
+    datetime.today()
 
     main_URL = "https://www.faa.gov/regulations_policies/advisory_circulars/index.cfm/go/document.list/"
 
@@ -601,8 +599,8 @@ if __name__ == "__main__":
     try:
         props = None
 
-        #configure the logging level
-        remaining_args = configure_logging_from_argv(default_level='INFO')
+        # configure the logging level
+        remaining_args = configure_logging_from_argv(default_level="INFO")
 
         docIdsList = []
         if len(remaining_args) >= 1:
@@ -616,7 +614,7 @@ if __name__ == "__main__":
         else:
             scrapeURLId = 2
 
-        configs = parseCredentialFile("/app/tlp_config.json")
+        configs = parseCredentialFile(str(CONFIG_DIR / "dev_test_tlp_config.json"))
         #        configs = parseCredentialFile('/home/rkulkarni/v7-scripts/testv7_tlp_config.json')
         if configs:
             run(configs, scrapeURLId)

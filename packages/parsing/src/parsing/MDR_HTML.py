@@ -1,17 +1,12 @@
-import codecs
-import json
 import logging
 import os
 import re
-import sys
 import time
 import traceback
 
 import lxml
-import lxml.etree as ET
-import numpy as np
 import pandas as pd
-import requests
+from common_tools.log_config import configure_logging_from_argv
 from database.document_service import (
     find_document_by_id,
     get_documents_for_parsing_by_type,
@@ -21,20 +16,20 @@ from database.document_service import (
 )
 from database.entity.Document import Document
 from database.entity.Repository import Repository
+from database import CONFIG_DIR
 from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
 from database.utils.MySQLFactory import MySQLDriver
-from lxml import html
 
-from common_tools.log_config import configure_logging_from_argv
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-'''
+"""
 # Console (stdout) handler
 console_handler = logging.StreamHandler(sys.stdout)
 console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 console_handler.setFormatter(console_formatter)
-'''
+"""
+
 
 def First_word_iscompound(x):
     first_word_iscompound = 0
@@ -69,7 +64,6 @@ def HTML_Parsing(file_path: str):
 
     ###html parsing
 
-    pages = []
     tag_list = []
     text_list = []
     Class = []
@@ -281,15 +275,15 @@ def run(config: ScriptsConfig, docIdsList: int):
         for doc in document_list:
             parse(config, mysql_driver, doc)
             """hard coded"""
-    except Exception as exc:
+    except Exception:
         print("Exception in MDR XML Parsing")
         traceback.print_exc()
 
 
 if __name__ == "__main__":
     try:
-        #configure the logging level
-        remaining_args = configure_logging_from_argv(default_level='INFO')
+        # configure the logging level
+        remaining_args = configure_logging_from_argv(default_level="INFO")
 
         docIdsList = []
 
@@ -299,7 +293,7 @@ if __name__ == "__main__":
             docs = docs.split(" ")
             docIdsList = [int(i) for i in docs]
 
-        configs = parseCredentialFile("/app/tlp_config.json")
+        configs = parseCredentialFile(str(CONFIG_DIR / "dev_test_tlp_config.json"))
 
         if configs:
             run(configs, docIdsList)

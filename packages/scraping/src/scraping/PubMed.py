@@ -1,42 +1,47 @@
 import ftplib
-import os
-from pathlib import Path
-import traceback
-import time
-import random
+import gzip
 import hashlib
 import logging
-import requests
-import gzip
-from multiprocessing import Pool, cpu_count
-from math import ceil
-
-from lxml import html
-import regex as re
+import os
+import random
+import time
+import traceback
 from datetime import datetime
-
-from common_tools.log_config import configure_logging_from_argv
-
-from pubmed_parser import PubmedFullParser
-
+from math import ceil
+from multiprocessing import Pool, cpu_count
+from pathlib import Path
 from typing import Union
-from database.entity.PubMed import PubMed, Base  # adjust import to your project structure
-from database.entity.Repository import Repository
-from database.entity.Document import Document
+
+import regex as re
+import requests
+from common_tools.log_config import configure_logging_from_argv
 
 # Replace with your actual imports or implementations
-from database.document_service import get_scrapeurl_by_scrapeUrlId, find_documents_by_type, \
-get_scrape_script_by_scraperUrlId, insert_document, update_documents
-from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
+from database.document_service import (
+    find_documents_by_type,
+    get_scrape_script_by_scraperUrlId,
+    get_scrapeurl_by_scrapeUrlId,
+    insert_document,
+    update_documents,
+)
+from database.entity.Document import Document
+from database.entity.PubMed import (  # adjust import to your project structure
+    Base,
+    PubMed,
+)
+from database.entity.Repository import Repository
 from database.entity.ScrapScript import ScrapScript
+from database.entity.ScriptsProperty import parseCredentialFile
 from database.utils.MySQLFactory import MySQLDriver
+from lxml import html
+from pubmed_parser import PubmedFullParser
 
-from common_tools.log_config import configure_logging_from_argv
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 DateToday = datetime.today().date()
 # ------------------ Exception ------------------
+
 
 class DBCredentialError(Exception):
     pass
@@ -46,12 +51,11 @@ class DBCredentialError(Exception):
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.StreamHandler()  # You can add FileHandler here if needed
-    ]
+    handlers=[logging.StreamHandler()],  # You can add FileHandler here if needed
 )
 
 log = logging.getLogger(__name__)
+
 
 def extract_pubmed_download_date(url: str, xpath: str) -> datetime.date:
     try:
@@ -74,7 +78,7 @@ def extract_pubmed_download_date(url: str, xpath: str) -> datetime.date:
     # Look for a date string
     match = re.search(
         r"\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}\b",
-        text
+        text,
     )
     if not match:
         log.error("No valid date found in the extracted text.")
@@ -85,11 +89,14 @@ def extract_pubmed_download_date(url: str, xpath: str) -> datetime.date:
     log.debug(f"Extracted date: {date_obj}")
     return date_obj
 
+
 # ------------------ FTP & File Functions ------------------
+
 
 def download_file(ftp, filename, local_path):
     with open(local_path, "wb") as f:
         ftp.retrbinary(f"RETR {filename}", f.write)
+
 
 def calculate_md5(filepath):
     hash_md5 = hashlib.md5()
@@ -98,19 +105,21 @@ def calculate_md5(filepath):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
 
+
 def verify_md5(local_file, md5_file):
     with open(md5_file, "r") as f:
         md5_expected = f.read().split()[-1]
     md5_actual = calculate_md5(local_file)
     return md5_actual == md5_expected
 
+
 def check_file_exists_and_size_same(filepath, remote_size):
     """
     Checks if the local file exists and compares its size in bytes with remote size.
-    
+
     Parameters:
         filepath (str): The path to the file.
-    
+
     Returns:
         exists (bool)
     """
@@ -125,13 +134,14 @@ def check_file_exists_and_size_same(filepath, remote_size):
     else:
         return False
 
+
 def check_local_file_exists(filepath):
     """
     Checks if the local file exists.
-    
+
     Parameters:
         filepath (str): The path to the file.
-    
+
     Returns:
         exists (bool)
     """
@@ -146,7 +156,10 @@ def check_local_file_exists(filepath):
     else:
         return False
 
-def download_files(ftp_server:str, ftp_folder:str, download_folder:str, update:bool=False):
+
+def download_files(
+    ftp_server: str, ftp_folder: str, download_folder: str, update: bool = False
+):
 
     downloaded_files = []
 
@@ -156,7 +169,7 @@ def download_files(ftp_server:str, ftp_folder:str, download_folder:str, update:b
         ftp = ftplib.FTP(ftp_server)
         ftp.login()
         ftp.cwd(ftp_folder)
-        ftp.voidcmd('TYPE I')
+        ftp.voidcmd("TYPE I")
         return ftp
 
     # Initial connection to fetch file list
@@ -178,7 +191,7 @@ def download_files(ftp_server:str, ftp_folder:str, download_folder:str, update:b
 
     logging.info(f"Found {total_files} .gz files to download.")
     for i in range(0, total_files, batch_size):
-        batch = gz_files[i:i + batch_size]
+        batch = gz_files[i : i + batch_size]
 
         ftp = connect()
         logging.info(f"Started batch {(i // batch_size) + 1} with {len(batch)} files.")
@@ -211,7 +224,7 @@ def download_files(ftp_server:str, ftp_folder:str, download_folder:str, update:b
                 time.sleep(random.uniform(0.35, 1.57))
 
                 logging.info(f"Verifying {gz_file} integrity after download...")
-                
+
                 if verify_md5(local_gz_path, local_md5_path):
                     logging.info(f"{gz_file}: OK")
                     downloaded_files.append(gz_file)
@@ -234,10 +247,10 @@ def download_files(ftp_server:str, ftp_folder:str, download_folder:str, update:b
 def delete_obsolete_local_files(folder_path: str) -> int:
     """
     Deletes all *.gz and *.md5 files in the given folder (non-recursively).
-    
+
     Args:
         folder_path (str): Path to the target folder.
-    
+
     Returns:
         int: Number of files deleted.
     """
@@ -249,7 +262,7 @@ def delete_obsolete_local_files(folder_path: str) -> int:
         return 0
 
     for ext in ("*.gz", "*.md5"):
-        for file in folder.glob(ext): #change to rglob for include subfolders
+        for file in folder.glob(ext):  # change to rglob for include subfolders
             try:
                 file.unlink()
                 deleted_count += 1
@@ -267,10 +280,14 @@ def delete_obsolete_local_files(folder_path: str) -> int:
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+
 def text_normalize(key: str) -> str:
     """Normalize the key by removing whitespace and converting to lowercase."""
-    return ''.join(key.split()).lower()
+    return "".join(key.split()).lower()
+
+
 #        return key.lower()
+
 
 # Batch function: each process handles a list of files
 def process_batch(args):
@@ -282,12 +299,16 @@ def process_batch(args):
     for file_path in file_paths:
         parse_and_upsert_pubmed_file(mysql_driver, file_path, document_id)
 
+
 def chunk_list(lst, chunk_size):
     """Helper to split a list into chunks"""
     for i in range(0, len(lst), chunk_size):
-        yield lst[i:i + chunk_size]
+        yield lst[i : i + chunk_size]
 
-def parse_and_upsert_pubmed_file(mysql_driver, file_path: Union[str, os.PathLike], documentID:int) -> bool:
+
+def parse_and_upsert_pubmed_file(
+    mysql_driver, file_path: Union[str, os.PathLike], documentID: int
+) -> bool:
     """
     Parses a compressed PubMed XML update file and upserts articles into the database.
 
@@ -299,7 +320,7 @@ def parse_and_upsert_pubmed_file(mysql_driver, file_path: Union[str, os.PathLike
         bool: True if success, False otherwise.
     """
     try:
-        if not os.path.isfile(file_path) or not file_path.endswith('.xml.gz'):
+        if not os.path.isfile(file_path) or not file_path.endswith(".xml.gz"):
             log.error(f"Invalid file path: {file_path}")
             return False
 
@@ -312,42 +333,47 @@ def parse_and_upsert_pubmed_file(mysql_driver, file_path: Union[str, os.PathLike
 
                 try:
                     pmid = int(art.pmid)
-                except Exception as e:
-                    log.warning(f"pmid: {art.pmid} cannot be converted to int, skipping")
+                except Exception:
+                    log.warning(
+                        f"pmid: {art.pmid} cannot be converted to int, skipping"
+                    )
                     continue
-                
-                try:
-                    pmidversion = int(getattr(art, 'pmid_version', 1))
-                except Exception as e:
-                    log.debug(f"pmidversion: {art.pmid_version} cannot be converted to int, set to 1 ")
-                    pmidversion = 1
-                    pass
 
-                is_deleted = bool(getattr(art, 'deleted', False))
-                title = getattr(art, 'title', None)
+                try:
+                    pmidversion = int(getattr(art, "pmid_version", 1))
+                except Exception:
+                    log.debug(
+                        f"pmidversion: {art.pmid_version} cannot be converted to int, set to 1 "
+                    )
+                    pmidversion = 1
+
+                is_deleted = bool(getattr(art, "deleted", False))
+                title = getattr(art, "title", None)
                 if title:
                     title = title[:2048]
 
-                abstract = getattr(art, 'abstract', None)
+                abstract = getattr(art, "abstract", None)
                 if abstract:
                     abstract = abstract[:8192]
 
                 if art.authors:
-                    authors = "; ".join(f"{a.last_name}, {a.fore_name}" for a in art.authors)
+                    authors = "; ".join(
+                        f"{a.last_name}, {a.fore_name}" for a in art.authors
+                    )
                     authors = authors[:2048]
-                else: 
+                else:
                     authors = ""
 
-                created = getattr(art, 'created_date', None)
-                modified = getattr(art, 'modified_date', None)
+                created = getattr(art, "created_date", None)
+                modified = getattr(art, "modified_date", None)
 
-                #if not (art.abstract and len(art.abstract) > 0 and art.doi and len(art.doi) > 0):
+                # if not (art.abstract and len(art.abstract) > 0 and art.doi and len(art.doi) > 0):
                 #    continue
-                
+
                 if is_deleted:
                     log.debug(f"[DELETED] PMID {pmid}, Title: {title}")
-#                elif not abstract : #or not art.doi:
-#                    log.debug(f"[] PMID {pmid}: missing abstract.")
+                #                elif not abstract : #or not art.doi:
+                #                    log.debug(f"[] PMID {pmid}: missing abstract.")
                 else:
                     log.debug(f"[UPSERT] PMID {pmid} v{pmidversion}: {title}")
 
@@ -360,16 +386,36 @@ def parse_and_upsert_pubmed_file(mysql_driver, file_path: Union[str, os.PathLike
                         existing.deleted = is_deleted
                         existing.modifiedDate = DateToday
                         session.flush()
-                    elif  existing.pmidversion < pmidversion:
-                        #Update Repository records for title and abstract if the texts have changed
+                    elif existing.pmidversion < pmidversion:
+                        # Update Repository records for title and abstract if the texts have changed
 
-                        if title and text_normalize(existing.title) != text_normalize(title):
-                            currTitleParagraph = session.query(Repository).filter(Repository.paragraphID == existing.titleParagraphID).first()
+                        if title and text_normalize(existing.title) != text_normalize(
+                            title
+                        ):
+                            currTitleParagraph = (
+                                session.query(Repository)
+                                .filter(
+                                    Repository.paragraphID == existing.titleParagraphID
+                                )
+                                .first()
+                            )
                             if currTitleParagraph:
-                                    currTitleParagraph.data = title
+                                currTitleParagraph.data = title
 
-                        if abstract and existing.abstract and text_normalize(existing.abstract) != text_normalize(abstract):
-                            currAbstractParagraph = session.query(Repository).filter(Repository.paragraphID == existing.abstractParagraphID).first()
+                        if (
+                            abstract
+                            and existing.abstract
+                            and text_normalize(existing.abstract)
+                            != text_normalize(abstract)
+                        ):
+                            currAbstractParagraph = (
+                                session.query(Repository)
+                                .filter(
+                                    Repository.paragraphID
+                                    == existing.abstractParagraphID
+                                )
+                                .first()
+                            )
                             if currAbstractParagraph:
                                 currAbstractParagraph.data = abstract
 
@@ -389,14 +435,14 @@ def parse_and_upsert_pubmed_file(mysql_driver, file_path: Union[str, os.PathLike
                     titleParagraphID = 0
                     abstractParagraphID = 0
 
-                    #First insert title and abstract into two Repository records
+                    # First insert title and abstract into two Repository records
                     if title and len(title) > 0:
                         titleParagraph = Repository(
-                            documentID = documentID,
-                            data = title,
-                            Type = 2, #Heading for title
-                            pageNo = 0,
-                            wordCount = len(title[:1024])
+                            documentID=documentID,
+                            data=title,
+                            Type=2,  # Heading for title
+                            pageNo=0,
+                            wordCount=len(title[:1024]),
                         )
                         session.add(titleParagraph)
                         session.flush()
@@ -404,11 +450,11 @@ def parse_and_upsert_pubmed_file(mysql_driver, file_path: Union[str, os.PathLike
 
                     if abstract and len(abstract) > 0:
                         abstractParagraph = Repository(
-                            documentID = documentID,
-                            data = abstract[:8192],
-                            Type = 0, #paragraph for abstract
-                            pageNo = 0,
-                            wordCount = len(abstract[:8192])
+                            documentID=documentID,
+                            data=abstract[:8192],
+                            Type=0,  # paragraph for abstract
+                            pageNo=0,
+                            wordCount=len(abstract[:8192]),
                         )
 
                         session.add(abstractParagraph)
@@ -428,10 +474,10 @@ def parse_and_upsert_pubmed_file(mysql_driver, file_path: Union[str, os.PathLike
                         deleted=is_deleted,
                         authors=authors,
                         url=url,
-                        titleParagraphID= titleParagraphID,
-                        abstractParagraphID= abstractParagraphID,
+                        titleParagraphID=titleParagraphID,
+                        abstractParagraphID=abstractParagraphID,
                         createdDate=created or DateToday,
-                        modifiedDate=modified or DateToday
+                        modifiedDate=modified or DateToday,
                     )
                     session.add(new_article)
                     log.debug(f"[INSERTED] PMID {pmid}, Title: {title}")
@@ -441,12 +487,16 @@ def parse_and_upsert_pubmed_file(mysql_driver, file_path: Union[str, os.PathLike
                     log.debug(f"Processed {count} articles...")
 
             session.commit()
-            log.info(f"✅ Processed: {file_path} ==> Parsed and upserted {count} articles.")
+            log.info(
+                f"✅ Processed: {file_path} ==> Parsed and upserted {count} articles."
+            )
 
-        #session.close()
+        # session.close()
         return True
-    except Exception as e:
-        log.exception(f"❌ Processing: {file_path} ==> Failed to parse and insert PubMed data:")
+    except Exception:
+        log.exception(
+            f"❌ Processing: {file_path} ==> Failed to parse and insert PubMed data:"
+        )
         if session:
             session.rollback()
         return False
@@ -455,17 +505,20 @@ def parse_and_upsert_pubmed_file(mysql_driver, file_path: Union[str, os.PathLike
             session.close()
         return True
 
-def get_pubmed_document(mysql_driver, scrapeURLId:int):
-    scrapeScript: ScrapScript = get_scrape_script_by_scraperUrlId(mysql_driver, scrapeURLId)
+
+def get_pubmed_document(mysql_driver, scrapeURLId: int):
+    scrapeScript: ScrapScript = get_scrape_script_by_scraperUrlId(
+        mysql_driver, scrapeURLId
+    )
 
     doc = find_documents_by_type(mysql_driver, scrapeScript.documentTypeID)
 
     if not doc:
         document = Document(
-            number='PubMed',
-            title='PubMed',
-            description='PubMed Dummy Document',
-            url='https://pubmed.ncbi.nlm.nih.gov/',
+            number="PubMed",
+            title="PubMed",
+            description="PubMed Dummy Document",
+            url="https://pubmed.ncbi.nlm.nih.gov/",
             documentType=scrapeScript.documentTypeID,
             documentStatus=1,  # Active
             activeDate=datetime.today().date(),
@@ -482,25 +535,26 @@ def get_pubmed_document(mysql_driver, scrapeURLId:int):
             embeddingLog="notEmbedded",
             noOfParagraphs=0,
             lastScrapeDate=datetime.today().date(),
-            sourceProject = 0,
+            sourceProject=0,
         )
-   
+
         # insert document in DB
         insert_document(mysql_driver, document)
-
 
         doc = find_documents_by_type(mysql_driver, scrapeScript.documentTypeID)
         log.info(f"inserted PubMed document => DocumentId: {doc.documentId}")
 
     return doc
 
+
 # ------------------ Main ------------------
+
 
 def main():
     try:
 
-        #configure the logging level
-        remaining_args = configure_logging_from_argv(default_level='INFO')
+        # configure the logging level
+        remaining_args = configure_logging_from_argv(default_level="INFO")
 
         docIdsList = []
         if len(remaining_args) >= 1:
@@ -514,14 +568,14 @@ def main():
         else:
             scrapeURLId = 3
 
-        config_path = 'tlp-scripts/test-tlp_config.json'
+        config_path = "tlp-scripts/test-tlp_config.json"
         config = parseCredentialFile(config_path)
         if config is None:
             LOCAL_DIR = "./pubmed/baseline_files"
             LOCAL_UPDATE_DIR = "./pubmed/daily_updates"
         else:
-            LOCAL_DIR = config.baseDir+'/scrapedDocs/pubmed/baseline_files'
-            LOCAL_UPDATE_DIR = config.baseDir+'/scrapedDocs/pubmed/daily_updates'
+            LOCAL_DIR = config.baseDir + "/scrapedDocs/pubmed/baseline_files"
+            LOCAL_UPDATE_DIR = config.baseDir + "/scrapedDocs/pubmed/daily_updates"
 
         url = "https://pubmed.ncbi.nlm.nih.gov/download/"
         xpath = "/html/body/main/div[2]/p[1]"
@@ -531,7 +585,7 @@ def main():
 
         log.info(f"PubMed data last updated on: {pubmed_release_date}")
 
-        #establish database connection
+        # establish database connection
         dbCredentials = config.databaseConfig.__dict__
         mysql_driver = MySQLDriver(cred=dbCredentials)
 
@@ -543,7 +597,7 @@ def main():
             lastScrapeDate = scrapeURL_data.lastScrapeDate
         else:
             lastScrapeDate = None
-        
+
         if lastScrapeDate:
             days_ago = 0
 
@@ -552,13 +606,13 @@ def main():
                 if days_ago >= 0:
                     baseline_stale = True
                 else:
-                    baseline_stale = False                
+                    baseline_stale = False
             else:
                 baseline_stale = False
         else:
             baseline_stale = True
 
-        #set the FTP server details
+        # set the FTP server details
         FTP_HOST = "ftp.ncbi.nlm.nih.gov"
         FTP_BASELINE_DIR = "/pubmed/baseline"
         FTP_UPDATE_DIR = "/pubmed/updatefiles"
@@ -566,22 +620,24 @@ def main():
         pubmed_doc = get_pubmed_document(mysql_driver, scrapeURLId)
 
         if baseline_stale:
-            #remove previous local files
-            #delete_obsolete_local_files(LOCAL_DIR)
-            #delete_obsolete_local_files(LOCAL_UPDATE_DIR)
-            downloaded_files = download_files(FTP_HOST, FTP_BASELINE_DIR, LOCAL_DIR, update=False)
+            # remove previous local files
+            # delete_obsolete_local_files(LOCAL_DIR)
+            # delete_obsolete_local_files(LOCAL_UPDATE_DIR)
+            downloaded_files = download_files(
+                FTP_HOST, FTP_BASELINE_DIR, LOCAL_DIR, update=False
+            )
 
-            '''
+            """
             files = [f for f in os.listdir(LOCAL_DIR) if f.endswith('.gz')]
 
             for file in files:
                 file_path = os.path.join(LOCAL_DIR, file)
                 parse_and_upsert_pubmed_file(mysql_driver, file_path, pubmed_doc.documentId)
-            '''
+            """
 
             if downloaded_files and len(downloaded_files) > 0:
                 # Find all .gz files
-                #files = [f for f in os.listdir(LOCAL_DIR) if f.endswith('.gz') and f in downloaded_files]
+                # files = [f for f in os.listdir(LOCAL_DIR) if f.endswith('.gz') and f in downloaded_files]
                 files = [f for f in downloaded_files]
                 file_paths = [os.path.join(LOCAL_DIR, f) for f in files]
 
@@ -593,27 +649,32 @@ def main():
                     batches = list(chunk_list(file_paths, batch_size))
 
                     # Prepare args for each batch
-                    
-                    args_list = [(dbCredentials, batch, pubmed_doc.documentId) for batch in batches]
+
+                    args_list = [
+                        (dbCredentials, batch, pubmed_doc.documentId)
+                        for batch in batches
+                    ]
 
                     # Use multiprocessing
                     with Pool(processes=num_processes) as pool:
                         pool.map(process_batch, args_list)
 
-            #when new baseline is published, new update files need to used!
-            #delete_obsolete_local_files(LOCAL_UPDATE_DIR)
+            # when new baseline is published, new update files need to used!
+            # delete_obsolete_local_files(LOCAL_UPDATE_DIR)
 
-        downloaded_files = download_files(FTP_HOST, FTP_UPDATE_DIR, LOCAL_UPDATE_DIR, update=True)
+        downloaded_files = download_files(
+            FTP_HOST, FTP_UPDATE_DIR, LOCAL_UPDATE_DIR, update=True
+        )
         if downloaded_files and len(downloaded_files) > 0:
-            '''
+            """
             files = [f for f in os.listdir(LOCAL_UPDATE_DIR) if f.endswith('.gz')]
 
             for file in files:
                 file_path = os.path.join(LOCAL_UPDATE_DIR, file)
                 parse_and_upsert_pubmed_file(mysql_driver, file_path, pubmed_doc.documentId)
-            '''
+            """
             # Find all .gz files
-            #files = [f for f in os.listdir(LOCAL_UPDATE_DIR) if f.endswith('.gz') and f in downloaded_files]
+            # files = [f for f in os.listdir(LOCAL_UPDATE_DIR) if f.endswith('.gz') and f in downloaded_files]
             files = [f for f in downloaded_files]
             file_paths = [os.path.join(LOCAL_UPDATE_DIR, f) for f in files]
 
@@ -626,25 +687,28 @@ def main():
                 batches = list(chunk_list(file_paths, batch_size))
 
                 # Prepare args for each batch
-                
-                args_list = [(dbCredentials, batch, pubmed_doc.documentId) for batch in batches]
+
+                args_list = [
+                    (dbCredentials, batch, pubmed_doc.documentId) for batch in batches
+                ]
 
                 # Use multiprocessing
                 with Pool(processes=num_processes) as pool:
                     pool.map(process_batch, args_list)
 
-        #update the lastScrapeDate in the document
+        # update the lastScrapeDate in the document
         pubmed_doc.lastScrapeDate = datetime.today().date()
         update_documents(mysql_driver, [pubmed_doc])
 
-        #process_update_files(session)
+        # process_update_files(session)
         log.info(f"✅ All done: PubMed database scraped on {datetime.today().date()}!")
 
     except Exception as e:
-        log.error('The EXCEPTION >>>>>>>>>>>>>> ')
+        log.error("The EXCEPTION >>>>>>>>>>>>>> ")
         log.error(traceback.format_exc())
-        #traceback.print_exc()
+        # traceback.print_exc()
         log.exception(e)
+
 
 if __name__ == "__main__":
     main()

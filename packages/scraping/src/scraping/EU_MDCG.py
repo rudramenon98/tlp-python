@@ -1,38 +1,39 @@
-import requests
-import regex as re
-from typing import Optional, Tuple, Union
-
-from bs4 import BeautifulSoup
 import csv
-import time
 import json
 import logging
-import os
 import re
-from urllib.parse import urljoin
+import time
 from pathlib import Path
+from typing import Optional, Tuple, Union
+from urllib.parse import urljoin
+
+import regex as re
+import requests
+from bs4 import BeautifulSoup
 
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(levelname)s] %(asctime)s - %(message)s',
+    format="[%(levelname)s] %(asctime)s - %(message)s",
     handlers=[
-        logging.FileHandler("mdcg_scraper.log", mode='w'),
-        logging.StreamHandler()
-    ]
+        logging.FileHandler("mdcg_scraper.log", mode="w"),
+        logging.StreamHandler(),
+    ],
 )
 
 # Folder to store downloaded files
 DOWNLOAD_DIR = Path("scrapedDocs")
 DOWNLOAD_DIR.mkdir(exist_ok=True)
 
+
 def sanitize_filename(name):
     """Sanitize filename by removing problematic characters"""
-    return re.sub(r'[^\w\-_\. ]', '_', name)
+    return re.sub(r"[^\w\-_\. ]", "_", name)
+
 
 def validate_item(item):
     """Check that required fields are present"""
-    return bool(item['reference_number'] and item['title'] and item['publication_date'])
+    return bool(item["reference_number"] and item["title"] and item["publication_date"])
 
 
 def extract_revision_info(text: str) -> Optional[Tuple[str, Union[int, list]]]:
@@ -42,15 +43,15 @@ def extract_revision_info(text: str) -> Optional[Tuple[str, Union[int, list]]]:
     Returns:
         A tuple like ('rev', 1) or ('rev', [1, 2]) or None if not found.
     """
-    match = re.search(r'\brev\.([0-9]+(?:\.[0-9]+)*)', text, re.IGNORECASE)
+    match = re.search(r"\brev\.([0-9]+(?:\.[0-9]+)*)", text, re.IGNORECASE)
     if match:
         version_str = match.group(1)
-        parts = version_str.split('.')
+        parts = version_str.split(".")
         numbers = [int(p) for p in parts]
         if len(numbers) == 1:
-            return ('rev', numbers[0])
+            return ("rev", numbers[0])
         else:
-            return ('rev', numbers)
+            return ("rev", numbers)
     return None
 
 
@@ -91,7 +92,7 @@ def fetch_guidance_list(url):
                 "reference_number": ref,
                 "title": title,
                 "publication_date": pub,
-                "links": links
+                "links": links,
             }
 
             if validate_item(item):
@@ -102,10 +103,13 @@ def fetch_guidance_list(url):
     logging.info(f"Found {len(guidance_items)} valid guidance entries")
     return guidance_items
 
+
 def download_file(url, reference_number, filetype):
     """Download the file to scrapedDocs/ folder if not already downloaded"""
     try:
-        filename = sanitize_filename(f"{reference_number}_{filetype}.{url.split('.')[-1]}")
+        filename = sanitize_filename(
+            f"{reference_number}_{filetype}.{url.split('.')[-1]}"
+        )
         filepath = DOWNLOAD_DIR / filename
 
         if filepath.exists():
@@ -127,10 +131,11 @@ def download_file(url, reference_number, filetype):
         logging.error(f"Failed to download {filetype.upper()} from {url}: {e}")
         return None
 
+
 def download_all_documents(data):
     count = 0
     for item in data:
-        
+
         ref = item["reference_number"]
         for filetype in ["pdf", "docx"]:
 
@@ -140,7 +145,10 @@ def download_all_documents(data):
                 if count % 5:
                     time.sleep(5)
                 local_path = download_file(url, ref, filetype)
-                item["links"][filetype] = local_path  # update with local path if downloaded
+                item["links"][
+                    filetype
+                ] = local_path  # update with local path if downloaded
+
 
 def save_files(data):
     try:
@@ -149,20 +157,32 @@ def save_files(data):
         logging.info("Saved JSON file: mdcg_guidance.json")
 
         with open("mdcg_guidance.csv", "w", newline="", encoding="utf-8") as f_csv:
-            writer = csv.DictWriter(f_csv, fieldnames=["reference_number", "title", "publication_date", "pdf_link", "docx_link"])
+            writer = csv.DictWriter(
+                f_csv,
+                fieldnames=[
+                    "reference_number",
+                    "title",
+                    "publication_date",
+                    "pdf_link",
+                    "docx_link",
+                ],
+            )
             writer.writeheader()
             for item in data:
-                writer.writerow({
-                    "reference_number": item["reference_number"],
-                    "title": item["title"],
-                    "publication_date": item["publication_date"],
-                    "pdf_link": item["links"].get("pdf"),
-                    "docx_link": item["links"].get("docx")
-                })
+                writer.writerow(
+                    {
+                        "reference_number": item["reference_number"],
+                        "title": item["title"],
+                        "publication_date": item["publication_date"],
+                        "pdf_link": item["links"].get("pdf"),
+                        "docx_link": item["links"].get("docx"),
+                    }
+                )
         logging.info("Saved CSV file: mdcg_guidance.csv")
 
     except Exception as e:
         logging.error(f"Error saving output files: {e}")
+
 
 def main():
     logging.info("🔍 Starting MDCG scraper...")
@@ -174,6 +194,7 @@ def main():
     except Exception as e:
         logging.error(f"Unhandled error: {e}")
     logging.info("✅ Scraping complete.")
+
 
 if __name__ == "__main__":
     main()

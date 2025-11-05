@@ -12,7 +12,7 @@ def clean_string(input_string):
     # input_string = re.sub(pattern2, '', input_string)
 
     # pattern = r'[^a-zA-Z0-9\s]'
-    pattern = '\!@#$%^&*'
+    pattern = "\!@#$%^&*"
 
     # Use the pattern to remove unwanted characters
     if any(c in pattern for c in input_string):
@@ -24,7 +24,7 @@ def clean_string(input_string):
 def detect(string):
     value = True
 
-    if string.startswith('[Reg') or string.startswith('[T'):
+    if string.startswith("[Reg") or string.startswith("[T"):
         value = False
     elif clean_string(string):
         value = False
@@ -32,7 +32,7 @@ def detect(string):
         value = False
     else:
         value = True
-    #print(value)
+    # print(value)
     return value
 
 

@@ -1,33 +1,26 @@
 import io
-import json
 import logging
 import os
-import sys
 import time
 import traceback
-import urllib.request
 from datetime import datetime
-from multiprocessing import Pool, cpu_count, current_process
 
 import pandas as pd
 import requests
+from common_tools.log_config import configure_logging_from_argv
 from database.document_service import (
-    cancel_documents,
     find_document_by_url,
     find_documents_not_scraped_on_date,
     get_parsing_script_by_document_type_name,
-    get_scrap_script_by_file_name,
     get_scrape_script_by_scraperUrlId,
     insert_document,
-    insert_documents_bulk2,
-    update_documents,
 )
 from database.entity.Document import Document
 from database.entity.ScrapScript import ScrapScript
+from database import CONFIG_DIR
 from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
 from database.scrape_url_service import (
     scrape_url_append_log,
-    update_scrape_url_set_log_value,
 )
 from database.utils.MySQLFactory import MySQLDriver
 from database.utils.util import get_dir_safe
@@ -35,20 +28,16 @@ from database.utils.WebDriverFactory import WebDriverFactory
 from dateutil.parser import parse
 from PyPDF2 import PdfReader
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
 from tqdm import tqdm
-
-from common_tools.log_config  import configure_logging_from_argv
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
-'''
+"""
 # Console (stdout) handler
 console_handler = logging.StreamHandler(sys.stdout)
 console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 console_handler.setFormatter(console_formatter)
-'''
+"""
 
 logList = []
 DateToday = datetime.today()
@@ -68,7 +57,7 @@ def download_file(URL, path):
         # response = requests.get(URL, headers=hdr,verify = '/app/scripts/venv/lib/python3.9/site-packages/certifi/cacert.pem')
         response = requests.get(URL, headers=hdr, verify="/etc/ssl/cert.pem")
         total = int(response.headers.get("content-length", 0))
-        filename = URL.split("/")[-1]
+        URL.split("/")[-1]
         # path = path+'/'+filename
         with open(path, "wb") as file, tqdm(
             desc=path,
@@ -317,7 +306,7 @@ def check_for_new_documents(
 
             docInDB = find_document_by_url(mysql_driver, file_url)
 
-        except Exception as excep:
+        except Exception:
             logText = f"Failed for : {file_url} \n"
             logText += traceback.format_exc()
             # logList.append(logText)
@@ -350,7 +339,7 @@ def check_for_new_documents(
 
             try:
                 download_file(DOCX_URL, path)
-            except Exception as ex1:
+            except Exception:
                 logText = (
                     file_name
                     + " with filetype = "
@@ -365,11 +354,10 @@ def check_for_new_documents(
                 scrape_url_append_log(mysql_driver, scrapeURLId, logText)
                 print(logText)
                 path = None
-                pass
 
             try:
                 download_file(PDF_URL, pdf_path)
-            except Exception as ex2:
+            except Exception:
                 logText = (
                     pdf_file_name
                     + " with filetype = "
@@ -412,7 +400,7 @@ def check_for_new_documents(
                     noOfParagraphs=0,
                     lastScrapeDate=datetime.today().date(),
                     # scrapingLog = 'scraped successfully',
-                    sourceProject = 0,
+                    sourceProject=0,
                 )
 
                 download_list.append(document)
@@ -431,7 +419,7 @@ def check_for_new_documents(
                 )
                 logList.append(logText)
                 scrape_url_append_log(mysql_driver, scrapeURLId, logText)
-            except Exception as exc:
+            except Exception:
                 logText = f"New Document row creation failed for : {file_url} \n"
                 logText += traceback.format_exc()
                 logList.append(logText)
@@ -499,7 +487,7 @@ def check_if_file_exists3(link, mysql_driver, scrapeURLId):
             )
             scrape_url_append_log(mysql_driver, scrapeURLId, logText)
         try:
-            pdf = PdfReader(stream)
+            PdfReader(stream)
             # print(pdf)
             return True
         except:
@@ -521,7 +509,7 @@ def check_for_cancelled_documents(mysql_driver, current_date, scrapeURLId):
         return None
 
     for old_doc in old_documents_list:
-        old_number = old_doc.number
+        old_doc.number
         old_url = old_doc.url
 
         # check if url exists, i.e. guidance document is downloadable from FDA website
@@ -555,7 +543,7 @@ def check_for_cancelled_documents(mysql_driver, current_date, scrapeURLId):
 def run(config: ScriptsConfig, scrapeURLId):
     # global logList
 
-    DateToday = datetime.today().date()
+    datetime.today().date()
     mysql_driver = MySQLDriver(cred=config.databaseConfig.__dict__)
     scrapeScript: ScrapScript = get_scrape_script_by_scraperUrlId(
         mysql_driver, scrapeURLId
@@ -609,8 +597,8 @@ def run(config: ScriptsConfig, scrapeURLId):
 if __name__ == "__main__":
     try:
 
-        #configure the logging level
-        remaining_args = configure_logging_from_argv(default_level='INFO')
+        # configure the logging level
+        remaining_args = configure_logging_from_argv(default_level="INFO")
 
         docIdsList = []
         if len(remaining_args) >= 1:
@@ -624,7 +612,7 @@ if __name__ == "__main__":
         else:
             scrapeURLId = 8
 
-        configs = parseCredentialFile("/app/tlp_config.json")
+        configs = parseCredentialFile(str(CONFIG_DIR / "dev_test_tlp_config.json"))
 
         if configs:
             run(configs, scrapeURLId)

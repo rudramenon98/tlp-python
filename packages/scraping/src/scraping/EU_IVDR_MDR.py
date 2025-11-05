@@ -1,27 +1,27 @@
 import os
 import time
+from urllib.parse import urljoin
+
 import requests
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-#from webdriver_manager.chrome import ChromeDriverManager
+from database.utils.WebDriverFactory import WebDriverFactory
+from selenium.common.exceptions import TimeoutException
+
+# from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.common.exceptions import TimeoutException
-from database.utils.WebDriverFactory import WebDriverFactory
 
-from urllib.parse import urljoin
 
 def setup_driver(docker_url):
     driver = WebDriverFactory.getWebDriverInstance(
-            browser="docker", docker_url=docker_url
+        browser="docker", docker_url=docker_url
     )
     return driver
 
+
 def download_file(url, filename, download_dir):
     os.makedirs(download_dir, exist_ok=True)
-    #filename = os.path.basename(url.split('?')[0])
+    # filename = os.path.basename(url.split('?')[0])
     filepath = os.path.join(download_dir, filename)
 
     if os.path.exists(filepath):
@@ -32,7 +32,7 @@ def download_file(url, filename, download_dir):
     try:
         with requests.get(url, stream=True, timeout=30) as r:
             r.raise_for_status()
-            with open(filepath, 'wb') as f:
+            with open(filepath, "wb") as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
         print(f"Saved to: {filepath}")
@@ -40,6 +40,7 @@ def download_file(url, filename, download_dir):
     except Exception as e:
         print(f"Download failed: {e}")
         return None
+
 
 def wait_for_page_load(driver, timeout=15):
     try:
@@ -51,17 +52,18 @@ def wait_for_page_load(driver, timeout=15):
     except TimeoutException:
         print("⚠️ Timeout waiting for page to load.")
 
+
 def scrape_consolidated_documents():
     base_url = "https://eur-lex.europa.eu/eli/reg/2017/746/oj/eng"
     download_dir = "downloads"
 
-    driver = setup_driver(docker_url='http://localhost:4444')
+    driver = setup_driver(docker_url="http://localhost:4444")
     driver.get(base_url)
 
     wait_for_page_load(driver)
     # Wait and find the "Current consolidated version" link
     time.sleep(5)
-    '''
+    """
     try:
         consolidated_link = driver.find_element(By.PARTIAL_LINK_TEXT, "Current consolidated version")
         consolidated_url = consolidated_link.get_attribute("href")
@@ -70,11 +72,11 @@ def scrape_consolidated_documents():
         driver.quit()
         raise RuntimeError("Could not find the 'Current consolidated version' link") from e
         #PP1Contents > div > p.forceIndicator > strong > span > a
-    '''
+    """
 
     # Find all <a> tags and look for "Current consolidated version" in text
     consolidated_url = None
-    '''
+    """
     links = driver.find_elements(By.TAG_NAME, "a")
     for link in links:
         text = link.text.strip().lower()
@@ -82,12 +84,16 @@ def scrape_consolidated_documents():
         if "current consolidated version" in text.lower():
             consolidated_url = link.get_attribute("href")
             break
-    '''
-    link = driver.find_element(By.CSS_SELECTOR, "#PP1Contents > div > p.forceIndicator > strong > span > a")
+    """
+    link = driver.find_element(
+        By.CSS_SELECTOR, "#PP1Contents > div > p.forceIndicator > strong > span > a"
+    )
     consolidated_url = link.get_attribute("href")
     if not consolidated_url:
         driver.quit()
-        raise RuntimeError("Could not find the 'Current consolidated version' link using <a> tags")
+        raise RuntimeError(
+            "Could not find the 'Current consolidated version' link using <a> tags"
+        )
 
     print(f"✅ Found consolidated version link: {consolidated_url}")
 
@@ -121,7 +127,8 @@ def scrape_consolidated_documents():
     if en_html:
         download_file(en_html, "ivdr_mdf_regulations_en.html", download_dir)
     if en_pdf:
-        download_file(en_pdf,  "ivdr_mdf_regulations_en.pdf", download_dir)
+        download_file(en_pdf, "ivdr_mdf_regulations_en.pdf", download_dir)
+
 
 if __name__ == "__main__":
     scrape_consolidated_documents()

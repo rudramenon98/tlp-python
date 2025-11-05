@@ -1,20 +1,33 @@
+import json
 import logging
 import os
+import sys
+import time
 import traceback
+import urllib
 from datetime import date, datetime
-from multiprocessing import current_process
+from multiprocessing import Pool, cpu_count, current_process
 from urllib.request import urlretrieve
 
 import lxml.html
+import pandas as pd
 import requests
-from common_tools.log_config import configure_logging_from_argv
-from database.document_service import get_scrape_script_by_scraperUrlId, insert_document
+from database.document_service import (
+    cancel_documents,
+    find_document_by_url,
+    find_documents_not_scraped_on_date,
+    get_scrap_script_by_file_name,
+    get_scrape_script_by_scraperUrlId,
+    insert_document,
+    update_documents,
+)
 from database.entity.Document import Document
 from database.entity.ScrapScript import ScrapScript
-
+from bs4 import BeautifulSoup
+from common_tools.log_config  import configure_logging_from_argv
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
-"""
+'''
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -22,10 +35,13 @@ log.setLevel(logging.DEBUG)
 console_handler = logging.StreamHandler(sys.stdout)
 console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 console_handler.setFormatter(console_formatter)
-"""
+'''
 
 from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
-from database.scrape_url_service import scrape_url_append_log
+from database.scrape_url_service import (
+    scrape_url_append_log,
+    update_scrape_url_set_log_value,
+)
 from database.utils.MySQLFactory import MySQLDriver
 from database.utils.util import get_dir_safe
 
@@ -156,6 +172,7 @@ def download_file(config: ScriptsConfig, type="MDR_EN"):
 
 
 def run(config: ScriptsConfig, scrapeURLId):
+
     # scrapeURLId = 1  currently hard-coded
     mysql_driver = MySQLDriver(cred=config.databaseConfig.__dict__)
 
@@ -221,7 +238,7 @@ def run(config: ScriptsConfig, scrapeURLId):
         )
         scrape_url_append_log(mysql_driver, scrapeURLId, logText)
         log.debug("%s", logText)
-    except Exception:
+    except Exception as exc:
         logText = (
             pdf_filename
             + " with filetype = MDR "
@@ -252,8 +269,8 @@ def run(config: ScriptsConfig, scrapeURLId):
 if __name__ == "__main__":
     try:
         props = None
-        # configure the logging level
-        remaining_args = configure_logging_from_argv(default_level="INFO")
+        #configure the logging level
+        remaining_args = configure_logging_from_argv(default_level='INFO')
 
         docIdsList = []
         if len(remaining_args) >= 1:

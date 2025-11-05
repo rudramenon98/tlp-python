@@ -1,40 +1,51 @@
 import io
+import json
 import logging
 import os
 import re
 import sys
 import time
 import traceback
+import urllib.request
 import zipfile
 from datetime import datetime
 from multiprocessing import current_process
 
 import pandas as pd
 from database.document_service import (
+    cancel_documents,
     find_document_by_url,
     find_documents_not_scraped_on_date,
     get_parsing_script_by_document_type_name,
     get_scrape_script_by_scraperUrlId,
+    insert_document,
     insert_documents_bulk2,
+    update_documents,
 )
 from database.entity.Document import Document
 from database.entity.ScrapScript import ScrapScript
 from database.entity.ScriptsProperty import ScriptsConfig, parseCredentialFile
-from database.scrape_url_service import scrape_url_append_log
+from database.scrape_url_service import (
+    scrape_url_append_log,
+    update_scrape_url_set_log_value,
+)
 from database.utils.MySQLFactory import MySQLDriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 # Console (stdout) handler
 console_handler = logging.StreamHandler(sys.stdout)
-console_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 console_handler.setFormatter(console_formatter)
 
-from common_tools.log_config import configure_logging_from_argv
 from database.utils.util import get_dir_safe
 from database.utils.WebDriverFactory import WebDriverFactory
 from PyPDF2 import PdfReader
+from common_tools.log_config  import configure_logging_from_argv
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -77,13 +88,17 @@ def extract_xml_from_zip_file(zip_file, download_dir):
     # dir_name = '/home/dshah/Inspird-2023-dev/Web_Scrapping/Easa_Reg_Docs'
     dir_name = download_dir
 
+    extension = ".zip"
+
     temp_extract_path = get_dir_safe(download_dir + "/temp_extract")
 
     try:
         os.lstat(zip_file)
         if zip_file.endswith("zip"):
+
             # with zipfile.ZipFile(os.path.join(dir_name,zip_file), 'r') as zip_ref:
             with zipfile.ZipFile(zip_file, "r") as zip_ref:
+
                 zip_ref.extractall(temp_extract_path)
 
                 xml_file_path = os.path.join(dir_name, zip_file.split(".")[0] + ".xml")
@@ -143,6 +158,7 @@ def download_file(URL, file_path):
 
 def download_files(config: ScriptsConfig, document: Document, pdf_url, xml_url):
     try:
+
         download_dir = get_dir_safe(config.downloadDir)
         pdf_file_name = document.pdfFileName
         xml_file_name = document.sourceFileName
@@ -194,6 +210,7 @@ def download_link(driver2, url):
     links = []
     filenames = []
     for i in driver2.find_elements_by_class_name("matomo_download"):
+
         name = i.text
         link = i.get_attribute("href")
         links.append(link)
@@ -237,10 +254,12 @@ def EASA_Scrapping(url, docker_url):
             link = t.get_attribute("href")
 
             if len(data) > 2:
+
                 dataset["title"].append(data[2])
 
                 dataset["active_date"].append(data[0])
             else:
+
                 dataset["title"].append(data[1])
 
                 dataset["active_date"].append(data[0])
@@ -262,7 +281,7 @@ def EASA_Scrapping(url, docker_url):
             dataset["Number"].append(cn)
 
             cn += 1
-        except Exception:
+        except Exception as e:
             if "SUPERSEDED’" in data[1]:
                 log.debug("Dataset content: %s", dataset)
                 cn = cn + 1
@@ -300,10 +319,12 @@ def check_for_new_documents(
     # global logList
     download_list = []
     update_list = []
+    skip_list = []
 
     pdf_urls = []
     xml_urls = []
     for idx, row in scrapeDF.iterrows():
+
         file_urls = row["pdf_file_url"]
 
         file_names = row["pdf_file_name"]
@@ -343,7 +364,7 @@ def check_for_new_documents(
 
             docInDB = find_document_by_url(mysql_driver, pdf_file_url)
 
-        except Exception:
+        except Exception as excep:
             logText = f"Failed for : {pdf_file_url} \n"
             logText += traceback.format_exc()
             # logList.append(logText)
@@ -382,7 +403,7 @@ def check_for_new_documents(
                     noOfParagraphs=0,
                     lastScrapeDate=datetime.today().date(),
                     # scrapingLog = 'scraped successfully'
-                    sourceProject=0,
+                    sourceProject = 0,
                 )
                 download_list.append(document)
                 pdf_urls.append(pdf_file_url)
@@ -402,7 +423,7 @@ def check_for_new_documents(
                 )
                 logList.append(logText)
                 scrape_url_append_log(mysql_driver, scrapeURLId, logText)
-            except Exception:
+            except Exception as exc:
                 logText = f"New Document row creation failer for : {file_url} \n"
                 logText += traceback.format_exc()
                 logList.append(logText)
@@ -470,7 +491,7 @@ def check_if_file_exists3(link, mysql_driver, scrapeURLId):
             )
             scrape_url_append_log(mysql_driver, scrapeURLId, logText)
         try:
-            PdfReader(stream)
+            pdf = PdfReader(stream)
             # print(pdf)
             return True
         except:
@@ -492,7 +513,7 @@ def check_for_cancelled_documents(mysql_driver, current_date, scrapeURLId):
         return None
 
     for old_doc in old_documents_list:
-        old_doc.number
+        old_number = old_doc.number
         old_url = old_doc.url
 
         # check if url exists, i.e. guidance document is downloadable from FDA website
@@ -526,7 +547,7 @@ def check_for_cancelled_documents(mysql_driver, current_date, scrapeURLId):
 def run(config: ScriptsConfig, scrapeURLId):
     # global logList
 
-    datetime.today().date()
+    DateToday = datetime.today().date()
     mysql_driver = MySQLDriver(cred=config.databaseConfig.__dict__)
     scrapeScript: ScrapScript = get_scrape_script_by_scraperUrlId(
         mysql_driver, scrapeURLId
@@ -640,8 +661,8 @@ def run(config: ScriptsConfig, scrapeURLId):
 if __name__ == "__main__":
     try:
         props = None
-        # configure the logging level
-        remaining_args = configure_logging_from_argv(default_level="INFO")
+        #configure the logging level
+        remaining_args = configure_logging_from_argv(default_level='INFO')
 
         docIdsList = []
         if len(remaining_args) >= 1:

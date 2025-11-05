@@ -3,15 +3,16 @@ import io
 import json
 import logging
 import os
+import sys
 import traceback
 from datetime import date, datetime
 
 import pandas as pd
 import requests
-from common_tools.log_config import configure_logging_from_argv
 from database.document_service import (
     cancel_documents,
     find_document_by_url,
+    get_scrap_script_by_file_name,
     get_scrape_script_by_scraperUrlId,
     insert_document,
     update_documents,
@@ -28,14 +29,16 @@ from database.utils.util import get_dir_safe
 from PyPDF2 import PdfFileReader, PdfReader
 from tqdm import tqdm
 
+from common_tools.log_config  import configure_logging_from_argv
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
-"""
+'''
 # Console (stdout) handler
 console_handler = logging.StreamHandler(sys.stdout)
 console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 console_handler.setFormatter(console_formatter)
-"""
+'''
 
 # for logging
 logList = []
@@ -70,7 +73,7 @@ def check_if_file_exists2(link):
     page = requests.get(str(link), headers=hdr)
     with io.BytesIO(page.content) as f:
         try:
-            PdfFileReader(f)
+            pdf = PdfFileReader(f)
             # print(pdf)
             return True
         except:
@@ -109,7 +112,7 @@ def check_if_file_exists3(link):
                 str(total),
             )
         try:
-            PdfReader(stream)
+            pdf = PdfReader(stream)
             # print(pdf)
             return True
         except:
@@ -203,9 +206,11 @@ def get_fda_cfrs():
             current_year = year
             idx = 0
             while current_year != 1996:
+
                 if check_availability(
                     current_year, j, volumes[i - 1], "pdf"
                 ):  # and check_availability(current_year, j, i, 'xml'):
+
                     idx += 1
 
                     TITLE = (
@@ -300,6 +305,7 @@ def download_file(URL, path):
 def download_cfr_document(
     config: ScriptsConfig, mysql_driver: MySQLDriver, df, scrapeURLId
 ):
+
     global logList
     try:
         XML_URL = df["xml_file_url"]
@@ -309,6 +315,7 @@ def download_cfr_document(
         docInDB = find_document_by_url(mysql_driver, PDF_URL, doc_class=PublicDocument)
 
         if not docInDB:
+
             file_name = XML_URL.split("/")[-1]
             pdf_file_name = PDF_URL.split("/")[-1]
 
@@ -319,7 +326,7 @@ def download_cfr_document(
 
             try:
                 download_file(XML_URL, path)
-            except Exception:
+            except Exception as ex1:
                 logText = (
                     df["xml_filename"]
                     + " with filetype = "
@@ -336,7 +343,7 @@ def download_cfr_document(
 
             try:
                 download_file(PDF_URL, pdf_path)
-            except Exception:
+            except Exception as ex2:
                 logText = (
                     df["pdf_filename"]
                     + " with filetype = "
@@ -379,7 +386,7 @@ def download_cfr_document(
                 noOfParagraphs=0,
                 lastScrapeDate=datetime.today().date(),
                 # scrapingLog = 'scraped successfully on ' + str(datetime.today().date()),
-                sourceProject=0,
+                sourceProject = 0,
             )
 
             # insert document in DB
@@ -411,8 +418,8 @@ def download_cfr_document(
             scrape_url_append_log(mysql_driver, scrapeURLId, logText)
 
             # update document in DB
-            update_documents(mysql_driver, [docInDB])
-    except Exception:
+            update_documents(mysql_driver, [docInDB], doc_class=PublicDocument)
+    except Exception as exc:
         logText = (
             "ERROR in Scraping File "
             + df["title"]
@@ -435,7 +442,7 @@ def cancel_previous_editions(
 ):
     global logList
     try:
-        df["xml_file_url"]
+        XML_URL = df["xml_file_url"]
         PDF_URL = df["pdf_file_url"]
 
         curr_year = df["curr_year"]
@@ -449,9 +456,7 @@ def cancel_previous_editions(
             pdf_url_to_check = PDF_URL.replace(str(curr_year), str(curr_year - y))
 
             # check if document exists in documents table
-            docInDB = find_document_by_url(
-                mysql_driver, pdf_url_to_check, doc_class=PublicDocument
-            )
+            docInDB = find_document_by_url(mysql_driver, pdf_url_to_check, doc_class=PublicDocument)
 
             if docInDB:
                 # Mark as Cancelled/Archived
@@ -460,7 +465,7 @@ def cancel_previous_editions(
                 docInDB.modifiedDate = datetime.today().date()
 
                 # update in DB
-                cancel_documents(mysql_driver, [docInDB])
+                cancel_documents(mysql_driver, [docInDB], doc_class=PublicDocument)
 
                 # write to log
                 logText = (
@@ -475,7 +480,7 @@ def cancel_previous_editions(
                 scrape_url_append_log(mysql_driver, scrapeURLId, logText)
                 return True
 
-    except Exception:
+    except Exception as ex2:
         logText = (
             df["pdf_filename"]
             + " with filetype = "
@@ -497,7 +502,7 @@ def save_log_data_to_db(log_list, mysql_driver, scrapeURLId):
     update_scrape_url_set_log_value(mysql_driver, scrapeURLId, json.dumps(log_list))
 
 
-def run(config: ScriptsConfig, scrapeURLId: int):
+def run(config: ScriptsConfig, scrapeURLId: int, repo_id:int):
     global logList
     scraped_df = get_fda_cfrs()
 
@@ -516,14 +521,13 @@ def run(config: ScriptsConfig, scrapeURLId: int):
     #    save_log_data_to_db(logList, mysql_driver, scrapeURLId)
     print("Scraped CFR FDA documents")
 
-
 def parse_remaining_args(cleaned_args):
     repo_id = None
     values = []
 
     i = 0
     while i < len(cleaned_args):
-        if cleaned_args[i] == "--repo_id":
+        if cleaned_args[i] == '--repo_id':
             i += 1
             if i >= len(cleaned_args):
                 print("Missing value for --repo_id")
@@ -548,10 +552,11 @@ def parse_remaining_args(cleaned_args):
 
 
 if __name__ == "__main__":
+
     try:
         props = None
-        # configure the logging level
-        remaining_args = configure_logging_from_argv(default_level="INFO")
+        #configure the logging level
+        remaining_args = configure_logging_from_argv(default_level='INFO')
         repo_id, docIdsList = parse_remaining_args(remaining_args)
 
         if len(docIdsList) > 0:

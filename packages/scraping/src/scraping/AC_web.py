@@ -2,15 +2,15 @@
 import json
 import logging
 import os
+import sys
 import time
 import traceback
+import urllib.request
 from datetime import datetime
 from multiprocessing import current_process
 
 import pandas as pd
 import requests
-from bs4 import BeautifulSoup
-from common_tools.log_config import configure_logging_from_argv
 from database.document_service import (
     cancel_documents,
     find_document_by_url,
@@ -28,16 +28,19 @@ from database.scrape_url_service import (
 )
 from database.utils.MySQLFactory import MySQLDriver
 from database.utils.util import get_dir_safe
+from bs4 import BeautifulSoup
+from tqdm import tqdm
 
+from common_tools.log_config  import configure_logging_from_argv
 log = logging.getLogger(__name__)
-"""
+'''
 log.setLevel(logging.DEBUG)
 
 # Console (stdout) handler
 console_handler = logging.StreamHandler(sys.stdout)
 console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 console_handler.setFormatter(console_formatter)
-"""
+'''
 
 # for logging
 logList = []
@@ -55,11 +58,11 @@ def download_file_low(URL, path):
     chunk_size = (1024 * 1024) * 1  # 1MB
 
     response = requests.get(URL, headers=hdr, stream=True)
-    int(response.headers.get("content-length", 0))
+    total = int(response.headers.get("content-length", 0))
 
     with open(path, "wb") as file:
         for data in response.iter_content(chunk_size=chunk_size):
-            file.write(data)
+            size = file.write(data)
 
 
 def download_file(config: ScriptsConfig, document: Document, sequence):
@@ -222,7 +225,7 @@ def check_for_new_documents(
     try:
         # scrapeScript: ScrapScript = get_scrap_script_by_file_name(mysql_driver, os.path.basename(__file__))
         log.debug("Processing document type ID: %s", scrapeScript.documentTypeID)
-    except Exception:
+    except Exception as exc:
         logText = f"Get ScrapeSCript Failed for : {os.path.basename(__file__)} \n"
         logText += traceback.format_exc()
         logList.append(logText)
@@ -231,6 +234,7 @@ def check_for_new_documents(
         return update_list, download_list
 
     for idx, row in scrapeDF.iterrows():
+
         file_url = row["pdf_file_url"]
 
         try:
@@ -256,7 +260,7 @@ def check_for_new_documents(
                     continue
 
             docInDB = find_document_by_url(mysql_driver, file_url)
-        except Exception:
+        except Exception as excep:
             logText = f"Failed for : {file_url} \n"
             logText += traceback.format_exc()
             logList.append(logText)
@@ -290,10 +294,10 @@ def check_for_new_documents(
                     embeddingLog="notEmbedded",
                     noOfParagraphs=0,
                     lastScrapeDate=datetime.today().date(),
-                    sourceProject=0,
+                    sourceProject = 0,
                 )
                 download_list.append(document)
-            except Exception:
+            except Exception as exc:
                 logText = f"New Document row creation failed for : {file_url} \n"
                 logText += traceback.format_exc()
                 logList.append(logText)
@@ -390,6 +394,7 @@ def page_extraction2(mysql_driver, scrapeURLId, url):
     }
 
     try:
+
         # response = requests.post(URL2, headers=hdr, json=data, timeout=10)
         response2 = requests.get(url, headers=hdr, timeout=10)
         response2.raise_for_status()
@@ -473,6 +478,7 @@ def page_extraction2(mysql_driver, scrapeURLId, url):
 
 
 def get_main_page2(mysql_driver, scrapeURLId, main_url):
+
     hdr = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -482,6 +488,7 @@ def get_main_page2(mysql_driver, scrapeURLId, main_url):
     }
 
     try:
+
         # response = requests.post(URL2, headers=hdr, json=data, timeout=10)
         response = requests.get(main_url, headers=hdr, timeout=10)
         response.raise_for_status()
@@ -531,6 +538,7 @@ def get_main_page2(mysql_driver, scrapeURLId, main_url):
 def scrape_faa_acs2(config: ScriptsConfig, driver, result, mysql_driver, scrapeURLId):
     # dfs = []
     try:
+
         batch_size = 10
         for i in range(0, len(result), batch_size):
             # print(l[i:i+batch_size])
@@ -544,7 +552,7 @@ def scrape_faa_acs2(config: ScriptsConfig, driver, result, mysql_driver, scrapeU
             process_page(config, df, mysql_driver, scrapeURLId)
 
             time.sleep(10)
-    except Exception:
+    except Exception as exc:
         logText = traceback.format_exc()
         logList.append(logText)
         scrape_url_append_log(mysql_driver, scrapeURLId, logText)
@@ -555,7 +563,7 @@ def scrape_faa_acs2(config: ScriptsConfig, driver, result, mysql_driver, scrapeU
 
 def run(config: ScriptsConfig, scrapeURLId):
     global logList
-    datetime.today()
+    DateToday = datetime.today()
 
     main_URL = "https://www.faa.gov/regulations_policies/advisory_circulars/index.cfm/go/document.list/"
 
@@ -593,8 +601,8 @@ if __name__ == "__main__":
     try:
         props = None
 
-        # configure the logging level
-        remaining_args = configure_logging_from_argv(default_level="INFO")
+        #configure the logging level
+        remaining_args = configure_logging_from_argv(default_level='INFO')
 
         docIdsList = []
         if len(remaining_args) >= 1:

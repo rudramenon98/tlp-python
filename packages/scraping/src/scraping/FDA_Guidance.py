@@ -4,19 +4,22 @@ import json
 import logging
 import os
 import random
+import sys
 import time
 import traceback
+import urllib.request
 from datetime import datetime
-from multiprocessing import current_process
+from multiprocessing import Pool, cpu_count, current_process
 
 import pandas as pd
 import requests
-from common_tools.log_config import configure_logging_from_argv
 from database.document_service import (
     cancel_documents,
     find_document_by_url,
     find_documents_not_scraped_on_date,
+    get_scrap_script_by_file_name,
     get_scrape_script_by_scraperUrlId,
+    insert_document,
     insert_documents_bulk2,
     update_documents,
     update_documents2,
@@ -33,14 +36,16 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from common_tools.log_config  import configure_logging_from_argv
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
-"""
+'''
 # Console (stdout) handler
 console_handler = logging.StreamHandler(sys.stdout)
 console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 console_handler.setFormatter(console_formatter)
-"""
+'''
 
 from database.utils.MySQLFactory import MySQLDriver
 from database.utils.util import get_dir_safe
@@ -62,11 +67,11 @@ def download_file_low(URL, path):
     chunk_size = (1024 * 1024) * 1  # 1MB
 
     response = requests.get(URL, headers=hdr, stream=True)
-    int(response.headers.get("content-length", 0))
+    total = int(response.headers.get("content-length", 0))
 
     with open(path, "wb") as file:
         for data in response.iter_content(chunk_size=chunk_size):
-            file.write(data)
+            size = file.write(data)
 
 
 def download_file(config: ScriptsConfig, document: PublicDocument, sequence):
@@ -194,6 +199,7 @@ def check_links(x, docker_url):
     ]
     for j in new_links:
         try:
+
             if "download" in j:
                 download_link = j
                 print(download_link)
@@ -205,6 +211,8 @@ def check_links(x, docker_url):
 
 def page_extraction(driver, mysql_driver, scrapeURLId, docker_url):
     global logList
+
+    result = []
 
     dataset = {
         "Number": [],
@@ -254,6 +262,7 @@ def page_extraction(driver, mysql_driver, scrapeURLId, docker_url):
                 )
                 links = check_links(url_next_page, docker_url)
                 for k in links:
+
                     dataset["Number"].append(k.split("/")[-2])
 
                     dataset["title"].append(td[0][:100])
@@ -325,6 +334,7 @@ def page_extraction(driver, mysql_driver, scrapeURLId, docker_url):
 
 
 def process_page(config: ScriptsConfig, dfs, mysql_driver, scrapeURLId):
+
     global logList, DateToday
 
     print("Processing website page")
@@ -371,9 +381,7 @@ def process_page(config: ScriptsConfig, dfs, mysql_driver, scrapeURLId):
             scrape_url_append_log(mysql_driver2, scrapeURLId, msgText)
 
     if len(redownloaded_documents) > 0:
-        update_documents2(
-            mysql_driver2, redownloaded_documents, doc_class=PublicDocument
-        )
+        update_documents2(mysql_driver2, redownloaded_documents, doc_class=PublicDocument)
 
     print("final download  list size:")
     print(download_list)
@@ -455,7 +463,9 @@ def scrape_fda_guidance_documentsOLD(
 ):
     # dfs = []
     try:
+
         for _ in range(number_of_pages):
+
             print("Scraping page: " + str(_))
             df = page_extraction(driver, mysql_driver, scrapeURLId, docker_url)
 
@@ -466,7 +476,7 @@ def scrape_fda_guidance_documentsOLD(
                 By.XPATH, '//*[@id="DataTables_Table_0_next"]/a'
             ).click()
             time.sleep(30)
-    except Exception:
+    except Exception as exc:
         logText = traceback.format_exc()
         logList.append(logText)
         print(logText)
@@ -488,21 +498,19 @@ def scrape_fda_guidance_documents(
         # Step 1: Scrape and collect all pages
         for page_num in range(number_of_pages):
             print(f"Scraping page: {page_num + 1}")
-
+            
             df = page_extraction(driver, mysql_driver, scrapeURLId, docker_url)
             all_dfs.append(df)
-
-            #            if page_num < number_of_pages - 1:
-            next_page = driver.find_element(
-                By.XPATH, '//*[@id="DataTables_Table_0_next"]/a'
-            ).click()
+            
+#            if page_num < number_of_pages - 1:
+            next_page = driver.find_element(By.XPATH, '//*[@id="DataTables_Table_0_next"]/a').click()
             time.sleep(30)
 
         # Step 2: Process each page's DataFrame individually
         for df in all_dfs:
             process_page(config, df, mysql_driver, scrapeURLId)
 
-    except Exception:
+    except Exception as exc:
         logText = traceback.format_exc()
         logList.append(logText)
         print(logText)
@@ -524,7 +532,7 @@ def check_file_on_disk_is_pdfOLD(file_name: str, download_dir: str):
 
 def check_file_on_disk_is_pdf(file_name: str, download_dir: str):
     try:
-        PdfReader(download_dir + file_name)
+        pdf = PdfReader(download_dir + file_name)
         return True
     except:
         traceback.print_exc()
@@ -545,6 +553,7 @@ def check_for_new_documents(
     redownload_list = []
 
     for idx, row in scrapeDF.iterrows():
+
         file_url = row["pdf_file_url"]
 
         try:
@@ -569,10 +578,8 @@ def check_for_new_documents(
                     print(logText)
                     continue
 
-            docInDB = find_document_by_url(
-                mysql_driver, file_url, doc_class=PublicDocument
-            )
-        except Exception:
+            docInDB = find_document_by_url(mysql_driver, file_url, doc_class=PublicDocument)
+        except Exception as excep:
             logText = f"Failed for : {file_url} \n"
             logText += traceback.format_exc()
             logList.append(logText)
@@ -609,10 +616,10 @@ def check_for_new_documents(
                     noOfParagraphs=0,
                     lastScrapeDate=datetime.today().date(),
                     # scrapingLog = 'scraped successfully',
-                    sourceProject=0,
+                    sourceProject = 0,
                 )
                 download_list.append(document)
-            except Exception:
+            except Exception as exc:
                 logText = f"New PublicDocument row creation failure for : {file_url} \n"
                 logText += traceback.format_exc()
                 logList.append(logText)
@@ -713,7 +720,7 @@ def check_if_file_exists3(link, mysql_driver, scrapeURLId):
             )
             scrape_url_append_log(mysql_driver, scrapeURLId, logText)
         try:
-            PdfReader(stream)
+            pdf = PdfReader(stream)
             # print(pdf)
             return True
         except:
@@ -731,15 +738,13 @@ def check_for_cancelled_documents(
     cancel_list = []
 
     # get the documents in documents table which were not scraped today
-    old_documents_list = find_documents_not_scraped_on_date(
-        mysql_driver, current_date, doc_class=PublicDocument
-    )
+    old_documents_list = find_documents_not_scraped_on_date(mysql_driver, current_date, doc_class=PublicDocument)
 
     if not old_documents_list or len(old_documents_list) == 0:
         return None
 
     for old_doc in old_documents_list:
-        old_doc.number
+        old_number = old_doc.number
         old_url = old_doc.url
 
         if old_doc.documentType != scrapeScript.documentTypeID:
@@ -781,7 +786,7 @@ def save_log_data_to_db(log_list, scrapeURLId, mysql_driver):
 
 def run(config: ScriptsConfig, scrapeURLId):
     global logList
-    datetime.today().date()
+    DateToday = datetime.today().date()
 
     main_URL = "https://www.fda.gov/medical-devices/device-advice-comprehensive-regulatory-assistance/guidance-documents-medical-devices-and-radiation-emitting-products"
 
@@ -822,14 +827,13 @@ def run(config: ScriptsConfig, scrapeURLId):
     # save_log_data_to_db(logList, mysql_driver)
     print("Scaped URL:" + main_URL)
 
-
 def parse_remaining_args(cleaned_args):
     repo_id = None
     values = []
 
     i = 0
     while i < len(cleaned_args):
-        if cleaned_args[i] == "--repo_id":
+        if cleaned_args[i] == '--repo_id':
             i += 1
             if i >= len(cleaned_args):
                 print("Missing value for --repo_id")
@@ -857,8 +861,8 @@ if __name__ == "__main__":
     try:
         props = None
 
-        # configure the logging level
-        remaining_args = configure_logging_from_argv(default_level="INFO")
+        #configure the logging level
+        remaining_args = configure_logging_from_argv(default_level='INFO')
         repo_id, docIdsList = parse_remaining_args(remaining_args)
 
         if len(docIdsList) > 0:
@@ -867,7 +871,7 @@ if __name__ == "__main__":
             scrapeURLId = 2
 
         configs = parseCredentialFile("/app/tlp_config.json")
-
+        #configs = parseCredentialFile("/home/rkulkarni/work/tlp-java/tlp-scripts/new-tlp_config.json")
         if configs:
             run(configs, scrapeURLId)
 
